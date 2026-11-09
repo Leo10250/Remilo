@@ -166,6 +166,7 @@ version in `.nvmrc` and run these commands from the repository root.
 ```sh
 npm ci
 sh verification/ios-engine/run.sh
+sh verification/ios-calendar/run.sh
 (cd ios && pod install)
 sh verification/ios-archive/run.sh
 sh verification/ios-media/run.sh
@@ -202,6 +203,10 @@ feasibility. Physical acceptance uses a signed build of Remilo itself.
 5. Open **Settings → Tomorrow shortcuts** and edit a time. Confirm Done saves
    the exact minute and Cancel discards the edit. Check the new time in the
    postpone chooser with both system clock formats.
+6. Complete a test routine date. In Records, move it to Trash and restore it,
+   then check that the saved steps are still completed. Move the test date back
+   to Trash and permanently delete it. Relaunch and confirm the routine plan
+   and its other dates are still available.
 
 [AltServer connection requirements](https://faq.altstore.io/altstore-classic/altserver)
 
@@ -234,6 +239,8 @@ Confirm the App Group in both signatures. On a signed iPhone or iPad, open
 Remilo once, add both widgets from the Home Screen gallery, and exercise
 configuration, refresh after a reminder change, exact dated navigation, large
 text, both languages, and behavior across lock, midnight, and time-zone changes.
+After midnight with Remilo closed, check the new day's preview. Open Remilo to
+refresh and check that the current day's actions become available.
 In a medium or large Routine Focus widget, tap Done while Remilo is closed and
 confirm only the displayed step changes. Tap an older rendering after changing
 the dated session in Remilo and check that stale progress stays unchanged.

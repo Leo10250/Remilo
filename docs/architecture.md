@@ -272,6 +272,11 @@ snapshot before returning. Equal captures share one operation receipt.
 WidgetKit can display an older timeline, so the native date and revision
 checks govern whether the action applies. [Apple interactive widgets](https://developer.apple.com/documentation/widgetkit/adding-interactivity-to-widgets-and-live-activities)
 
+The snapshot can include read-only previews for the next two days in the device
+time zone. The timeline places them at local day boundaries and expires after
+the final day. On refresh, the provider rejects a snapshot from a different
+time zone. A new snapshot for the current day supplies action identities.
+
 An optional named iOS widget profile adds its own Undo history and exact
 Retry. Two placements selecting the same profile share that history. The
 app-private profile store records a pending action before submitting it to

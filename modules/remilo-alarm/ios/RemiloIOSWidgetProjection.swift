@@ -6,10 +6,32 @@ enum RemiloIOSWidgetProjection {
     ) -> RemiloWidgetSnapshot {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = zone
-        let instant = iosDate(now)
-        let start = calendar.startOfDay(for: instant)
-        let end = calendar.date(byAdding: .day, value: 1, to: start) ?? instant
-        let date = RemiloIOSRoutineAuthoring.localDate(instant, in: zone)
+        let start = calendar.startOfDay(for: iosDate(now))
+        let end = calendar.dateInterval(of: .day, for: start)?.end ?? start
+        let current = day(state, from: start, until: end, at: now, in: zone, language: language, allowsActions: true)
+        var upcoming: [RemiloWidgetSnapshot.Day] = []
+        var boundary = end
+        for _ in 0..<2 {
+            guard boundary > start, let next = calendar.dateInterval(of: .day, for: boundary)?.end, next > boundary else { break }
+            upcoming.append(day(
+                state, from: boundary, until: next, at: iosMillis(boundary), in: zone, language: language, allowsActions: false
+            ))
+            boundary = next
+        }
+        return RemiloWidgetSnapshot(
+            schemaVersion: RemiloWidgetSnapshot.currentVersion, date: current.date,
+            dayStartsAtMs: current.startsAtMs, dayEndsAtMs: current.endsAtMs, zoneID: zone.identifier,
+            language: language, reminders: current.reminders, reminderCount: current.reminderCount, routines: current.routines,
+            profiles: profiles.isEmpty ? nil : profiles.map { profile($0, date: current.date, state: state) },
+            upcomingDays: upcoming.isEmpty ? nil : upcoming
+        )
+    }
+
+    private static func day(
+        _ state: IOSDatabase, from start: Date, until end: Date, at now: Int64,
+        in zone: TimeZone, language: String, allowsActions: Bool
+    ) -> RemiloWidgetSnapshot.Day {
+        let date = RemiloIOSRoutineAuthoring.localDate(start, in: zone)
         let dayRange = iosMillis(start)..<iosMillis(end)
 
         let today = state.reminders.values.filter {
@@ -26,13 +48,11 @@ enum RemiloIOSWidgetProjection {
             )
         }
         let routines = state.routines.values.filter { $0.state != "Trashed" }.compactMap {
-            routine($0, date: date, now: now, in: zone, state: state, language: language)
+            routine($0, date: date, now: now, in: zone, state: state, language: language, allowsActions: allowsActions)
         }.sorted { ($0.title, $0.id) < ($1.title, $1.id) }
-        return RemiloWidgetSnapshot(
-            schemaVersion: RemiloWidgetSnapshot.currentVersion, date: date,
-            dayStartsAtMs: dayRange.lowerBound, dayEndsAtMs: dayRange.upperBound, zoneID: zone.identifier,
-            language: language, reminders: reminders, reminderCount: today.count, routines: routines,
-            profiles: profiles.isEmpty ? nil : profiles.map { profile($0, date: date, state: state) }
+        return RemiloWidgetSnapshot.Day(
+            date: date, startsAtMs: dayRange.lowerBound, endsAtMs: dayRange.upperBound,
+            reminders: reminders, reminderCount: today.count, routines: routines
         )
     }
 
@@ -41,11 +61,13 @@ enum RemiloIOSWidgetProjection {
         var undo: RemiloWidgetProfileAction?
         var undoName: String?
         var retry: RemiloWidgetProfileAction?
-        if let pending = profile.pending {
+        let id = RemiloIOSSeries.occurrenceID(profile.routineID, date)
+        let excluded = state.isPurgedOccurrence(id) || state.routines[profile.routineID]?.excludesDate(date) == true
+        if !excluded, let pending = profile.pending {
             if pending.date == date && pending.isValid && pending.profileRevision == profile.revision {
                 retry = pending
             }
-        } else if let session = IOSWidgetProfilePolicy.session(profile, date: date, state: state) {
+        } else if !excluded, let session = IOSWidgetProfilePolicy.session(profile, date: date, state: state) {
             if let step = session.steps.first(where: { !session.done.contains($0.id) }) {
                 done = IOSWidgetProfilePolicy.action(profile, session: session, stepID: step.id)
             }
@@ -63,10 +85,17 @@ enum RemiloIOSWidgetProjection {
     }
 
     private static func routine(
-        _ plan: IOSRoutinePlan, date: String, now: Int64, in zone: TimeZone, state: IOSDatabase, language: String
+        _ plan: IOSRoutinePlan, date: String, now: Int64, in zone: TimeZone, state: IOSDatabase,
+        language: String, allowsActions: Bool
     ) -> RemiloWidgetSnapshot.Routine? {
         guard let latest = plan.latest else { return nil }
         let id = RemiloIOSSeries.occurrenceID(plan.id, date)
+        if state.isPurgedOccurrence(id) || plan.excludesDate(date) {
+            return RemiloWidgetSnapshot.Routine(
+                id: plan.id, title: plan.version(on: date)?.title ?? latest.title, state: .unavailable,
+                occurrenceID: nil, revision: nil, done: 0, total: 0, current: nil, nextName: nil
+            )
+        }
         let session = state.routineSessions[id]
         let record = state.reminders[id]
         let version = session.flatMap { session in plan.versions.first { $0.revision == session.versionRevision } }
@@ -85,7 +114,7 @@ enum RemiloIOSWidgetProjection {
         } else { status = completed.isEmpty ? .ready : .inProgress }
 
         let showsStep = status == .ready || status == .inProgress
-        let actionAvailable = showsStep && record?.active == true
+        let actionAvailable = allowsActions && showsStep && record?.active == true
         let current = showsStep ? pending.first.map {
             RemiloWidgetSnapshot.Routine.Step(id: $0.id, name: $0.name, target: target($0, language: language))
         } : nil

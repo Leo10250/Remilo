@@ -102,26 +102,32 @@ private struct RemiloWidgetTimeline<Configuration: RemiloWidgetConfiguration>: A
         if context.isPreview { return placeholder(in: context) }
         let now = Date()
         return RemiloWidgetEntry(
-            date: now, snapshot: currentSnapshot(at: now), routineID: configuration.routine?.id,
+            date: now, snapshot: availableDays(at: now).first, routineID: configuration.routine?.id,
             profileID: configuration.profile?.id, example: false
         )
     }
 
     func timeline(for configuration: Configuration, in context: Context) async -> Timeline<RemiloWidgetEntry> {
         let now = Date()
-        let snapshot = currentSnapshot(at: now)
+        let days = availableDays(at: now)
         let selected = configuration.routine?.id
         let profileID = configuration.profile?.id
-        let current = RemiloWidgetEntry(date: now, snapshot: snapshot, routineID: selected, profileID: profileID, example: false)
-        guard let snapshot else { return Timeline(entries: [current], policy: .after(now.addingTimeInterval(60 * 60))) }
-        let midnight = Date(timeIntervalSince1970: Double(snapshot.dayEndsAtMs) / 1_000)
-        let expired = RemiloWidgetEntry(date: midnight, snapshot: nil, routineID: selected, profileID: profileID, example: false)
-        return Timeline(entries: [current, expired], policy: .after(midnight))
+        guard let first = days.first, let last = days.last else {
+            let current = RemiloWidgetEntry(date: now, snapshot: nil, routineID: selected, profileID: profileID, example: false)
+            return Timeline(entries: [current], policy: .after(now.addingTimeInterval(60 * 60)))
+        }
+        var entries = days.enumerated().map { index, day in
+            let date = index == 0 ? now : Date(timeIntervalSince1970: Double(day.dayStartsAtMs) / 1_000)
+            return RemiloWidgetEntry(date: date, snapshot: day, routineID: selected, profileID: profileID, example: false)
+        }
+        let expiry = Date(timeIntervalSince1970: Double(last.dayEndsAtMs) / 1_000)
+        entries.append(RemiloWidgetEntry(date: expiry, snapshot: nil, routineID: selected, profileID: profileID, example: false))
+        let nextDay = Date(timeIntervalSince1970: Double(first.dayEndsAtMs) / 1_000)
+        return Timeline(entries: entries, policy: .after(nextDay))
     }
 
-    private func currentSnapshot(at now: Date) -> RemiloWidgetSnapshot? {
-        guard let snapshot = try? RemiloWidgetSnapshotFile.read(), snapshot.isCurrent(at: now, in: .current) else { return nil }
-        return snapshot
+    private func availableDays(at now: Date) -> [RemiloWidgetSnapshot] {
+        (try? RemiloWidgetSnapshotFile.read())?.timelineDays(at: now, in: .current) ?? []
     }
 }
 
@@ -153,18 +159,23 @@ private struct RemiloWidgetContent: View {
     let entry: RemiloWidgetEntry
     let focusOnly: Bool
 
-    private var language: String { entry.snapshot?.language ?? widgetSystemLanguage() }
+    private var visibleSnapshot: RemiloWidgetSnapshot? {
+        guard let snapshot = entry.snapshot, snapshot.isCurrent(at: max(entry.date, Date()), in: .current) else { return nil }
+        return snapshot
+    }
+
+    private var language: String { visibleSnapshot?.language ?? widgetSystemLanguage() }
     private var profile: RemiloWidgetSnapshot.Profile? {
         guard let id = entry.profileID else { return nil }
-        return entry.snapshot?.profiles?.first { $0.id == id }
+        return visibleSnapshot?.profiles?.first { $0.id == id }
     }
     private var routine: RemiloWidgetSnapshot.Routine? {
         if entry.profileID != nil {
             guard let profile else { return nil }
-            return entry.snapshot?.routines.first { $0.id == profile.routineID }
+            return visibleSnapshot?.routines.first { $0.id == profile.routineID }
         }
-        if let id = entry.routineID { return entry.snapshot?.routines.first { $0.id == id } }
-        return focusOnly ? entry.snapshot?.routines.first : nil
+        if let id = entry.routineID { return visibleSnapshot?.routines.first { $0.id == id } }
+        return focusOnly ? visibleSnapshot?.routines.first : nil
     }
 
     private var missingRoutineCopy: String {
@@ -181,7 +192,7 @@ private struct RemiloWidgetContent: View {
                 .accessibilityAddTraits(.isHeader)
             if entry.example {
                 preview
-            } else if let snapshot = entry.snapshot {
+            } else if let snapshot = visibleSnapshot {
                 if focusOnly {
                     if let routine {
                         ViewThatFits(in: .vertical) {
@@ -211,7 +222,7 @@ private struct RemiloWidgetContent: View {
     }
 
     private var mainDestination: URL? {
-        if focusOnly, let routine, let date = entry.snapshot?.date { return routineURL(routine.id, date: date) }
+        if focusOnly, let routine, let date = visibleSnapshot?.date { return routineURL(routine.id, date: date) }
         return URL(string: focusOnly ? "remilo://routines" : "remilo:///")
     }
 

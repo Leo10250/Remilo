@@ -28,6 +28,11 @@ struct RemiloWidgetSnapshot: Codable, Equatable {
         let total: Int
         let current: Step?
         let nextName: String?
+
+        var readOnly: Self {
+            Self(id: id, title: title, state: state, occurrenceID: nil, revision: nil,
+                 done: done, total: total, current: current, nextName: nextName)
+        }
     }
 
     struct Profile: Codable, Equatable {
@@ -38,6 +43,19 @@ struct RemiloWidgetSnapshot: Codable, Equatable {
         let undo: RemiloWidgetProfileAction?
         let undoName: String?
         let retry: RemiloWidgetProfileAction?
+
+        var readOnly: Self {
+            Self(id: id, title: title, routineID: routineID, done: nil, undo: nil, undoName: nil, retry: nil)
+        }
+    }
+
+    struct Day: Codable, Equatable {
+        let date: String
+        let startsAtMs: Int64
+        let endsAtMs: Int64
+        let reminders: [Reminder]
+        let reminderCount: Int
+        let routines: [Routine]
     }
 
     let schemaVersion: Int
@@ -50,12 +68,37 @@ struct RemiloWidgetSnapshot: Codable, Equatable {
     let reminderCount: Int
     let routines: [Routine]
     var profiles: [Profile]? = nil
+    var upcomingDays: [Day]? = nil
 
     static let currentVersion = 1
 
     func isCurrent(at instant: Date, in zone: TimeZone) -> Bool {
         let milliseconds = instant.timeIntervalSince1970 * 1_000
         return zone.identifier == zoneID && milliseconds >= Double(dayStartsAtMs) && milliseconds < Double(dayEndsAtMs)
+    }
+
+    /// Only contiguous days from the publisher's zone can participate in a timeline.
+    func timelineDays(at instant: Date, in zone: TimeZone) -> [Self] {
+        guard zone.identifier == zoneID, dayStartsAtMs < dayEndsAtMs else { return [] }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = zone
+        var published = self
+        published.upcomingDays = nil
+        var days = [published]
+        for day in (upcomingDays ?? []).prefix(2) {
+            let start = Date(timeIntervalSince1970: Double(day.startsAtMs) / 1_000)
+            let end = Date(timeIntervalSince1970: Double(day.endsAtMs) / 1_000)
+            guard let previous = days.last, day.startsAtMs == previous.dayEndsAtMs,
+                  day.date > previous.date, let bounds = calendar.dateInterval(of: .day, for: start),
+                  bounds.start == start, bounds.end == end else { break }
+            days.append(Self(
+                schemaVersion: schemaVersion, date: day.date, dayStartsAtMs: day.startsAtMs, dayEndsAtMs: day.endsAtMs,
+                zoneID: zoneID, language: language, reminders: day.reminders, reminderCount: day.reminderCount,
+                routines: day.routines.map(\.readOnly), profiles: profiles?.map(\.readOnly)
+            ))
+        }
+        guard let index = days.firstIndex(where: { $0.isCurrent(at: instant, in: zone) }) else { return [] }
+        return Array(days[index...])
     }
 }
 

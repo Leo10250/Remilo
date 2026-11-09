@@ -16,6 +16,7 @@ enum WidgetProjectionChecks {
         state.reminders["past"] = record("past", alert: now - 1, next: now + 180_000_000)
         state.reminders["today"] = record("today", alert: now + 3_600_000)
         state.reminders["future"] = record("future", alert: now + 86_400_000)
+        state.reminders["second-future"] = record("second-future", alert: now + 2 * 86_400_000)
         state.reminders["test"] = record("test", alert: now + 1, isTest: true)
         state.reminders["routine"] = record("routine", alert: now + 1, routineID: "plan")
         state.reminders["complete"] = record("complete", alert: now + 1, completed: true)
@@ -39,7 +40,13 @@ enum WidgetProjectionChecks {
         state.routineSessions[occurrence] = IOSRoutineSession(
             routineID: "plan", occurrenceID: occurrence, date: "2026-03-08", versionRevision: 1, steps: [step]
         )
-        let snapshot = RemiloIOSWidgetProjection.snapshot(state, at: now, in: zone, language: "zh-Hans")
+        let nextOccurrence = RemiloIOSSeries.occurrenceID("plan", "2026-03-09")
+        state.reminders[nextOccurrence] = record(nextOccurrence, alert: now + 86_400_000, routineID: "plan")
+        state.routineSessions[nextOccurrence] = IOSRoutineSession(
+            routineID: "plan", occurrenceID: nextOccurrence, date: "2026-03-09", versionRevision: 1, steps: [step]
+        )
+        let profile = IOSWidgetProfile(id: UUID().uuidString, title: "Focus", routineID: "plan")
+        let snapshot = RemiloIOSWidgetProjection.snapshot(state, at: now, in: zone, language: "zh-Hans", profiles: [profile])
         assert(snapshot.date == "2026-03-08")
         assert(snapshot.dayEndsAtMs - snapshot.dayStartsAtMs == 23 * 60 * 60 * 1_000)
         assert(snapshot.isCurrent(at: iosDate(now), in: zone))
@@ -49,11 +56,61 @@ enum WidgetProjectionChecks {
         assert(snapshot.routines.map(\.id) == ["plan"])
         assert(snapshot.routines.first?.occurrenceID == occurrence)
         assert(snapshot.routines.first?.current?.target == "3 组 × 40 秒")
+        assert(snapshot.profiles?.first?.done != nil)
+
+        let timeline = snapshot.timelineDays(at: iosDate(now), in: zone)
+        assert(timeline.map(\.date) == ["2026-03-08", "2026-03-09", "2026-03-10"])
+        assert(timeline[1].dayStartsAtMs == snapshot.dayEndsAtMs)
+        assert(timeline[1].dayEndsAtMs == timeline[2].dayStartsAtMs)
+        assert(timeline[1].reminders.map(\.id) == ["past", "today", "future"])
+        assert(timeline[2].reminders.map(\.id) == ["past", "today", "future", "second-future"])
+        assert(timeline[1].routines.first?.current?.name == "Interval")
+        assert(timeline[1].routines.first?.occurrenceID == nil && timeline[1].routines.first?.revision == nil)
+        assert(timeline[1].profiles?.first?.id == profile.id && timeline[1].profiles?.first?.done == nil)
+        assert(timeline[1].profiles?.first?.undo == nil && timeline[1].profiles?.first?.retry == nil)
+        assert(snapshot.timelineDays(at: iosDate(snapshot.dayEndsAtMs), in: zone).map(\.date) == ["2026-03-09", "2026-03-10"])
+        assert(snapshot.timelineDays(at: iosDate(timeline[2].dayEndsAtMs), in: zone).isEmpty)
+        assert(snapshot.timelineDays(at: iosDate(now), in: TimeZone(identifier: "America/New_York")!).isEmpty)
+        var gapped = snapshot
+        gapped.upcomingDays = [snapshot.upcomingDays![1]]
+        assert(gapped.timelineDays(at: iosDate(now), in: zone).map(\.date) == ["2026-03-08"])
+        let fall = iosMillis(ISO8601DateFormatter().date(from: "2026-11-01T07:00:00Z")!)
+        let fallSnapshot = RemiloIOSWidgetProjection.snapshot(IOSDatabase(), at: fall, in: zone, language: "en")
+        assert(fallSnapshot.dayEndsAtMs - fallSnapshot.dayStartsAtMs == 25 * 60 * 60 * 1_000)
+
+        // Purged dates have no rows. The widget must not recover steps from the plan template.
+        var purged = state
+        for id in [occurrence, nextOccurrence] {
+            purged.reminders.removeValue(forKey: id)
+            purged.routineSessions.removeValue(forKey: id)
+        }
+        purged.purgedLocalOccurrences = [occurrence, nextOccurrence]
+        purged.routines["plan"]?.portableExclusions = [
+            "imported": IOSPortableExclusion(segmentID: "imported", nominalSlot: "2026-03-10T10:00"),
+        ]
+        var staleProfile = profile
+        staleProfile.pending = snapshot.profiles?.first?.done
+        let purgedSnapshot = RemiloIOSWidgetProjection.snapshot(
+            purged, at: now, in: zone, language: "en", profiles: [staleProfile]
+        )
+        let purgedTimeline = purgedSnapshot.timelineDays(at: iosDate(now), in: zone)
+        assert(purgedTimeline.count == 3)
+        for day in purgedTimeline {
+            let routine = day.routines.first!
+            assert(routine.state == .unavailable && routine.current == nil && routine.nextName == nil)
+            assert(routine.total == 0 && routine.done == 0 && routine.occurrenceID == nil && routine.revision == nil)
+            assert(day.profiles?.first?.retry == nil && day.profiles?.first?.done == nil && day.profiles?.first?.undo == nil)
+        }
+
         let bytes = try JSONEncoder().encode(snapshot)
         let text = String(decoding: bytes, as: UTF8.self)
         assert(!text.contains("private"))
         let decoded = try JSONDecoder().decode(RemiloWidgetSnapshot.self, from: bytes)
         assert(decoded == snapshot)
+        var legacy = try JSONSerialization.jsonObject(with: bytes) as! [String: Any]
+        legacy.removeValue(forKey: "upcomingDays")
+        let old = try JSONDecoder().decode(RemiloWidgetSnapshot.self, from: JSONSerialization.data(withJSONObject: legacy))
+        assert(old.timelineDays(at: iosDate(now), in: zone).map(\.date) == ["2026-03-08"])
         let group = "group.com.remilo.app.widgets"
         assert(RemiloWidgetSnapshotFile.appGroup(sideloadedGroups: nil) == group)
         assert(RemiloWidgetSnapshotFile.appGroup(sideloadedGroups: [group + ".A1B2C3D4E5"]) == group + ".A1B2C3D4E5")
