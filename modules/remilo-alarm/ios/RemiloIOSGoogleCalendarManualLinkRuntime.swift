@@ -74,11 +74,15 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
         self.now = now
     }
 
-    func preview(_ occurrenceID: String, expectedConnectionRevision: Int) async throws -> Link.Review {
+    func preview(_ occurrenceID: String, expectedConnectionRevision: Int, superseding: UUID? = nil) async throws -> Link.Review {
         let account = try viewer(expectedConnectionRevision)
         guard let snapshot = try local.read(occurrenceID) else { throw Link.Failure.ineligible }
         let evidence = try await resolveEvidence(occurrenceID, account: account)
         let saved = try existingLink(occurrenceID, evidence: evidence)
+        let pending = try store.pendingTransfer(occurrenceID: occurrenceID, source: evidence.source, viewingAs: account)
+        guard pending?.operationID == superseding else {
+            throw pending == nil ? Store.Rejection.stalePreview : Store.Rejection.operationPending
+        }
         let remote = try await connection.observeManualLink(evidence, account: account, canRead: canUseForeground)
         guard try viewer(expectedConnectionRevision) == account, try local.read(occurrenceID) == snapshot,
               try existingLink(occurrenceID, evidence: evidence)?.revision == saved?.revision else { throw Link.Failure.stalePreview }
@@ -87,6 +91,15 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
         if reviews.count == 8 { reviews.removeFirst() }
         var review = Link.Review(id: UUID(), account: account, evidence: evidence, local: snapshot, remote: remote,
                                  linkRevision: saved?.revision, baseline: saved?.baseline, checkedAtMs: checked)
+        if let pending {
+            guard pending.phase == .sent, !running.contains(pending.operationID),
+                  try store.pendingTransfer(occurrenceID: occurrenceID, source: evidence.source, viewingAs: account)?.operationID == pending.operationID,
+                  let transfer = pending.transfer, let readback = pending.readback,
+                  remote.etag != transfer.remote.etag, try !readback.matches(remote.fields) else {
+                throw Store.Rejection.operationPending
+            }
+            review.supersedingOperationID = pending.operationID
+        }
         review.remiloTiming = try local.timing(snapshot, snapshot.fields)
         let googleSchedule = Link.Event.Fields(title: snapshot.fields.title, notes: snapshot.fields.notes, schedule: remote.fields.schedule)
         do { review.googleTiming = try local.timing(snapshot, googleSchedule) }
@@ -160,9 +173,18 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
             _ = try Writer.Patch(transfer)
             try connection.requireManualLinkWrite(account: account)
         }
+        if review.supersedingOperationID != nil {
+            let observed = try await observe(review.evidence, account: account)
+            guard review.remote.matches(observed) else { throw Link.Failure.staleRemote }
+        }
         let captured = try await local.permit(review.local) { [self] in
             try requireLive(transfer)
-            return .transfer(try store.captureTransfer(transfer, fingerprint: fingerprint))
+            guard review.valid(at: now()) else { throw Link.Failure.stalePreview }
+            if let superseding = review.supersedingOperationID, running.contains(superseding) {
+                throw Store.Rejection.operationPending
+            }
+            return .transfer(try store.captureTransfer(transfer, fingerprint: fingerprint,
+                                                       superseding: review.supersedingOperationID))
         }
         guard case .transfer(let operation) = captured else { throw Failure.invalidResponse }
         return try await run(operation, viewer: account)

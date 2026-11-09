@@ -113,10 +113,12 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   previewCalendarLink(
     id: string,
     expectedConnectionRevision?: number,
+    supersedingOperationId?: string,
   ): Promise<import('./RemiloAlarm.types').CalendarLinkPreview>;
   previewCalendarUpdate(
     id: string,
     expectedConnectionRevision?: number,
+    supersedingOperationId?: string,
   ): Promise<import('./RemiloAlarm.types').CalendarLinkPreview>;
   checkCalendarLink(id: string): Promise<import('./RemiloAlarm.types').CalendarLink>;
   getCalendarLinks(

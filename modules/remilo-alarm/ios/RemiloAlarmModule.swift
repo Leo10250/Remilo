@@ -285,11 +285,15 @@ public final class RemiloAlarmModule: Module {
     AsyncFunction("getCalendarLinks") { (expectedRevision: Double?, promise: Promise) in
       resolveCalendar(promise) { try await RemiloIOSGoogleCalendarBridge.shared.links(expectedRevision: expectedRevision) }
     }
-    AsyncFunction("previewCalendarLink") { (id: String, expectedRevision: Double?, promise: Promise) in
-      resolveCalendar(promise) { try await RemiloIOSGoogleCalendarBridge.shared.previewLink(id, expectedRevision: expectedRevision) }
+    AsyncFunction("previewCalendarLink") { (id: String, expectedRevision: Double?, superseding: String?, promise: Promise) in
+      resolveCalendar(promise) {
+        try await RemiloIOSGoogleCalendarBridge.shared.previewLink(id, expectedRevision: expectedRevision, superseding: superseding)
+      }
     }
-    AsyncFunction("previewCalendarUpdate") { (id: String, expectedRevision: Double?, promise: Promise) in
-      resolveCalendar(promise) { try await RemiloIOSGoogleCalendarBridge.shared.previewLink(id, expectedRevision: expectedRevision) }
+    AsyncFunction("previewCalendarUpdate") { (id: String, expectedRevision: Double?, superseding: String?, promise: Promise) in
+      resolveCalendar(promise) {
+        try await RemiloIOSGoogleCalendarBridge.shared.previewLink(id, expectedRevision: expectedRevision, superseding: superseding)
+      }
     }
     AsyncFunction("applyCalendarCommand") { (command: [String: Any], promise: Promise) in
       resolveCalendar(promise) { try await RemiloIOSGoogleCalendarBridge.shared.apply(command) }

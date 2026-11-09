@@ -170,11 +170,13 @@ final class RemiloIOSGoogleCalendarBridge {
         return try Self.linkRuntime(runtime).links(expectedConnectionRevision: revision).map { try Self.link($0, connection: view) }
     }
 
-    func previewLink(_ id: String, expectedRevision: Double?) async throws -> [String: Any] {
+    func previewLink(_ id: String, expectedRevision: Double?, superseding: String?) async throws -> [String: Any] {
         try Self.validateOccurrenceID(id)
         let revision = try Self.revision(expectedRevision)
+        let operation = superseding.flatMap(UUID.init(uuidString:))
+        guard superseding == nil || operation != nil else { throw Failure.invalidInput }
         let runtime = try runtime()
-        let review = try await Self.linkRuntime(runtime).preview(id, expectedConnectionRevision: revision)
+        let review = try await Self.linkRuntime(runtime).preview(id, expectedConnectionRevision: revision, superseding: operation)
         let view = try await runtime.view()
         guard view.revision == revision, review.account.connectionRevision == revision else { throw Failure.staleConnection }
         let selections = review.suggestedSelections
@@ -510,7 +512,8 @@ final class RemiloIOSGoogleCalendarBridge {
             "calendarId": operation.source.calendarID, "eventId": operation.source.eventID,
         ]
         let readOnly = !operation.phase.pending &&
-            (operation.erased || local == nil || (operation.phase == .confirmed && operation.resultLinkRevision == nil))
+            (operation.erased || local == nil || operation.reason == "SUPERSEDED"
+             || (operation.phase == .confirmed && operation.resultLinkRevision == nil))
         return [
             "operationId": operation.operationID.uuidString, "occurrenceId": operation.occurrenceID,
             "kind": operation.kind, "calendarName": operation.calendarName, "title": operation.erased ? "" : local?.fields.title ?? "",
@@ -549,7 +552,8 @@ final class RemiloIOSGoogleCalendarBridge {
             if canReview { return ("NeedsReview", "Conflict", "ReviewAgain", "ReviewItems", current) }
             return ("Failed", "Failed", "None", "None", current)
         case .cancelled:
-            return ("Cancelled", "Cancelled", canReview ? "ReviewAgain" : "None", canReview ? "ReviewItems" : "None", current)
+            let reviewAgain = canReview && operation.reason != "SUPERSEDED"
+            return ("Cancelled", "Cancelled", reviewAgain ? "ReviewAgain" : "None", reviewAgain ? "ReviewItems" : "None", current)
         }
     }
 

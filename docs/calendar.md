@@ -22,8 +22,11 @@ an explicit manual link. Review shows both sides and lets the user select
 the title, notes and schedule independently. Remilo saves the chosen local
 changes first, uses the reviewed Google event version for any authorized
 update, and records a new baseline after both sides agree. After a send,
-recovery checks the original event without repeating the write. Unlinking
-ends the relationship and leaves the reminder and Google event in place.
+recovery checks the original event without repeating the write. If the
+outcome stays unconfirmed and Google has a different event version, an
+explicitly confirmed fresh review can replace the outstanding operation.
+Unlinking ends the relationship and leaves the reminder and Google event
+in place.
 [The signed iOS test workflow](verification.md#google-calendar-on-a-sideloaded-iphone-or-ipad)
 covers setup and device checks.
 [Google Calendar authorization scopes](https://developers.google.com/workspace/calendar/api/auth)

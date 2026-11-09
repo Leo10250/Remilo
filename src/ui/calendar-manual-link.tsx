@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type {
   CalendarCommand,
   CalendarLinkedOperation,
@@ -17,7 +17,7 @@ import {
 import { calendarSummary, currentCalendarOperations } from '../domain/calendar-presentation';
 import { secondaryOriginRoute, type OriginParams } from '../domain/navigation';
 import { useLocalizedState, useTranslation } from '../localization/react';
-import { CalendarOperationStatus } from './calendar-linked';
+import { CalendarOperationStatus, isUnconfirmedManualCalendarSend } from './calendar-linked';
 import { useCalendarLinks, useIOSCalendarLinkCandidate } from './calendar-links';
 import {
   calendarAuthorizationError,
@@ -71,6 +71,19 @@ export function IOSCalendarManualLink({
     ? (jobs.data ?? []).filter((job) => job.occurrenceId === id && isManualCalendarOperation(job))
     : [];
   const pending = currentCalendarOperations(manualJobs);
+  const { reviewSentId, reviewSentRevision } = useLocalSearchParams<{
+    reviewSentId?: string;
+    reviewSentRevision?: string;
+  }>();
+  const [freshReview, setFreshReview] = useState<{ id: string; revision: number } | undefined>(
+    () =>
+      review && typeof reviewSentId === 'string' && typeof reviewSentRevision === 'string'
+        ? { id: reviewSentId.toLowerCase(), revision: Number(reviewSentRevision) }
+        : undefined,
+  );
+  const fresh = freshReview?.revision === revision ? freshReview : undefined;
+  const requestedPreview = useRef<typeof fresh>(undefined);
+  const [previewVersion, setPreviewVersion] = useState(0);
   const [operationId, setOperationId] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<{
     revision: number;
@@ -85,20 +98,43 @@ export function IOSCalendarManualLink({
   const shown = review
     ? (manualJobs.find((job) => job.operationId.toLowerCase() === operationId) ??
       (lastResult?.revision === revision ? lastResult?.job : undefined) ??
+      manualJobs.find((job) => job.operationId.toLowerCase() === fresh?.id) ??
       pending[0])
     : undefined;
   const canReview = ready && candidate.eligible && links.isSuccess && jobs.isSuccess;
+  const canReadFresh =
+    !!shown &&
+    shown.operationId.toLowerCase() === fresh?.id &&
+    isUnconfirmedManualCalendarSend(shown);
+  const retryFreshCapture =
+    !!fresh &&
+    !!captured &&
+    shown?.operationId.toLowerCase() !== captured.operationId.toLowerCase();
   const preview = useQuery({
-    queryKey: ['calendar', 'manual-review', id, revision, link?.revision],
+    queryKey: [
+      'calendar',
+      'manual-review',
+      id,
+      revision,
+      fresh ? ['sent', fresh.id] : link?.revision,
+      previewVersion,
+    ],
     queryFn: () =>
       linked
-        ? engine().previewCalendarUpdate(id, revision!)
-        : engine().previewCalendarLink(id, revision!),
-    enabled: review && canReview && !shown,
+        ? engine().previewCalendarUpdate(id, revision!, fresh?.id)
+        : engine().previewCalendarLink(id, revision!, fresh?.id),
+    enabled: review && canReview && !shown && !fresh,
+    retry: fresh ? false : undefined,
     // A preview stays fixed while the user chooses values. Refresh explicitly or on a new scope.
     staleTime: 'static',
     gcTime: 0,
   });
+  const refetchPreview = preview.refetch;
+  useEffect(() => {
+    if (!canReview || !canReadFresh || !fresh || requestedPreview.current === fresh) return;
+    requestedPreview.current = fresh;
+    void refetchPreview();
+  }, [canReview, canReadFresh, fresh, refetchPreview]);
   const reviewed =
     canReview && !preview.error && preview.data?.connectionRevision === revision
       ? preview.data
@@ -126,8 +162,18 @@ export function IOSCalendarManualLink({
     router.canGoBack() ? router.back() : router.replace(secondaryOriginRoute(origin));
   const openSettings = () =>
     router.push({ pathname: '/calendar', params: { ...origin, originReminderId: id } });
-  const openReview = () =>
-    router.push({ pathname: '/calendar-review', params: { ...origin, id, originReminderId: id } });
+  const openReview = (sent?: CalendarLinkedOperation) =>
+    router.push({
+      pathname: '/calendar-review',
+      params: {
+        ...origin,
+        id,
+        originReminderId: id,
+        ...(sent && revision !== undefined
+          ? { reviewSentId: sent.operationId, reviewSentRevision: String(revision) }
+          : {}),
+      },
+    });
   const working = busy || unlink.busy;
   useAppearanceHold(working || unlink.unknown);
   usePreventRemove(working || unlink.unknown, () =>
@@ -185,18 +231,24 @@ export function IOSCalendarManualLink({
       } catch (e) {
         if (calendarCaptureRejected(e)) {
           setCaptured(undefined);
-          setOperationId(null);
+          setOperationId(fresh?.id ?? null);
+          setFreshReview(undefined);
         }
         throw e;
       }
     });
   };
-  const reviewAgain = () => {
-    setCaptured(undefined);
+  const reviewAgain = (job?: CalendarLinkedOperation) => {
+    if (!canReview || working || preview.isFetching || captured || unlink.unknown) return;
     setLastResult(undefined);
     setOperationId(null);
     setError('');
-    if (canReview) void preview.refetch();
+    setFreshReview(
+      revision !== undefined && job && isUnconfirmedManualCalendarSend(job)
+        ? { id: job.operationId.toLowerCase(), revision }
+        : undefined,
+    );
+    setPreviewVersion((version) => version + 1);
   };
   const confirmUnlink = () => {
     if (!linked || revision === undefined || working || unlink.unknown) return;
@@ -224,15 +276,23 @@ export function IOSCalendarManualLink({
     );
   };
   const title = review ? t(linked ? 'm_9e636d2d17ec' : 'm_45f738fd2ff1') : t('m_b074310e911f');
-  const problem = connection.error || links.error || jobs.error || candidate.error || preview.error;
+  const previewError = !fresh || canReadFresh ? preview.error : null;
+  const problem = connection.error || links.error || jobs.error || candidate.error || previewError;
   const loading =
     connection.isLoading ||
     links.isLoading ||
     jobs.isLoading ||
     candidate.loading ||
     preview.isLoading;
-  const reviewForm = review && !shown && reviewed?.local;
-  const retryUnknown = !!captured && !shown;
+  const reviewForm = review && (!shown || canReadFresh || retryFreshCapture) && reviewed?.local;
+  const retryUnknown = !!captured && (!shown || retryFreshCapture);
+  const statusJobs = review
+    ? shown && !reviewForm
+      ? [shown]
+      : []
+    : pending.length
+      ? pending
+      : manualJobs.slice(0, 1);
 
   return (
     <Page
@@ -329,7 +389,7 @@ export function IOSCalendarManualLink({
           label={t(linked ? 'm_6a47708f4e14' : link ? 'm_1b01ea836cde' : 'm_45f738fd2ff1')}
           variant="secondary"
           disabled={working || unlink.unknown}
-          onPress={openReview}
+          onPress={() => openReview()}
         />
       )}
       {!review && (linked || unlink.unknown) && (
@@ -342,18 +402,21 @@ export function IOSCalendarManualLink({
         />
       )}
       {current &&
-        (review ? (shown ? [shown] : []) : pending.length ? pending : manualJobs.slice(0, 1)).map(
-          (job) => (
-            <CalendarOperationStatus
-              key={job.operationId}
-              operation={job}
-              iosConnection={current}
-              onReviewAgain={
-                candidate.eligible && ready ? (review ? reviewAgain : openReview) : undefined
-              }
-            />
-          ),
-        )}
+        statusJobs.map((job) => (
+          <CalendarOperationStatus
+            key={job.operationId}
+            operation={job}
+            iosConnection={current}
+            onReviewAgain={
+              canReview && !working && !preview.isFetching && !captured && !unlink.unknown
+                ? () =>
+                    review
+                      ? reviewAgain(job)
+                      : openReview(isUnconfirmedManualCalendarSend(job) ? job : undefined)
+                : undefined
+            }
+          />
+        ))}
       {reviewForm && reviewed && (
         <>
           <Copy muted>{t('m_c672ed8175e2')}</Copy>
@@ -389,7 +452,7 @@ export function IOSCalendarManualLink({
               label={t('m_962d33506a8f')}
               variant="secondary"
               disabled={working}
-              onPress={reviewAgain}
+              onPress={() => reviewAgain(shown)}
             />
           )}
         </>
@@ -399,10 +462,10 @@ export function IOSCalendarManualLink({
           label={t('m_962d33506a8f')}
           variant="secondary"
           disabled={working}
-          onPress={reviewAgain}
+          onPress={() => reviewAgain()}
         />
       )}
-      {problem && !preview.error && (
+      {problem && !previewError && (
         <Button
           label={t('m_942087cc2d41')}
           variant="secondary"

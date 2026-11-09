@@ -287,7 +287,10 @@ that it requires a fresh review. On a reminder with a future postponed alert,
 choose a revised Google schedule and verify that Remilo keeps the postponed
 alert time. If a write result is interrupted, reconnect
 the same account with read access and check the result against the original
-event. Unlink and verify that the reminder and Google event remain.
+event. If the outcome is still unconfirmed and the event has since changed,
+open a fresh review and confirm. Verify the old operation is cancelled and
+the new result reflects the reviewed event. Unlink and verify that the reminder
+and Google event remain.
 Keep the configured test IPA local.
 [AltServer connection requirements](https://faq.altstore.io/altstore-classic/altserver)
 

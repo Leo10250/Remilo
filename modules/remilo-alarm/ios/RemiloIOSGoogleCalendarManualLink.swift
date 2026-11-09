@@ -147,6 +147,7 @@ enum RemiloIOSGoogleCalendarManualLink {
         var remiloTiming: Timing? = nil
         var googleTiming: Timing? = nil
         var manualScheduleBlocked: String? = nil
+        var supersedingOperationID: UUID? = nil
 
         func valid(at time: Int64) -> Bool {
             time >= checkedAtMs && time - checkedAtMs <= 600_000

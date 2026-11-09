@@ -87,6 +87,8 @@ enum PublicationChecks {
         try await journalChecks(request: request, readOnly: readOnly, now: now)
         try await runtimeChecks(configuration: configuration, request: request, access: access, readOnly: readOnly, now: now)
         try await manualTransferChecks(configuration: configuration, request: request, access: access, readOnly: readOnly, now: now)
+        try await manualTransferChecks(configuration: configuration, request: request, access: access, readOnly: readOnly,
+                                       now: now, superseding: true)
         let allDay = try Event.fields(["start": ["date": "2027-03-14"], "end": ["date": "2027-03-15"]], calendarZone: zone)
         let bounds = try Publication.Bounds(allDay.fields.schedule)
         precondition(bounds.start.date == "2027-03-14" && bounds.end.date == "2027-03-15" && bounds.end.dateTime == nil)
@@ -95,7 +97,8 @@ enum PublicationChecks {
     @MainActor
     private static func manualTransferChecks(
         configuration: RemiloIOSGoogleCalendarConfiguration, request: Publication.Request,
-        access: RemiloIOSGoogleCalendarAccess, readOnly: RemiloIOSGoogleCalendarAccess, now: @escaping @Sendable () -> Date
+        access: RemiloIOSGoogleCalendarAccess, readOnly: RemiloIOSGoogleCalendarAccess, now: @escaping @Sendable () -> Date,
+        superseding: Bool = false
     ) async throws {
         typealias Manual = RemiloIOSGoogleCalendarManualLinkRuntime
         let path = FileManager.default.temporaryDirectory.appendingPathComponent("remilo-manual-transfer-\(UUID())")
@@ -158,6 +161,35 @@ enum PublicationChecks {
         precondition(local.snapshot?.fields.notes == "Google note")
         let stillUnknown = try await newRuntime().retry(operation, expectedConnectionRevision: write.revision)
         precondition(stillUnknown.phase == .sent)
+        if superseding {
+            do {
+                _ = try await runtime.preview(source.version.occurrenceID, expectedConnectionRevision: write.revision, superseding: operation)
+                preconditionFailure("An unchanged ETag must keep the original request reserved")
+            } catch Manual.Store.Rejection.operationPending {}
+            try await fixture.changeRemoteTag()
+            let previous = local.snapshot!.version
+            local.snapshot = .init(version: .init(occurrenceID: previous.occurrenceID, revision: previous.revision + 1,
+                                                  generation: previous.generation),
+                                   fields: .init(title: request.fields.title, notes: "Google note", schedule: request.fields.schedule))
+            let fresh = try await runtime.preview(source.version.occurrenceID, expectedConnectionRevision: write.revision, superseding: operation)
+            precondition(fresh.supersedingOperationID == operation)
+            try await fixture.changeRemoteTag(#""newer""#)
+            do {
+                _ = try await runtime.resolve(operationID: UUID(), reviewID: fresh.id, expectedConnectionRevision: write.revision,
+                                              choices: [:], updating: false)
+                preconditionFailure("Stale confirmation must leave the original operation reserved")
+            } catch Manual.Link.Failure.staleRemote {}
+            let reserved = try runtime.transferOperation(operation, expectedConnectionRevision: write.revision)
+            precondition(reserved?.phase == .sent)
+            let current = try await runtime.preview(source.version.occurrenceID, expectedConnectionRevision: write.revision, superseding: operation)
+            let confirmed = try await runtime.resolve(operationID: UUID(), reviewID: current.id,
+                                                      expectedConnectionRevision: write.revision, choices: [:], updating: false)
+            let retired = try await newRuntime().retry(operation, expectedConnectionRevision: write.revision)
+            let writes = await fixture.writes
+            precondition(confirmed.phase == .confirmed && confirmed.resultLinkRevision == 1)
+            precondition(retired.phase == .cancelled && retired.reason == "SUPERSEDED" && retired.remoteAttempted && writes == 1)
+            return
+        }
         try await fixture.completeManualTransfer()
         let refreshed = try await connection.connectFromUserAction(expectedRevision: write.revision, consent: .reauthorizeCurrentAccount) { _, _ in readOnly }
         let verified = try await newRuntime().retry(operation, expectedConnectionRevision: refreshed.revision)
@@ -479,9 +511,9 @@ enum PublicationChecks {
             result = try Self.remote(request: request, edited: false).json
         }
 
-        func changeRemoteTag() throws {
+        func changeRemoteTag(_ tag: String = #""after""#) throws {
             var event = try JSONSerialization.jsonObject(with: result!) as! [String: Any]
-            event["etag"] = #""after""#
+            event["etag"] = tag
             result = try JSONSerialization.data(withJSONObject: event)
         }
 

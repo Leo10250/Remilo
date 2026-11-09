@@ -8,7 +8,11 @@ import type {
   CalendarLinkedOperation,
 } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
 import { iosManualCalendarError } from '../domain/calendar';
-import { calendarOperationRetryable, iosManualLinkRecovery } from '../domain/calendar-link';
+import {
+  calendarOperationRetryable,
+  iosManualLinkRecovery,
+  isManualCalendarOperation,
+} from '../domain/calendar-link';
 import { ActionFeedback, Button, ConnectedGroup, Copy, Status } from './components';
 import { useCalendarAction, useCalendarAuthorization } from './calendar-sync';
 import {
@@ -17,6 +21,16 @@ import {
   rememberCalendarConnection,
 } from './calendar-local-import';
 import { engine } from './native';
+
+export function isUnconfirmedManualCalendarSend(operation: CalendarLinkedOperation) {
+  return (
+    isManualCalendarOperation(operation) &&
+    operation.state === 'Unconfirmed' &&
+    operation.recoveryMode === 'ConfirmOutcome' &&
+    operation.remoteAttempted &&
+    !operation.readOnly
+  );
+}
 
 export function CalendarOperationStatus({
   operation,
@@ -156,14 +170,17 @@ export function CalendarOperationStatus({
             onPress={() => void retry()}
           />
         )}
-        {iosConnection && operation.recoveryMode === 'ReviewAgain' && onReviewAgain && (
-          <Button
-            label={t('m_d4ea61c79c9b')}
-            variant="secondary"
-            disabled={busy}
-            onPress={onReviewAgain}
-          />
-        )}
+        {iosConnection &&
+          onReviewAgain &&
+          (operation.recoveryMode === 'ReviewAgain' ||
+            isUnconfirmedManualCalendarSend(operation)) && (
+            <Button
+              label={t('m_d4ea61c79c9b')}
+              variant="secondary"
+              disabled={busy}
+              onPress={onReviewAgain}
+            />
+          )}
         {busy && <ActionFeedback loading message={t('m_8edf41c03d72')} />}
         {!!auth.message && (
           <ActionFeedback message={auth.message} tone={auth.tone} loading={auth.waiting} />

@@ -103,6 +103,7 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
     private struct StoredTransfer: Codable {
         let fingerprint: Data
         let requestDigest: Data
+        let superseding: UUID?
         var operation: Operation
     }
 
@@ -205,26 +206,49 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         return try commit(record, operationID: operationID, fingerprint: fingerprint, digest: digest, account: account, state: &state)
     }
 
-    func captureTransfer(_ transfer: Transfer, fingerprint: Data) throws -> Operation {
+    func pendingTransfer(occurrenceID: String, source: Source, viewingAs account: Account) throws -> Operation? {
+        guard source.belongs(to: account) else { return nil }
+        let state = try read()
+        return (state.transfers ?? [:]).values.first {
+            $0.operation.phase.pending && $0.operation.occurrenceID == occurrenceID && $0.operation.source == source
+        }?.operation
+    }
+
+    func captureTransfer(_ transfer: Transfer, fingerprint: Data, superseding: UUID? = nil) throws -> Operation {
         guard fingerprint.count == 32, Self.valid(transfer) else { throw Failure.invalidInput }
         let digest = try transferDigest(transfer)
         let id = transfer.operationID
         var state = try read()
         guard state.receipts[id] == nil else { throw Failure.operationReused }
         if let saved = state.transfers?[id] {
-            guard saved.fingerprint == fingerprint, saved.requestDigest == digest else { throw Failure.operationReused }
+            guard saved.fingerprint == fingerprint, saved.requestDigest == digest, saved.superseding == superseding else {
+                throw Failure.operationReused
+            }
             return saved.operation
         }
         let source = transfer.evidence.source
         let origin = transfer.evidence.origin
         try requireLink(transfer.occurrenceID, source: source, origin: origin, revision: transfer.linkRevision, in: state)
+        if let superseding {
+            var previous = try scopedTransfer(superseding, account: transfer.account, in: state)
+            guard previous.operation.phase == .sent, !previous.operation.erased,
+                  previous.operation.occurrenceID == transfer.occurrenceID, previous.operation.source == source,
+                  previous.operation.origin == origin, let old = previous.operation.transfer else {
+                throw Rejection.stalePreview
+            }
+            guard old.remote.etag != transfer.remote.etag else { throw Link.Failure.staleRemote }
+            // This settlement is written only when the replacement capture also succeeds.
+            settle(&previous.operation, phase: .cancelled, reason: "SUPERSEDED")
+            state.transfers?[superseding] = previous
+        }
         try requireUnreserved(transfer.occurrenceID, source: source, in: state)
         let kind = state.links[transfer.occurrenceID]?.state == .linked ? "ApplyCalendarResolution" : "EnableCalendarLink"
         let operation = Operation(operationID: id, account: transfer.account, source: source, origin: origin,
                                   occurrenceID: transfer.occurrenceID, linkRevision: transfer.linkRevision,
                                   kind: kind, calendarName: transfer.remote.calendarName, checkedAtMs: transfer.checkedAtMs,
                                   transfer: transfer)
-        return try save(StoredTransfer(fingerprint: fingerprint, requestDigest: digest, operation: operation), state: &state)
+        return try save(StoredTransfer(fingerprint: fingerprint, requestDigest: digest, superseding: superseding,
+                                      operation: operation), state: &state)
     }
 
     func transferOperation(_ id: UUID, viewingAs account: Account, fingerprint: Data? = nil) throws -> Operation? {
@@ -280,6 +304,7 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
     func beginSend(_ transfer: Transfer, after snapshot: LocalSnapshot) throws -> Writer.Permission {
         var state = try read()
         var saved = try exactTransfer(transfer, in: state)
+        if saved.operation.phase == .cancelled { return .denied(.cancelled) }
         if saved.operation.remoteAttempted { return .alreadySent }
         guard saved.operation.phase == .localApplied, !saved.operation.erased else { return .denied(.cancelled) }
         guard transfer.needsRemote, saved.operation.localAfter == snapshot else { throw Rejection.stalePreview }
@@ -555,6 +580,7 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
     private func validateTransfers(_ state: State) throws {
         var pendingOccurrences = Set<String>()
         var pendingSources = Set<Reservation>()
+        var superseded = Set<UUID>()
         let invalid = RemiloIOSGoogleCalendarStore.Failure.invalidState
         for (id, saved) in state.transfers ?? [:] {
             let operation = saved.operation
@@ -568,6 +594,13 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
                   ["EnableCalendarLink", "ApplyCalendarResolution"].contains(operation.kind),
                   Self.validLocalStatus(operation.localStatus, applied: operation.localApplied),
                   operation.reason.map(Self.validReason) ?? true else { throw invalid }
+            if let predecessor = saved.superseding {
+                guard predecessor != id, superseded.insert(predecessor).inserted,
+                      let previous = state.transfers?[predecessor]?.operation,
+                      previous.phase == .cancelled, previous.reason == "SUPERSEDED", previous.remoteAttempted,
+                      previous.occurrenceID == operation.occurrenceID, previous.source == operation.source,
+                      previous.origin == operation.origin else { throw invalid }
+            }
             if operation.linkRevision != 0 || operation.resultLinkRevision != nil {
                 guard let linked = state.links[operation.occurrenceID], linked.source == operation.source,
                       linked.origin == operation.origin, linked.revision >= operation.linkRevision else {

@@ -141,6 +141,7 @@ enum ManualLinkStoreChecks {
         let preserved = try Data(contentsOf: file)
         precondition(preserved == future)
         try transferChecks(in: path.appendingPathComponent("transfer", isDirectory: true), time: firstObserved)
+        try supersedingChecks(in: path.appendingPathComponent("superseding", isDirectory: true), time: firstObserved)
     }
 
     private static func transferChecks(in path: URL, time: Int64) throws {
@@ -230,6 +231,14 @@ enum ManualLinkStoreChecks {
         precondition(scrubbed?.transfer == nil && scrubbed?.localAfter == nil && scrubbed?.calendarName == "")
         let text = try String(contentsOf: path.appendingPathComponent("manual-links.json"), encoding: .utf8)
         precondition(!text.contains("Remilo title") && !text.contains("Another remote note"))
+        let afterPurge = try observation(evidence, title: "Fresh title", notes: "", etag: #""after-purge""#)
+        try rejects(Rejection.stalePreview) {
+            _ = try reopened.captureTransfer(
+                .init(operationID: UUID(), account: refreshed, evidence: evidence, local: nextAfter,
+                      remote: afterPurge, desired: nextDesired, linkRevision: 3, checkedAtMs: time + 1),
+                fingerprint: fingerprint, superseding: outbound.operationID
+            )
+        }
         let matching = try observation(evidence, title: nextDesired.title, notes: nextDesired.notes)
         let readBack = try reopened.confirmReadback(outbound.operationID, viewingAs: refreshed, observedRemote: matching)
         let purgedLink = try reopened.link(localID)
@@ -237,7 +246,111 @@ enum ManualLinkStoreChecks {
         precondition(purgedLink?.state == .detached && purgedLink?.baseline == nil)
     }
 
-    private static func observation(_ evidence: Store.Link.Evidence, title: String, notes: String) throws -> Store.Link.Observation {
+    private static func supersedingChecks(in path: URL, time: Int64) throws {
+        let store = Store(directory: path)
+        let owner = account("owner")
+        let refreshed = account("owner", revision: 2)
+        let foreign = account("owner", client: "other-client")
+        let source = source(owner, event: "sent-event")
+        let foreignSource = Store.Source(subject: foreign.subject, clientID: foreign.clientID, calendarID: source.calendarID,
+                                         eventID: source.eventID)
+        let evidence = Store.Link.Evidence.imported(source)
+        let remote = try observation(evidence, title: "Original remote title", notes: "Original remote notes")
+        let beforeFields = Store.Link.Event.Fields(title: "Local title", notes: "Discarded prior notes", schedule: remote.fields.schedule)
+        let chosen = Store.Link.Event.Fields(title: beforeFields.title, notes: remote.fields.notes, schedule: remote.fields.schedule)
+        let before = Store.LocalSnapshot(version: .init(occurrenceID: "sent-reminder", revision: 1, generation: 7), fields: beforeFields)
+        let after = Store.LocalSnapshot(version: .init(occurrenceID: before.version.occurrenceID, revision: 2, generation: 7), fields: chosen)
+        let old = Store.Transfer(operationID: UUID(), account: owner, evidence: evidence, local: before,
+                                 remote: remote, desired: chosen, linkRevision: 0, checkedAtMs: time)
+        let oldFingerprint = Data(repeating: 91, count: 32)
+        let fingerprint = Data(repeating: 92, count: 32)
+        let waiting = try store.captureTransfer(old, fingerprint: oldFingerprint)
+        let pending = try store.pendingTransfer(occurrenceID: old.occurrenceID, source: source, viewingAs: refreshed)
+        let hidden = try store.pendingTransfer(occurrenceID: old.occurrenceID, source: foreignSource, viewingAs: foreign)
+        precondition(pending == waiting && hidden == nil)
+
+        let fresh = try observation(evidence, title: "Fresh remote title", notes: "Fresh remote notes", etag: #""fresh""#)
+        let replacement = Store.Transfer(operationID: UUID(), account: refreshed, evidence: evidence, local: after,
+                                         remote: fresh, desired: fresh.fields, linkRevision: 0, checkedAtMs: time + 1)
+        try rejects(Rejection.stalePreview) {
+            _ = try store.captureTransfer(replacement, fingerprint: fingerprint, superseding: old.operationID)
+        }
+        _ = try store.recordLocal(old, after: after, status: "Scheduled")
+        try rejects(Rejection.stalePreview) {
+            _ = try store.captureTransfer(replacement, fingerprint: fingerprint, superseding: old.operationID)
+        }
+        guard case .granted = try store.beginSend(old, after: after) else { preconditionFailure("Original send checkpoint") }
+        let sent = try store.pendingTransfer(occurrenceID: old.occurrenceID, source: source, viewingAs: refreshed)
+        precondition(sent?.phase == .sent)
+
+        try rejects(Failure.notFound) {
+            _ = try store.captureTransfer(replacement, fingerprint: fingerprint, superseding: UUID())
+        }
+        try rejects(Store.Link.Failure.staleRemote) {
+            _ = try store.captureTransfer(
+                .init(operationID: UUID(), account: refreshed, evidence: evidence, local: after,
+                      remote: remote, desired: chosen, linkRevision: 0, checkedAtMs: time + 1),
+                fingerprint: fingerprint, superseding: old.operationID
+            )
+        }
+        let unrelated = Store.LocalSnapshot(version: .init(occurrenceID: "other-reminder", revision: 1, generation: 7), fields: chosen)
+        try rejects(Rejection.stalePreview) {
+            _ = try store.captureTransfer(
+                .init(operationID: UUID(), account: refreshed, evidence: evidence, local: unrelated,
+                      remote: fresh, desired: fresh.fields, linkRevision: 0, checkedAtMs: time + 1),
+                fingerprint: fingerprint, superseding: old.operationID
+            )
+        }
+        let foreignEvidence = Store.Link.Evidence.imported(foreignSource)
+        let foreignObservation = try observation(foreignEvidence, title: "Fresh remote title", notes: "", etag: #""fresh""#)
+        try rejects(Failure.notFound) {
+            _ = try store.captureTransfer(
+                .init(operationID: UUID(), account: foreign, evidence: foreignEvidence, local: after,
+                      remote: foreignObservation, desired: foreignObservation.fields, linkRevision: 0, checkedAtMs: time + 1),
+                fingerprint: fingerprint, superseding: old.operationID
+            )
+        }
+        let stillSent = try store.pendingTransfer(occurrenceID: old.occurrenceID, source: source, viewingAs: refreshed)
+        let absentReplacement = try store.transferOperation(replacement.operationID, viewingAs: refreshed)
+        precondition(stillSent == sent && absentReplacement == nil)
+
+        let captured = try store.captureTransfer(replacement, fingerprint: fingerprint, superseding: old.operationID)
+        let reopened = Store(directory: path)
+        let cancelled = try reopened.transferOperation(old.operationID, viewingAs: refreshed)
+        let exact = try reopened.captureTransfer(replacement, fingerprint: fingerprint, superseding: old.operationID)
+        let current = try reopened.pendingTransfer(occurrenceID: old.occurrenceID, source: source, viewingAs: refreshed)
+        precondition(exact == captured && current == captured && captured.phase == .waiting)
+        precondition(cancelled?.phase == .cancelled && cancelled?.reason == "SUPERSEDED")
+        precondition(cancelled?.localApplied == true && cancelled?.localStatus == "Scheduled" && cancelled?.remoteAttempted == true)
+        precondition(cancelled?.source == source && cancelled?.transfer == nil && cancelled?.localAfter == nil && cancelled?.readback == nil)
+        let bytes = try String(contentsOf: path.appendingPathComponent("manual-links.json"), encoding: .utf8)
+        precondition(!bytes.contains("Discarded prior notes") && !bytes.contains("Original remote title"))
+        try rejects(Failure.operationReused) {
+            _ = try reopened.captureTransfer(replacement, fingerprint: fingerprint)
+        }
+        let priorReplay = try reopened.captureTransfer(old, fingerprint: oldFingerprint)
+        precondition(priorReplay == cancelled)
+        try rejects(Rejection.stalePreview) { try reopened.requireTransferAuthority(old) }
+        guard case .denied(.cancelled) = try reopened.beginSend(old, after: after) else {
+            preconditionFailure("A superseded operation must not dispatch again")
+        }
+        let late = try observation(evidence, title: chosen.title, notes: chosen.notes, etag: #""late""#)
+        let lateConfirmation = try reopened.confirmTransfer(old, observedLocal: after, observedRemote: late,
+                                                           observedAtMs: time + 2, advanceLink: true)
+        let lateReadback = try reopened.confirmReadback(old.operationID, viewingAs: refreshed, observedRemote: late)
+        let link = try reopened.link(old.occurrenceID)
+        precondition(lateConfirmation == cancelled && lateReadback == cancelled && link == nil)
+
+        let updated = Store.LocalSnapshot(version: .init(occurrenceID: old.occurrenceID, revision: 3, generation: 7), fields: fresh.fields)
+        _ = try reopened.recordLocal(replacement, after: updated, status: "Applied")
+        let settled = try reopened.confirmTransfer(replacement, observedLocal: updated, observedRemote: fresh,
+                                                   observedAtMs: time + 3, advanceLink: true)
+        let attached = try reopened.link(old.occurrenceID)
+        precondition(settled.phase == .confirmed && attached?.baseline?.title == fresh.fields.title)
+    }
+
+    private static func observation(_ evidence: Store.Link.Evidence, title: String, notes: String, etag: String = #""reviewed""#)
+        throws -> Store.Link.Observation {
         let source = evidence.source
         let calendar = try JSONSerialization.data(withJSONObject: [
             "id": source.calendarID, "summary": "Owned", "accessRole": "owner", "timeZone": "UTC",
@@ -248,7 +361,7 @@ enum ManualLinkStoreChecks {
         ])
         return try Store.Link.Observation(
             evidence: evidence, calendar: JSONDecoder().decode(Store.Link.Transport.OwnedCalendar.self, from: calendar),
-            lookup: .found(.init(id: source.eventID, etag: #""reviewed""#, cancelled: false, json: event))
+            lookup: .found(.init(id: source.eventID, etag: etag, cancelled: false, json: event))
         )
     }
 
