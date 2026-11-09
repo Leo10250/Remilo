@@ -6,6 +6,10 @@ cursors and permissions are credential-protected and excluded from portable back
 and device-protected storage. [Product](product.md) owns local behavior and
 [architecture](architecture.md) owns the serialized native mutation boundary.
 
+The integration is available on Android. iOS Calendar operations remain internal
+while reviewed changes are connected to the native engine and verified with a
+signed app and a Google account.
+
 ## Connection, permissions and relationship types
 
 One connected Google account is supported per installation. Its stable Google

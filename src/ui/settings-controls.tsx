@@ -1,16 +1,26 @@
 import { useLocalizedState, useLocale, useTranslation } from '../localization/react';
 
 import { useTimeDisplay, useTimeFormatting } from './time-display';
-import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { useEffect, useRef, useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 import type { Atmosphere, AtmosphereSelection, Brightness } from '../domain/appearance';
 import { clockPreferenceDate, clockPreferenceFromPicker } from '../domain/clock-preferences';
 import { atmosphereNames } from '../domain/settings-presentation';
-import { ActionFeedback, Choice, Copy, Icon, RowSupport, SettingRow, Sheet } from './components';
+import {
+  ActionFeedback,
+  Button,
+  Choice,
+  Copy,
+  Icon,
+  RowSupport,
+  SettingRow,
+  Sheet,
+} from './components';
 import { atmosphereColors } from './colors';
 import { nativeAvailable } from './native';
 import { useAppearanceHold, useAtmosphere, useTheme } from './theme';
+import { space } from './tokens';
 
 export function ClockPreferenceRow({
   label,
@@ -27,8 +37,10 @@ export function ClockPreferenceRow({
   const t = useTranslation();
   const { clockPreferenceLabel } = useTimeFormatting();
   const timeDisplay = useTimeDisplay();
+  const colors = useTheme();
   const [picking, setPicking] = useState(false),
     [error, setError] = useLocalizedState('');
+  const [iosDraft, setIOSDraft] = useState<number>();
   const trigger = useRef<View>(null);
   const mounted = useRef(true),
     request = useRef(0);
@@ -40,11 +52,19 @@ export function ClockPreferenceRow({
       mounted.current = false;
     };
   }, []);
-  useAppearanceHold(picking);
+  const pickerOpen = picking || iosDraft != null;
+  const canPick = preview || Platform.OS === 'android' || Platform.OS === 'ios';
+  useAppearanceHold(pickerOpen);
+  const closeIOSPicker = () => setIOSDraft(undefined);
   const pick = () => {
-    if (disabled || picking) return;
+    if (disabled || pickerOpen) return;
     if (preview) {
       setPicking(true);
+      return;
+    }
+    if (Platform.OS === 'ios') {
+      setError('');
+      setIOSDraft(minutes);
       return;
     }
     if (Platform.OS !== 'android') return;
@@ -94,13 +114,56 @@ export function ClockPreferenceRow({
         label={label}
         value={clockPreferenceLabel(minutes)}
         buttonRef={trigger}
-        disabled={disabled || picking || (!preview && Platform.OS !== 'android')}
+        disabled={disabled || pickerOpen || !canPick}
         onPress={pick}
       />
       {!!error && (
         <RowSupport>
           <ActionFeedback message={error} tone="danger" />
         </RowSupport>
+      )}
+      {iosDraft != null && (
+        <Sheet
+          title={label}
+          visible
+          returnFocusRef={trigger}
+          onClose={closeIOSPicker}
+          footer={
+            <View style={{ padding: space.gutter, gap: space.sm }}>
+              <Button
+                label={t('m_11a6767d5674')}
+                disabled={disabled}
+                onPress={() => {
+                  closeIOSPicker();
+                  if (iosDraft !== minutes) onChange(iosDraft);
+                }}
+              />
+              <Button label={t('m_19766ed6ccb2')} variant="secondary" onPress={closeIOSPicker} />
+            </View>
+          }
+        >
+          <DateTimePicker
+            accessibilityLabel={label}
+            mode="time"
+            display="spinner"
+            themeVariant={colors.dark ? 'dark' : 'light'}
+            timeZoneName="UTC"
+            value={clockPreferenceDate(iosDraft)}
+            disabled={disabled}
+            onValueChange={({ nativeEvent }) => {
+              try {
+                const value = clockPreferenceFromPicker(
+                  nativeEvent.timestamp,
+                  nativeEvent.utcOffset,
+                );
+                setIOSDraft((current) => (current == null ? current : value));
+              } catch {
+                closeIOSPicker();
+                setError(t('m_67a437769493'));
+              }
+            }}
+          />
+        </Sheet>
       )}
       {preview && (
         <Sheet

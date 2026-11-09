@@ -199,6 +199,9 @@ feasibility. Physical acceptance uses a signed build of Remilo itself.
    alarms, then tap **Test alarm**. Test a real reminder and inspect its state
    after dismissing the alarm. Test the explicit Done and Postpone actions
    separately.
+5. Open **Settings → Tomorrow shortcuts** and edit a time. Confirm Done saves
+   the exact minute and Cancel discards the edit. Check the new time in the
+   postpone chooser with both system clock formats.
 
 [AltServer connection requirements](https://faq.altstore.io/altstore-classic/altserver)
 
@@ -237,12 +240,9 @@ the dated session in Remilo and check that stale progress stays unchanged.
 In Remilo's widget settings, create two profiles for the same routine and
 select a different profile in each widget's Edit Widget panel. Complete a step
 in one widget and verify that only that profile offers Undo. Check Undo after
-the last step and after a later completion from inside Remilo. The optional
+the last step and after a later completion from inside Remilo. Retry an
+uncertain action and verify it applies the captured step once. The optional
 Swift fixture covers interrupted commits and exact Retry.
-Create two profiles for the same routine in Remilo Settings and assign them to
-two placements in Edit Widget. Complete successive steps from the two widgets.
-Confirm each Undo targets only its profile's last valid completion. Retry an
-uncertain action with the same captured step and verify that it applies once.
 
 The host's conditional entitlement path belongs to the Xcode project
 configuration. Expo autolinking reads target-level paths as inputs to its

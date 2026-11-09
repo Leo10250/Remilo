@@ -8,7 +8,7 @@ retain history. Missing historical test paperwork is not an open defect.
 
 | ID | Status | Work |
 |---|---|---|
-| QA-IOS-SMOKE | Ready | Compile Remilo on macOS, then sign and exercise the bundled app on iPhone/iPad. Use the [iOS build and physical checks](verification.md#ios-build). |
+| QA-IOS-SMOKE | Ready | Sign and exercise the bundled app on iPhone/iPad. Verify the optional signed WidgetKit build separately. Use the [iOS build and physical checks](verification.md#ios-build). |
 
 ## Later
 
