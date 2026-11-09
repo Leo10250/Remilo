@@ -278,6 +278,16 @@ saved result.
 Reopen Remilo and verify the published status is available from saved data. If
 the initial response was interrupted after sending, reauthorize the same
 account and check that the retry recovers a single event with the original ID.
+
+On an active one-time reminder previously imported or published, open its
+Calendar review. Change the title in Remilo and the notes in Google, choose
+the Remilo title and Google notes, and confirm. Check both sides after
+confirmation. Change the Google event while a second review is open and verify
+that it requires a fresh review. On a reminder with a future postponed alert,
+choose a revised Google schedule and verify that Remilo keeps the postponed
+alert time. If a write result is interrupted, reconnect
+the same account with read access and check the result against the original
+event. Unlink and verify that the reminder and Google event remain.
 Keep the configured test IPA local.
 [AltServer connection requirements](https://faq.altstore.io/altstore-classic/altserver)
 

@@ -2549,4 +2549,12 @@ A previously sent Google update may still finish.</string>
   <string name="l10n_ios_calendar_publish_waiting_access">Cancel this request to review the event again with your current Calendar access.</string>
   <string name="l10n_ios_calendar_cancel_publication">Cancel pending publication</string>
   <string name="l10n_ios_calendar_publish_readback_access">Reconnect the original Google account to check this publication.</string>
+  <string name="l10n_ios_calendar_manual_link_detail">Remilo transfers changes between the linked reminder and event after you review and confirm them.</string>
+  <string name="l10n_ios_calendar_manual_allow_write">Allow updates in Google Calendar</string>
+  <string name="l10n_ios_calendar_manual_allow_write_detail">Your choices would change the Google event. Review and confirm again after granting access.</string>
+  <string name="l10n_ios_calendar_manual_unavailable">Linking this reminder requires an eligible Google Calendar event from this account.</string>
+  <string name="l10n_ios_calendar_manual_reconnect_check">Reconnect the original Google account to check this saved update.</string>
+  <string name="l10n_ios_calendar_manual_waiting">This request is saved. Retry to continue it.</string>
+  <string name="l10n_ios_calendar_manual_waiting_check">Check this saved request before starting a new review.</string>
+  <string name="l10n_ios_calendar_manual_ringing">Wait for the alarm to stop ringing before applying this schedule.</string>
 </resources>

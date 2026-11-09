@@ -88,3 +88,8 @@ export function useIOSCalendarPublish() {
   const { data } = useCapabilities(iosReminders);
   return iosReminders && data?.calendarOneOffPublish === true;
 }
+
+export function useIOSCalendarManualLink() {
+  const { data } = useCapabilities(iosReminders);
+  return iosReminders && data?.calendarManualLink === true;
+}

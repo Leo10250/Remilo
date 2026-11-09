@@ -68,3 +68,12 @@ export function calendarError(error: unknown): string {
   if (code.includes('ALREADY')) return t('m_afa72b693f9d');
   return t('m_e33334fb25a7');
 }
+
+export function iosManualCalendarError(error: unknown) {
+  const code =
+    typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : '';
+  if (code.includes('RINGING_DEFERRED')) return t('ios_calendar_manual_ringing');
+  if (code.includes('REMOTE_REMOVED')) return t('m_136210e056b8');
+  if (code.includes('UNSUPPORTED_CALENDAR_CHANGE')) return t('m_9fbeface7dc1');
+  return calendarError(error);
+}

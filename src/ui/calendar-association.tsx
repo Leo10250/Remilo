@@ -21,13 +21,10 @@ import { engine, iosReminders, nativeAvailable } from './native';
 import { Button, ConnectedGroup, Copy, SettingRow } from './components';
 import { useTimeFormatting } from './time-display';
 import { useCalendarPublications } from './calendar-publication';
+import { useCalendarLinks } from './calendar-links';
 
 export function useCalendarAssociation(ids: readonly string[], enabled = true) {
-  const links = useQuery({
-    queryKey: ['calendar', 'links'],
-    queryFn: () => engine().getCalendarLinks(),
-    enabled: nativeAvailable && !iosReminders && enabled,
-  });
+  const { links } = useCalendarLinks(enabled);
   const { publications } = useCalendarPublications(enabled);
   return (
     (links.data || []).some((link) => ids.includes(link.occurrenceId)) ||
@@ -79,7 +76,8 @@ export function CalendarSummaryRow({
         }
         onPress={() =>
           router.push({
-            pathname: iosReminders ? '/calendar-publish' : '/calendar-manage',
+            pathname:
+              iosReminders && !link && !jobs.length ? '/calendar-publish' : '/calendar-manage',
             params: { id: link?.occurrenceId ?? id, ...origin, originReminderId: id },
           } as Href)
         }

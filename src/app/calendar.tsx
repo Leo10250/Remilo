@@ -18,7 +18,7 @@ import {
   type OriginParams,
 } from '../domain/navigation';
 import { calendarError } from '../domain/calendar';
-import { calendarCaptureRejected } from '../domain/calendar-link';
+import { calendarCaptureRejected, isManualCalendarOperation } from '../domain/calendar-link';
 import {
   calendarAutomaticSyncPresentation,
   calendarOverviewPresentation,
@@ -45,7 +45,13 @@ import {
   useCalendarSync,
   useCalendarAction,
 } from '../ui/calendar-sync';
-import { engine, iosReminders, nativeAvailable, useIOSCalendarImport } from '../ui/native';
+import {
+  engine,
+  iosReminders,
+  nativeAvailable,
+  useIOSCalendarImport,
+  useIOSCalendarManualLink,
+} from '../ui/native';
 import { CalendarPublicationStatus, useCalendarPublications } from '../ui/calendar-publication';
 import { CalendarOperationStatus } from '../ui/calendar-linked';
 import {
@@ -70,6 +76,7 @@ function LocalCalendarSettings() {
   const origin = retainedOriginParams(useLocalSearchParams<OriginParams>());
   const confirm = useAppearanceConfirmation();
   const available = useIOSCalendarImport();
+  const manual = useIOSCalendarManualLink();
   const { available: publishing, publications } = useCalendarPublications();
   const action = useCalendarAction();
   const [busy, setBusy] = useState(false);
@@ -92,7 +99,7 @@ function LocalCalendarSettings() {
   const jobs = useQuery({
     queryKey: ['calendar', 'operations', revision],
     queryFn: () => engine().getCalendarOperations(revision!),
-    enabled: available && ready,
+    enabled: available && (ready || (manual && !!current?.connected)),
   });
   useFocusEffect(
     useCallback(() => {
@@ -177,8 +184,9 @@ function LocalCalendarSettings() {
     ready && !jobs.error
       ? (jobs.data ?? []).filter(
           (job) =>
-            job.operationId === lastRetry ||
-            ['Waiting', 'Unconfirmed', 'NeedsAccess'].includes(job.state),
+            job.kind === 'ImportCalendarEvent' &&
+            (job.operationId === lastRetry ||
+              ['Waiting', 'Unconfirmed', 'NeedsAccess'].includes(job.state)),
         )
       : [];
   return (
@@ -299,6 +307,22 @@ function LocalCalendarSettings() {
           }
         />
       ))}
+      {manual &&
+        current?.connected &&
+        !jobs.error &&
+        jobs.data
+          ?.filter(
+            (job) =>
+              isManualCalendarOperation(job) &&
+              ['Waiting', 'Sending', 'Unconfirmed', 'NeedsAccess', 'Blocked'].includes(job.state),
+          )
+          .map((job) => (
+            <CalendarOperationStatus
+              key={job.operationId}
+              operation={job}
+              iosConnection={current}
+            />
+          ))}
       {publishing &&
         current &&
         !publications.error &&

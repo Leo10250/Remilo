@@ -42,14 +42,24 @@ import {
 import { typography } from '../ui/tokens';
 import { useAppearanceConfirmation } from '../ui/confirmation';
 import { CalendarOperationStatus } from '../ui/calendar-linked';
+import { IOSCalendarManualLink } from '../ui/calendar-manual-link';
 import { CalendarPublicationStatus } from '../ui/calendar-publication';
-import { engine, nativeAvailable } from '../ui/native';
+import { engine, iosReminders, nativeAvailable } from '../ui/native';
 import { CommandRecovery, notifyTrash, useCapturedCommand } from '../ui/navigation';
 import { TrashConfirmation } from '../ui/trash-confirmation';
 import { useAppearanceHold } from '../ui/theme';
 import { useTimeFormatting } from '../ui/time-display';
 
 export default function CalendarManagement() {
+  const params = useLocalSearchParams<OriginParams & { id: string }>();
+  return iosReminders ? (
+    <IOSCalendarManualLink key={params.id} id={params.id} origin={retainedOriginParams(params)} />
+  ) : (
+    <AndroidCalendarManagement />
+  );
+}
+
+function AndroidCalendarManagement() {
   'use no memo';
   const t = useTranslation();
   const calendarAction = useCalendarAction();

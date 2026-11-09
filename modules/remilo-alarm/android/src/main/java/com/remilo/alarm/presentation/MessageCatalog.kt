@@ -2528,6 +2528,14 @@ object MessageCatalog {
     "ios_calendar_allow_publish_detail" to Entry(R.string.l10n_ios_calendar_allow_publish_detail, false, listOf(), "This permission lets Remilo add events to Google calendars you own. You’ll confirm each event before it is sent.", false),
     "ios_calendar_publish_waiting_access" to Entry(R.string.l10n_ios_calendar_publish_waiting_access, false, listOf(), "Cancel this request to review the event again with your current Calendar access.", false),
     "ios_calendar_cancel_publication" to Entry(R.string.l10n_ios_calendar_cancel_publication, false, listOf(), "Cancel pending publication", false),
-    "ios_calendar_publish_readback_access" to Entry(R.string.l10n_ios_calendar_publish_readback_access, false, listOf(), "Reconnect the original Google account to check this publication.", false)
+    "ios_calendar_publish_readback_access" to Entry(R.string.l10n_ios_calendar_publish_readback_access, false, listOf(), "Reconnect the original Google account to check this publication.", false),
+    "ios_calendar_manual_link_detail" to Entry(R.string.l10n_ios_calendar_manual_link_detail, false, listOf(), "Remilo transfers changes between the linked reminder and event after you review and confirm them.", false),
+    "ios_calendar_manual_allow_write" to Entry(R.string.l10n_ios_calendar_manual_allow_write, false, listOf(), "Allow updates in Google Calendar", false),
+    "ios_calendar_manual_allow_write_detail" to Entry(R.string.l10n_ios_calendar_manual_allow_write_detail, false, listOf(), "Your choices would change the Google event. Review and confirm again after granting access.", false),
+    "ios_calendar_manual_unavailable" to Entry(R.string.l10n_ios_calendar_manual_unavailable, false, listOf(), "Linking this reminder requires an eligible Google Calendar event from this account.", false),
+    "ios_calendar_manual_reconnect_check" to Entry(R.string.l10n_ios_calendar_manual_reconnect_check, false, listOf(), "Reconnect the original Google account to check this saved update.", false),
+    "ios_calendar_manual_waiting" to Entry(R.string.l10n_ios_calendar_manual_waiting, false, listOf(), "This request is saved. Retry to continue it.", false),
+    "ios_calendar_manual_waiting_check" to Entry(R.string.l10n_ios_calendar_manual_waiting_check, false, listOf(), "Check this saved request before starting a new review.", false),
+    "ios_calendar_manual_ringing" to Entry(R.string.l10n_ios_calendar_manual_ringing, false, listOf(), "Wait for the alarm to stop ringing before applying this schedule.", false)
   )
 }

@@ -20,6 +20,38 @@ export function resolvedCalendarFields(
 export function calendarOperationRetryable(job: CalendarLinkedOperation) {
   return !job.readOnly && ['Retry', 'ConfirmOutcome'].includes(job.recoveryMode);
 }
+
+export function isManualCalendarOperation(job: Pick<CalendarLinkedOperation, 'kind'>) {
+  return job.kind === 'EnableCalendarLink' || job.kind === 'ApplyCalendarResolution';
+}
+
+export function manualCalendarNeedsWrite(resolved: CalendarFields, google: CalendarFields) {
+  const local = resolved.schedule;
+  const remote = google.schedule;
+  return (
+    resolved.title !== google.title ||
+    resolved.notes !== google.notes ||
+    local.eventStartMs !== remote.eventStartMs ||
+    local.eventEndMs !== remote.eventEndMs ||
+    local.allDay !== remote.allDay ||
+    local.zoneId !== remote.zoneId
+  );
+}
+
+export function iosManualLinkRecovery(
+  job: Pick<CalendarLinkedOperation, 'state' | 'recoveryMode' | 'remoteAttempted' | 'readOnly'>,
+  canRead: boolean,
+) {
+  if (
+    job.recoveryMode === 'ConfirmOutcome' ||
+    (job.remoteAttempted && job.recoveryMode === 'Retry')
+  )
+    return canRead && job.state !== 'NeedsAccess' ? 'check' : 'reauthorizeCheck';
+  if (job.recoveryMode === 'Retry' && !job.readOnly)
+    return canRead && job.state !== 'NeedsAccess' ? 'retry' : 'reauthorizeCheck';
+  return null;
+}
+
 export function calendarCaptureRejected(error: unknown) {
   const code = error && typeof error === 'object' && 'code' in error ? String(error.code) : '';
   return [

@@ -66,8 +66,9 @@ import { useAppearanceConfirmation } from '../../ui/confirmation';
 import { PurgeConfirmation } from '../../ui/purge-confirmation';
 import { TrashConfirmation } from '../../ui/trash-confirmation';
 import { CalendarExceptionNotice, CalendarSummaryRow } from '../../ui/calendar-association';
+import { useCalendarLinks, useIOSCalendarLinkCandidate } from '../../ui/calendar-links';
 import { useCalendarPublications } from '../../ui/calendar-publication';
-import { calendarCaptureRejected } from '../../domain/calendar-link';
+import { calendarCaptureRejected, isManualCalendarOperation } from '../../domain/calendar-link';
 import { calendarError } from '../../domain/calendar';
 
 const activity: Record<string, string> = live(() => ({
@@ -142,16 +143,33 @@ export default function ReminderDetails() {
     colors = useTheme();
   const { available: canPublish, publications: calendar } = useCalendarPublications();
   const publication = calendar.data?.find((value) => value.occurrenceId === id);
-  const calendarLinks = useQuery({
-    queryKey: ['calendar', 'links'],
-    queryFn: () => engine().getCalendarLinks(),
-    enabled: nativeAvailable && !iosReminders,
-  });
+  const {
+    manual: iosManualLink,
+    current: calendarConnection,
+    links: calendarLinks,
+  } = useCalendarLinks();
+  const active = item && !item.deleted && !item.completed && !item.skipped;
+  const manualCandidate = useIOSCalendarLinkCandidate(
+    id,
+    calendarConnection,
+    !!active && !item?.segmentId && !item?.routine,
+  );
+  const connectionRevision = calendarConnection?.revision;
   const calendarOperations = useQuery({
-    queryKey: ['calendar', 'operations'],
-    queryFn: () => engine().getCalendarOperations(),
-    enabled: nativeAvailable && !iosReminders,
+    queryKey: iosReminders
+      ? ['calendar', 'operations', connectionRevision]
+      : ['calendar', 'operations'],
+    queryFn: () =>
+      iosReminders
+        ? engine().getCalendarOperations(connectionRevision!)
+        : engine().getCalendarOperations(),
+    enabled:
+      nativeAvailable && (!iosReminders || (iosManualLink && !!calendarConnection?.connected)),
   });
+  const calendarJobs = (calendarOperations.data ?? []).filter(
+    (operation) =>
+      operation.occurrenceId === id && (!iosReminders || isManualCalendarOperation(operation)),
+  );
   const calendarLink = calendarLinks.data?.find(
     (value) => value.occurrenceId === id || (!!item?.seriesId && value.seriesId === item.seriesId),
   );
@@ -336,14 +354,14 @@ export default function ReminderDetails() {
       'details',
     );
   };
-  const active = item && !item.deleted && !item.completed && !item.skipped;
   const unlink = async () => {
-    if (unlinkBusy || !calendarLink) return;
+    if (unlinkBusy || !calendarLink || (iosReminders && connectionRevision === undefined)) return;
     unlinkCommand.current ??= {
       kind: 'UnlinkCalendar',
       occurrenceId: calendarLink.occurrenceId,
       operationId: engine().createOperationId(),
       expectedLinkRevision: calendarLink.revision,
+      ...(iosReminders ? { expectedConnectionRevision: connectionRevision } : {}),
     };
     setUnlinkBusy(true);
     try {
@@ -587,9 +605,7 @@ export default function ReminderDetails() {
           <CalendarExceptionNotice
             item={item}
             link={calendarLink}
-            jobs={
-              calendarOperations.data?.filter((operation) => operation.occurrenceId === id) || []
-            }
+            jobs={calendarJobs}
             disabled={command.isPending || uncertain || unlinkBusy || unlinkUncertain}
             onTrash={moveToTrash}
             onManage={() =>
@@ -702,9 +718,7 @@ export default function ReminderDetails() {
             id={id}
             link={calendarLink}
             publication={publication}
-            jobs={
-              calendarOperations.data?.filter((operation) => operation.occurrenceId === id) || []
-            }
+            jobs={calendarJobs}
             origin={routeParams}
             disabled={command.isPending || uncertain || unlinkBusy || unlinkUncertain}
           />
@@ -732,6 +746,7 @@ export default function ReminderDetails() {
           active &&
           !item.segmentId &&
           !calendarLink &&
+          (!iosReminders || (!manualCandidate.eligible && !manualCandidate.loading)) &&
           (!publication || publication.state === 'Cancelled') && (
             <SettingRow
               intent="action"
@@ -747,6 +762,21 @@ export default function ReminderDetails() {
               }}
             />
           )}
+        {manualCandidate.eligible && (!calendarLink || calendarLink.state === 'Detached') && (
+          <SettingRow
+            intent="navigation"
+            icon="event"
+            label={t(calendarLink ? 'm_1b01ea836cde' : 'm_45f738fd2ff1')}
+            disabled={command.isPending || uncertain}
+            onPress={() => {
+              setMenu(false);
+              router.push({
+                pathname: '/calendar-review',
+                params: { ...routeParams, id, originReminderId: id },
+              });
+            }}
+          />
+        )}
         {calendarLink && calendarLink.state !== 'Detached' && (
           <SettingRow
             intent="action"

@@ -86,9 +86,85 @@ enum PublicationChecks {
         try await patchChecks(request: request, access: access, readOnly: readOnly, now: now)
         try await journalChecks(request: request, readOnly: readOnly, now: now)
         try await runtimeChecks(configuration: configuration, request: request, access: access, readOnly: readOnly, now: now)
+        try await manualTransferChecks(configuration: configuration, request: request, access: access, readOnly: readOnly, now: now)
         let allDay = try Event.fields(["start": ["date": "2027-03-14"], "end": ["date": "2027-03-15"]], calendarZone: zone)
         let bounds = try Publication.Bounds(allDay.fields.schedule)
         precondition(bounds.start.date == "2027-03-14" && bounds.end.date == "2027-03-15" && bounds.end.dateTime == nil)
+    }
+
+    @MainActor
+    private static func manualTransferChecks(
+        configuration: RemiloIOSGoogleCalendarConfiguration, request: Publication.Request,
+        access: RemiloIOSGoogleCalendarAccess, readOnly: RemiloIOSGoogleCalendarAccess, now: @escaping @Sendable () -> Date
+    ) async throws {
+        typealias Manual = RemiloIOSGoogleCalendarManualLinkRuntime
+        let path = FileManager.default.temporaryDirectory.appendingPathComponent("remilo-manual-transfer-\(UUID())")
+        defer { try? FileManager.default.removeItem(at: path) }
+        let fixture = Fixture(.manualTransfer, request: request)
+        try await fixture.seedManualTransfer()
+        let http = HTTP(send: { wire, _, _ in try await fixture.send(wire) })
+        let connection = Manual.Connection(configuration: configuration, store: .init(directory: path), http: http, now: now)
+        let clock: @Sendable () -> Int64 = { Int64(now().timeIntervalSince1970 * 1_000) }
+        let journal = RemiloIOSGoogleCalendarPublicationJournal(directory: path, now: clock)
+        let published = try journal.capture(request, reviewFingerprint: request.fingerprint().base64EncodedString(), calendarName: "Owned")
+        _ = try journal.record(published.identity, outcome: .confirmed(.init(eventID: request.eventID, etag: nil, htmlLink: nil, remoteDiffers: false)))
+        let publication = Manual.Publication(connection: connection, journal: journal,
+                                              local: .init(read: { _ in nil }, permit: { _, _ in .denied(.invalidInput) }),
+                                              canUseForeground: { true })
+        let localFields = Event.Fields(title: "Local title", notes: request.fields.notes, schedule: request.fields.schedule)
+        let source = Manual.Publication.LocalSnapshot(version: request.local, fields: localFields)
+        let local = RuntimeLocal(source)
+        let authority = Manual.LocalAuthority(read: { _ in local.snapshot }, permit: { snapshot, commit in
+            guard local.snapshot == snapshot else { throw Manual.Link.Failure.stalePreview }
+            let result = try commit()
+            if case .send(.granted) = result { _ = await fixture.permit() }
+            return result
+        }, receipt: { transfer in local.manualReceipts[transfer.operationID] }, apply: { transfer, authorize in
+            guard try authorize(), local.snapshot == transfer.local else { throw Manual.Link.Failure.stalePreview }
+            precondition(local.manualReceipts.isEmpty && transfer.needsLocal && transfer.needsRemote)
+            let version = Publication.Local(occurrenceID: transfer.occurrenceID, revision: transfer.local.version.revision + 1,
+                                            generation: transfer.local.version.generation)
+            let snapshot = Manual.Publication.LocalSnapshot(version: version, fields: transfer.desired)
+            local.snapshot = snapshot
+            local.manualReceipts[transfer.operationID] = .init(snapshot: snapshot, status: "Scheduled")
+            throw RemiloIOSGoogleCalendarFailure.network // Engine commit survived the interrupted response.
+        })
+        func newRuntime() -> Manual {
+            Manual(connection: connection, publication: publication, imports: .init(directory: path),
+                   store: .init(directory: path), local: authority, canUseForeground: { true }, now: clock)
+        }
+        let runtime = newRuntime()
+        let read = try await connection.connectFromUserAction(expectedRevision: 0, consent: .connectOrChangeAccount) { _, _ in readOnly }
+        let readPreview = try await runtime.preview(source.version.occurrenceID, expectedConnectionRevision: read.revision)
+        let choices: [Manual.Link.Comparison.Group: Manual.Link.Comparison.Side] = [.title: .remilo, .notes: .google]
+        do {
+            _ = try await runtime.resolve(operationID: UUID(), reviewID: readPreview.id, expectedConnectionRevision: read.revision,
+                                          choices: choices, updating: false)
+            preconditionFailure("Read-only consent cannot start a two-sided transfer")
+        } catch Manual.Failure.needsAccess {}
+        let write = try await connection.connectFromUserAction(expectedRevision: read.revision, consent: .writeOwnedEvents) { _, _ in access }
+        let review = try await runtime.preview(source.version.occurrenceID, expectedConnectionRevision: write.revision)
+        let operation = UUID()
+        do {
+            _ = try await runtime.resolve(operationID: operation, reviewID: review.id, expectedConnectionRevision: write.revision,
+                                          choices: choices, updating: false)
+            preconditionFailure("The first local response is lost")
+        } catch Manual.Failure.network {}
+        let waiting = try runtime.transferOperation(operation, expectedConnectionRevision: write.revision)
+        let unsentWrites = await fixture.writes
+        precondition(waiting?.phase == .waiting && unsentWrites == 0 && local.manualReceipts.count == 1)
+        let sent = try await newRuntime().retry(operation, expectedConnectionRevision: write.revision)
+        precondition(sent.phase == .sent && sent.localApplied && sent.remoteAttempted && sent.localStatus == "Scheduled")
+        precondition(local.snapshot?.fields.notes == "Google note")
+        let stillUnknown = try await newRuntime().retry(operation, expectedConnectionRevision: write.revision)
+        precondition(stillUnknown.phase == .sent)
+        try await fixture.completeManualTransfer()
+        let refreshed = try await connection.connectFromUserAction(expectedRevision: write.revision, consent: .reauthorizeCurrentAccount) { _, _ in readOnly }
+        let verified = try await newRuntime().retry(operation, expectedConnectionRevision: refreshed.revision)
+        let savedLinks = try runtime.links(expectedConnectionRevision: refreshed.revision)
+        let writes = await fixture.writes
+        precondition(verified.phase == .confirmed && verified.resultLinkRevision == nil && savedLinks.isEmpty && writes == 1)
+        precondition(verified.transfer == nil && local.manualReceipts.count == 1)
     }
 
     @MainActor
@@ -192,20 +268,20 @@ enum PublicationChecks {
         let stale = try await runtime.preview(occurrenceID, expectedConnectionRevision: revision)
         precondition(stale.evidence.origin == .published && stale.baseline == nil && stale.local.fields == stale.remote.fields)
         try await fixture.changeRemoteTag()
-        do {
-            _ = try await runtime.confirmAgreement(operationID: UUID(), reviewID: stale.id, expectedConnectionRevision: revision, choices: [:])
-            preconditionFailure("A changed remote ETag requires fresh review even when fields still match")
-        } catch Runtime.Link.Failure.staleRemote {}
+        let rejected = try await runtime.resolve(operationID: UUID(), reviewID: stale.id, expectedConnectionRevision: revision,
+                                                 choices: [:], updating: false)
+        precondition(rejected.phase == .failed && rejected.reason == Runtime.Link.Failure.staleRemote.rawValue)
         let review = try await runtime.preview(occurrenceID, expectedConnectionRevision: revision)
         let operation = UUID()
-        let linked = try await runtime.confirmAgreement(operationID: operation, reviewID: review.id,
-                                                        expectedConnectionRevision: revision, choices: [:])
+        let linked = try await runtime.resolve(operationID: operation, reviewID: review.id,
+                                               expectedConnectionRevision: revision, choices: [:], updating: false)
         let saved = try store.link(occurrenceID)
-        precondition(linked.state == .linked && saved?.baseline?.title == snapshot.fields.title)
+        precondition(linked.phase == .confirmed && !linked.localApplied && !linked.remoteAttempted
+                     && saved?.baseline?.title == snapshot.fields.title)
         let detached = try runtime.unlink(operationID: UUID(), occurrenceID: occurrenceID, expectedConnectionRevision: revision,
-                                          expectedLinkRevision: linked.revision)
-        let replay = try await runtime.confirmAgreement(operationID: operation, reviewID: review.id,
-                                                        expectedConnectionRevision: revision, choices: [:])
+                                          expectedLinkRevision: linked.resultLinkRevision!)
+        let replay = try await runtime.resolve(operationID: operation, reviewID: review.id,
+                                               expectedConnectionRevision: revision, choices: [:], updating: false)
         let afterReplay = try store.link(occurrenceID)
         let writes = await fixture.writes
         precondition(replay == linked && afterReplay?.revision == detached.revision && afterReplay?.state == .detached && writes == 1)
@@ -227,6 +303,7 @@ enum PublicationChecks {
     private final class RuntimeLocal {
         var snapshot: RemiloIOSGoogleCalendarPublicationRuntime.LocalSnapshot?
         var invalidateAtPermit = false
+        var manualReceipts: [UUID: RemiloIOSGoogleCalendarManualLinkRuntime.LocalResult] = [:]
 
         init(_ snapshot: RemiloIOSGoogleCalendarPublicationRuntime.LocalSnapshot) { self.snapshot = snapshot }
     }
@@ -345,6 +422,11 @@ enum PublicationChecks {
         let moved = Event.Fields(title: request.fields.title, notes: request.fields.notes, schedule: allDay)
         let schedulePatch = try Writer.Patch(operationID: UUID(), account: request.account, local: request.local, calendarID: calendar,
                                              reviewedRemote: original, calendarZone: zone, desired: moved, evidence: .published(identity))
+        let changedZone = Fixture(.changedCalendarZone, request: request)
+        let staleZone = try await writer(changedZone, now).patch(schedulePatch, access: access, phase: .notSent) { _ in
+            preconditionFailure("A changed destination zone cannot send an all-day update")
+        }
+        guard case .staleRemote = staleZone else { preconditionFailure("A calendar zone change requires a fresh comparison") }
         let scheduleFixture = Fixture(.schedulePatch, request: request)
         let scheduleResult = try await writer(scheduleFixture, now).patch(schedulePatch, access: access, phase: .notSent) { _ in
             await scheduleFixture.permit()
@@ -371,12 +453,14 @@ enum PublicationChecks {
 
     private actor Fixture {
         enum Scenario: Equatable {
-            case duplicate, uncertainButCreated, missing, existingEdited, foreign, removed, stalePatch, uncertainPatch, schedulePatch
+            case duplicate, uncertainButCreated, missing, existingEdited, foreign, removed, stalePatch, uncertainPatch
+            case schedulePatch, changedCalendarZone, manualTransfer
         }
         private let scenario: Scenario
         private let request: Publication.Request
         private var sent = false
         private var result: Data?
+        private var pendingManualResult: Data?
         private(set) var writes = 0
 
         init(_ scenario: Scenario, request: Publication.Request) {
@@ -401,11 +485,25 @@ enum PublicationChecks {
             result = try JSONSerialization.data(withJSONObject: event)
         }
 
+        func seedManualTransfer() throws {
+            let event = try Self.remote(request: request, edited: false)
+            var fields = try JSONSerialization.jsonObject(with: event.json) as! [String: Any]
+            fields["description"] = "Google note"
+            result = try JSONSerialization.data(withJSONObject: fields)
+        }
+
+        func completeManualTransfer() throws {
+            guard let pendingManualResult else { preconditionFailure("Manual write has not been attempted") }
+            result = pendingManualResult
+        }
+
         func send(_ wire: URLRequest) throws -> HTTP.Response {
             let url = wire.url!
             precondition(url.absoluteString.contains("owned%2Fid%40example.test"))
             if url.path.contains("/calendarList/") {
-                return HTTP.Response(status: 200, body: Data(#"{"id":"owned/id@example.test","accessRole":"owner","timeZone":"America/Los_Angeles"}"#.utf8))
+                let zone = scenario == .changedCalendarZone ? "America/New_York" : PublicationChecks.zone
+                let calendar = ["id": PublicationChecks.calendar, "accessRole": "owner", "timeZone": zone]
+                return HTTP.Response(status: 200, body: try JSONSerialization.data(withJSONObject: calendar))
             }
             if wire.httpMethod == nil || wire.httpMethod == "GET" {
                 precondition(url.path.hasSuffix(request.eventID))
@@ -426,6 +524,14 @@ enum PublicationChecks {
             let body = try JSONSerialization.jsonObject(with: wire.httpBody!) as! [String: Any]
             if wire.httpMethod == "PATCH" {
                 precondition(wire.value(forHTTPHeaderField: "If-Match") == #""before""#)
+                if scenario == .manualTransfer {
+                    precondition(Set(body.keys) == ["summary"] && body["summary"] as? String == "Local title")
+                    var pending = try JSONSerialization.jsonObject(with: result!) as! [String: Any]
+                    pending["summary"] = "Local title"
+                    pending["etag"] = #""after""#
+                    pendingManualResult = try JSONSerialization.data(withJSONObject: pending)
+                    return HTTP.Response(status: 503, body: Data())
+                }
                 if scenario == .schedulePatch {
                     precondition(Set(body.keys) == Set(["start", "end"]))
                     for (key, date) in [("start", "2027-03-16"), ("end", "2027-03-17")] {

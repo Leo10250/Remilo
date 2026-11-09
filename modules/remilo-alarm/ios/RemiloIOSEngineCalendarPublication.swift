@@ -87,6 +87,9 @@ extension RemiloIOSGoogleCalendarPublicationRuntime.LocalAuthority {
 }
 
 extension RemiloIOSGoogleCalendarManualLinkRuntime.LocalAuthority {
+    private typealias Manual = RemiloIOSGoogleCalendarManualLink
+    private typealias Runtime = RemiloIOSGoogleCalendarManualLinkRuntime
+
     @MainActor
     static func localEngine(_ engine: RemiloIOSEngine) -> Self {
         Self(read: { id in
@@ -98,7 +101,45 @@ extension RemiloIOSGoogleCalendarManualLinkRuntime.LocalAuthority {
             } catch IOSCalendarOneTimeSnapshot.Failure.stalePreview {
                 throw RemiloIOSGoogleCalendarManualLink.Failure.stalePreview
             }
+        }, timing: { snapshot, fields in
+            do {
+                let timing = try engine.previewCalendarInbound(for: .init(calendar: snapshot), change: change(fields))
+                return .init(mode: timing.mode, dueAtMs: timing.dueAtMs, alarmAtMs: timing.alarmAtMs, retainedAlertMs: timing.retainedAlertMs)
+            } catch let failure as IOSInputFailure { throw Manual.LocalFailure(code: failure.code) }
+        }, receipt: { transfer in
+            let response = try engine.calendarInboundReceipt(operationID: transfer.operationID, for: .init(calendar: transfer.local),
+                                                            change: change(transfer.desired))
+            return try response.map { try localResult($0, occurrenceID: transfer.occurrenceID) }
+        }, apply: { transfer, authorize in
+            do {
+                let result = try await engine.applyCalendarInbound(operationID: transfer.operationID, for: .init(calendar: transfer.local),
+                                                                   change: change(transfer.desired), authorize: authorize)
+                return try localResult(result, occurrenceID: transfer.occurrenceID)
+            } catch let failure as IOSInputFailure { throw Manual.LocalFailure(code: failure.code) }
         })
+    }
+
+    private static func change(_ fields: Manual.Event.Fields) -> IOSCalendarInboundChange {
+        let schedule = fields.schedule
+        return .init(title: fields.title, notes: fields.notes,
+                     schedule: .init(eventStartMs: schedule.eventStartMs, eventEndMs: schedule.eventEndMs,
+                                     allDay: schedule.allDay, zoneID: schedule.zoneId))
+    }
+
+    private static func localResult(_ output: [String: Any], occurrenceID: String) throws -> Runtime.LocalResult {
+        guard output["occurrenceId"] as? String == occurrenceID,
+              let occurrence = output["occurrence"] as? [String: Any],
+              let status = occurrence["deliveryState"] as? String,
+              let revision = occurrence["revision"] as? Int, let generation = occurrence["generation"] as? Int,
+              let title = occurrence["title"] as? String, let notes = occurrence["notes"] as? String,
+              let start = occurrence["eventStartMs"] as? Int64, let end = occurrence["eventEndMs"] as? Int64,
+              let allDay = occurrence["allDay"] as? Bool, let zone = occurrence["zoneId"] as? String else {
+            throw Manual.Failure.ineligible
+        }
+        let snapshot = IOSCalendarOneTimeSnapshot(occurrenceID: occurrenceID, revision: revision, generation: generation,
+                                                   title: title, notes: notes, eventStartMs: start, eventEndMs: end,
+                                                   allDay: allDay, zoneID: zone).calendarSnapshot
+        return .init(snapshot: snapshot, status: ["Scheduled", "Blocked", "Pending"].contains(status) ? status : "Applied")
     }
 }
 #endif

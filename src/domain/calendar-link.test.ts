@@ -3,6 +3,8 @@ import { readFileSync } from 'node:fs';
 import {
   calendarCaptureRejected,
   calendarOperationRetryable,
+  iosManualLinkRecovery,
+  manualCalendarNeedsWrite,
   resolvedCalendarFields,
 } from './calendar-link';
 import { previewCalendar } from '../../verification/ui/preview-calendar';
@@ -18,6 +20,41 @@ const fields: CalendarFields = {
   schedule: { eventStartMs: 1000, eventEndMs: 2000, allDay: false, zoneId: 'UTC' },
 };
 describe('Calendar linked review', () => {
+  it('requires a write grant only for choices that change the exact Google event', () => {
+    expect(manualCalendarNeedsWrite(fields, { ...fields, schedule: { ...fields.schedule } })).toBe(
+      false,
+    );
+    expect(manualCalendarNeedsWrite({ ...fields, notes: 'Reviewed notes' }, fields)).toBe(true);
+    expect(
+      manualCalendarNeedsWrite(
+        { ...fields, schedule: { ...fields.schedule, zoneId: 'Asia/Tokyo' } },
+        fields,
+      ),
+    ).toBe(true);
+  });
+
+  it('keeps readback distinct from retrying an authorized unsent iOS link update', () => {
+    const waiting = {
+      state: 'Waiting',
+      recoveryMode: 'Retry',
+      readOnly: false,
+      remoteAttempted: false,
+    } as const;
+    expect(iosManualLinkRecovery(waiting, true)).toBe('retry');
+    expect(iosManualLinkRecovery(waiting, false)).toBe('reauthorizeCheck');
+    expect(iosManualLinkRecovery({ ...waiting, recoveryMode: 'ConfirmOutcome' }, true)).toBe(
+      'check',
+    );
+    const sent = {
+      ...waiting,
+      state: 'NeedsAccess',
+      recoveryMode: 'ConfirmOutcome',
+      remoteAttempted: true,
+      readOnly: true,
+    } as const;
+    expect(iosManualLinkRecovery(sent, false)).toBe('reauthorizeCheck');
+    expect(iosManualLinkRecovery({ ...sent, state: 'Unconfirmed' }, true)).toBe('check');
+  });
   it('requires a choice for every conflict and keeps schedule as one unit', () => {
     const remote = {
       ...fields,

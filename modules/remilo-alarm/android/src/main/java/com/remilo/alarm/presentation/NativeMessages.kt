@@ -2465,4 +2465,12 @@ object NativeMessages {
   fun ios_calendar_publish_waiting_access(): L10n.Message = L10n.Message("ios_calendar_publish_waiting_access")
   fun ios_calendar_cancel_publication(): L10n.Message = L10n.Message("ios_calendar_cancel_publication")
   fun ios_calendar_publish_readback_access(): L10n.Message = L10n.Message("ios_calendar_publish_readback_access")
+  fun ios_calendar_manual_link_detail(): L10n.Message = L10n.Message("ios_calendar_manual_link_detail")
+  fun ios_calendar_manual_allow_write(): L10n.Message = L10n.Message("ios_calendar_manual_allow_write")
+  fun ios_calendar_manual_allow_write_detail(): L10n.Message = L10n.Message("ios_calendar_manual_allow_write_detail")
+  fun ios_calendar_manual_unavailable(): L10n.Message = L10n.Message("ios_calendar_manual_unavailable")
+  fun ios_calendar_manual_reconnect_check(): L10n.Message = L10n.Message("ios_calendar_manual_reconnect_check")
+  fun ios_calendar_manual_waiting(): L10n.Message = L10n.Message("ios_calendar_manual_waiting")
+  fun ios_calendar_manual_waiting_check(): L10n.Message = L10n.Message("ios_calendar_manual_waiting_check")
+  fun ios_calendar_manual_ringing(): L10n.Message = L10n.Message("ios_calendar_manual_ringing")
 }

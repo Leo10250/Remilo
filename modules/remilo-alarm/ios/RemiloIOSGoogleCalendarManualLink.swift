@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 
 enum RemiloIOSGoogleCalendarManualLink {
@@ -28,7 +29,7 @@ enum RemiloIOSGoogleCalendarManualLink {
         }
     }
 
-    enum Evidence: Equatable, Sendable {
+    enum Evidence: Codable, Equatable, Sendable {
         case published(Publication.ReadbackIdentity)
         case imported(Source)
 
@@ -58,10 +59,11 @@ enum RemiloIOSGoogleCalendarManualLink {
         }
     }
 
-    struct Observation: Equatable, Sendable {
+    struct Observation: Codable, Equatable, Sendable {
         let source: Source
         let etag: String
         let calendarName: String
+        let calendarZone: String
         let fields: Event.Fields
 
         init(evidence: Evidence, calendar: Transport.OwnedCalendar, lookup: Transport.EventLookup) throws {
@@ -81,7 +83,55 @@ enum RemiloIOSGoogleCalendarManualLink {
             self.source = source
             self.etag = etag
             self.calendarName = try RemiloIOSCalendarOwnedRecord(calendar).name
+            self.calendarZone = calendar.timeZone ?? ""
             self.fields = fields
+        }
+
+        func matches(_ observed: Observation) -> Bool {
+            source == observed.source && etag == observed.etag && fields == observed.fields && calendarZone == observed.calendarZone
+        }
+    }
+
+    struct Timing: Equatable, Sendable {
+        let mode: String
+        let dueAtMs: Int64
+        let alarmAtMs: Int64
+        let retainedAlertMs: Int64?
+    }
+
+    struct LocalFailure: Error {
+        let code: String
+    }
+
+    struct Readback: Codable, Equatable, Sendable {
+        let evidence: Evidence
+        let desiredDigest: Data
+
+        func matches(_ fields: Event.Fields) throws -> Bool { try Self.digest(fields) == desiredDigest }
+
+        fileprivate static func digest(_ fields: Event.Fields) throws -> Data {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .sortedKeys
+            return Data(SHA256.hash(data: try encoder.encode(fields)))
+        }
+    }
+
+    struct Transfer: Codable, Equatable, Sendable {
+        let operationID: UUID
+        let account: Publication.Account
+        let evidence: Evidence
+        let local: RemiloIOSGoogleCalendarPublicationRuntime.LocalSnapshot
+        let remote: Observation
+        let desired: Event.Fields
+        let linkRevision: Int
+        let checkedAtMs: Int64
+
+        var occurrenceID: String { local.version.occurrenceID }
+        var needsLocal: Bool { local.fields != desired }
+        var needsRemote: Bool { remote.fields != desired }
+
+        func readback() throws -> Readback {
+            Readback(evidence: evidence, desiredDigest: try Readback.digest(desired))
         }
     }
 
@@ -94,6 +144,9 @@ enum RemiloIOSGoogleCalendarManualLink {
         let linkRevision: Int?
         let baseline: Comparison.Baseline?
         let checkedAtMs: Int64
+        var remiloTiming: Timing? = nil
+        var googleTiming: Timing? = nil
+        var manualScheduleBlocked: String? = nil
 
         func valid(at time: Int64) -> Bool {
             time >= checkedAtMs && time - checkedAtMs <= 600_000
@@ -118,7 +171,7 @@ enum RemiloIOSGoogleCalendarManualLink {
         /// A no-transfer confirmation can establish a common baseline only for
         /// the exact fields observed equal in both copies.
         func commonBaseline(after observation: Observation) throws -> Comparison.Baseline {
-            guard observation.source == remote.source, observation.etag == remote.etag, observation.fields == remote.fields else {
+            guard remote.matches(observation) else {
                 throw Failure.staleRemote
             }
             guard local.fields == observation.fields else { throw Failure.resolutionRequired }

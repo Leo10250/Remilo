@@ -2540,7 +2540,15 @@ export const catalogs = {
     "ios_calendar_allow_publish_detail": "This permission lets Remilo add events to Google calendars you own. You’ll confirm each event before it is sent.",
     "ios_calendar_publish_waiting_access": "Cancel this request to review the event again with your current Calendar access.",
     "ios_calendar_cancel_publication": "Cancel pending publication",
-    "ios_calendar_publish_readback_access": "Reconnect the original Google account to check this publication."
+    "ios_calendar_publish_readback_access": "Reconnect the original Google account to check this publication.",
+    "ios_calendar_manual_link_detail": "Remilo transfers changes between the linked reminder and event after you review and confirm them.",
+    "ios_calendar_manual_allow_write": "Allow updates in Google Calendar",
+    "ios_calendar_manual_allow_write_detail": "Your choices would change the Google event. Review and confirm again after granting access.",
+    "ios_calendar_manual_unavailable": "Linking this reminder requires an eligible Google Calendar event from this account.",
+    "ios_calendar_manual_reconnect_check": "Reconnect the original Google account to check this saved update.",
+    "ios_calendar_manual_waiting": "This request is saved. Retry to continue it.",
+    "ios_calendar_manual_waiting_check": "Check this saved request before starting a new review.",
+    "ios_calendar_manual_ringing": "Wait for the alarm to stop ringing before applying this schedule."
   },
   "zh-Hans": {
     "ui_your_routines": "你的日常计划",
@@ -5056,7 +5064,15 @@ export const catalogs = {
     "ios_calendar_allow_publish_detail": "此权限允许 Remilo 向你拥有的 Google 日历添加日程。每次添加前仍需你确认。",
     "ios_calendar_publish_waiting_access": "请取消此次添加请求，再使用当前日历权限重新核对日程。",
     "ios_calendar_cancel_publication": "取消此次添加请求",
-    "ios_calendar_publish_readback_access": "请重新连接原 Google 账号，查看此次添加结果。"
+    "ios_calendar_publish_readback_access": "请重新连接原 Google 账号，查看此次添加结果。",
+    "ios_calendar_manual_link_detail": "你核对并确认后，Remilo 才会将所选更改应用到关联的日程或提醒。",
+    "ios_calendar_manual_allow_write": "允许更新 Google 日历中的日程",
+    "ios_calendar_manual_allow_write_detail": "所选内容会更改 Google 日历中的日程。授予权限后，请重新核对并确认。",
+    "ios_calendar_manual_unavailable": "要关联此提醒，当前 Google 账号中必须有符合条件的日程。",
+    "ios_calendar_manual_reconnect_check": "请重新连接原 Google 账号，查看此更新的结果。",
+    "ios_calendar_manual_waiting": "此更新请求已保存。请重试以继续处理。",
+    "ios_calendar_manual_waiting_check": "请先检查已保存的请求，再重新核对更改。",
+    "ios_calendar_manual_ringing": "请等闹钟停止响铃后再应用此日程安排。"
   }
 } as const;
 export type MessageKey = keyof typeof catalogs.en;
@@ -7523,4 +7539,12 @@ export interface MessageArguments {
   ios_calendar_publish_waiting_access: Record<string, never>;
   ios_calendar_cancel_publication: Record<string, never>;
   ios_calendar_publish_readback_access: Record<string, never>;
+  ios_calendar_manual_link_detail: Record<string, never>;
+  ios_calendar_manual_allow_write: Record<string, never>;
+  ios_calendar_manual_allow_write_detail: Record<string, never>;
+  ios_calendar_manual_unavailable: Record<string, never>;
+  ios_calendar_manual_reconnect_check: Record<string, never>;
+  ios_calendar_manual_waiting: Record<string, never>;
+  ios_calendar_manual_waiting_check: Record<string, never>;
+  ios_calendar_manual_ringing: Record<string, never>;
 }

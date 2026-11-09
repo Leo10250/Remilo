@@ -329,6 +329,12 @@ final class RemiloIOSGoogleCalendarConnection {
         guard live.access.supports(.writeOwnedEvents, now: now()) else { throw Failure.needsAccess }
     }
 
+    func requireManualLinkWrite(account: Import.Account) throws {
+        let live = try requireAccess(account.connectionRevision)
+        guard live.fence.importAccount == account else { throw Failure.staleConnection }
+        guard live.access.supports(.writeOwnedEvents, now: now()) else { throw Failure.needsAccess }
+    }
+
     /// A current read grant for the captured subject and OAuth client may
     /// inspect the original event after reauthorization. The send permit
     /// separately requires the exact capture epoch, destination and write grant.

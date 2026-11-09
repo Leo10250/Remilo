@@ -34,7 +34,9 @@ struct RemiloIOSGoogleCalendarTransport: Sendable {
         /// Bounded provider data for native inspection, before an allowlisted cache projection.
         let json: Data
 
-        var strongETag: String? {
+        var strongETag: String? { Self.validatedStrongETag(etag) }
+
+        static func validatedStrongETag(_ etag: String?) -> String? {
             guard let etag, (2...512).contains(etag.utf8.count), etag.first == "\"", etag.last == "\"",
                   etag.utf8.dropFirst().dropLast().allSatisfy({ $0 == 33 || (35...126).contains($0) }) else { return nil }
             return etag

@@ -16,6 +16,14 @@ One-time publication uses a separately granted write scope and an explicitly
 selected owned destination. Remilo confirms the exact local reminder and
 connection before sending. Recovery after a sent request reads the original
 Google event identity.
+
+An eligible one-time reminder imported from or published to Google can keep
+an explicit manual link. Review shows both sides and lets the user select
+the title, notes and schedule independently. Remilo saves the chosen local
+changes first, uses the reviewed Google event version for any authorized
+update, and records a new baseline after both sides agree. After a send,
+recovery checks the original event without repeating the write. Unlinking
+ends the relationship and leaves the reminder and Google event in place.
 [The signed iOS test workflow](verification.md#google-calendar-on-a-sideloaded-iphone-or-ipad)
 covers setup and device checks.
 [Google Calendar authorization scopes](https://developers.google.com/workspace/calendar/api/auth)

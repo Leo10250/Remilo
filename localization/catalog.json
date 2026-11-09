@@ -17082,6 +17082,62 @@
       "args": {},
       "context": "Recovery guidance for an already submitted request. Reconnection permits a read-only result check.",
       "calendarStatus": false
+    },
+    "ios_calendar_manual_link_detail": {
+      "en": "Remilo transfers changes between the linked reminder and event after you review and confirm them.",
+      "zh-Hans": "你核对并确认后，Remilo 才会将所选更改应用到关联的日程或提醒。",
+      "args": {},
+      "context": "iOS manual Calendar review and status. A link requires explicit confirmation for each update.",
+      "calendarStatus": false
+    },
+    "ios_calendar_manual_allow_write": {
+      "en": "Allow updates in Google Calendar",
+      "zh-Hans": "允许更新 Google 日历中的日程",
+      "args": {},
+      "context": "Button and accessibility label opening Google write consent before a later confirmed manual update.",
+      "calendarStatus": false
+    },
+    "ios_calendar_manual_allow_write_detail": {
+      "en": "Your choices would change the Google event. Review and confirm again after granting access.",
+      "zh-Hans": "所选内容会更改 Google 日历中的日程。授予权限后，请重新核对并确认。",
+      "args": {},
+      "context": "The selected field values require a Google write grant. Granting access does not apply the update.",
+      "calendarStatus": false
+    },
+    "ios_calendar_manual_unavailable": {
+      "en": "Linking this reminder requires an eligible Google Calendar event from this account.",
+      "zh-Hans": "要关联此提醒，当前 Google 账号中必须有符合条件的日程。",
+      "args": {},
+      "context": "Manual link review when this active source and account could not be resolved.",
+      "calendarStatus": false
+    },
+    "ios_calendar_manual_reconnect_check": {
+      "en": "Reconnect the original Google account to check this saved update.",
+      "zh-Hans": "请重新连接原 Google 账号，查看此更新的结果。",
+      "args": {},
+      "context": "Same-account read reauthorization for a previously saved manual Calendar operation.",
+      "calendarStatus": false
+    },
+    "ios_calendar_manual_waiting": {
+      "en": "This request is saved. Retry to continue it.",
+      "zh-Hans": "此更新请求已保存。请重试以继续处理。",
+      "args": {},
+      "context": "An unsent manual Calendar request can resume under its original reviewed permission.",
+      "calendarStatus": false
+    },
+    "ios_calendar_manual_waiting_check": {
+      "en": "Check this saved request before starting a new review.",
+      "zh-Hans": "请先检查已保存的请求，再重新核对更改。",
+      "args": {},
+      "context": "A stale saved manual Calendar request must be settled before a replacement review.",
+      "calendarStatus": false
+    },
+    "ios_calendar_manual_ringing": {
+      "en": "Wait for the alarm to stop ringing before applying this schedule.",
+      "zh-Hans": "请等闹钟停止响铃后再应用此日程安排。",
+      "args": {},
+      "context": "The Google schedule choice would change a reminder while its local alarm is ringing.",
+      "calendarStatus": false
     }
   }
 }

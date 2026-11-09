@@ -2521,4 +2521,12 @@
   <string name="l10n_ios_calendar_publish_waiting_access">请取消此次添加请求，再使用当前日历权限重新核对日程。</string>
   <string name="l10n_ios_calendar_cancel_publication">取消此次添加请求</string>
   <string name="l10n_ios_calendar_publish_readback_access">请重新连接原 Google 账号，查看此次添加结果。</string>
+  <string name="l10n_ios_calendar_manual_link_detail">你核对并确认后，Remilo 才会将所选更改应用到关联的日程或提醒。</string>
+  <string name="l10n_ios_calendar_manual_allow_write">允许更新 Google 日历中的日程</string>
+  <string name="l10n_ios_calendar_manual_allow_write_detail">所选内容会更改 Google 日历中的日程。授予权限后，请重新核对并确认。</string>
+  <string name="l10n_ios_calendar_manual_unavailable">要关联此提醒，当前 Google 账号中必须有符合条件的日程。</string>
+  <string name="l10n_ios_calendar_manual_reconnect_check">请重新连接原 Google 账号，查看此更新的结果。</string>
+  <string name="l10n_ios_calendar_manual_waiting">此更新请求已保存。请重试以继续处理。</string>
+  <string name="l10n_ios_calendar_manual_waiting_check">请先检查已保存的请求，再重新核对更改。</string>
+  <string name="l10n_ios_calendar_manual_ringing">请等闹钟停止响铃后再应用此日程安排。</string>
 </resources>

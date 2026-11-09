@@ -8,7 +8,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import type {
   CalendarCommand,
-  CalendarFields,
   CalendarImportChoices,
   CalendarLinkPreview,
   CalendarLinkedOperation,
@@ -39,6 +38,8 @@ import {
 } from '../ui/components';
 import { useCalendarAction } from '../ui/calendar-sync';
 import { CalendarOperationStatus } from '../ui/calendar-linked';
+import { IOSCalendarManualLink } from '../ui/calendar-manual-link';
+import { CalendarResolutionFields, useCalendarFieldText } from '../ui/calendar-resolution-fields';
 import {
   calendarAuthorizationError,
   calendarConnectionNeedsRefresh,
@@ -69,6 +70,23 @@ type CalendarReviewParams = OriginParams & {
 
 export default function CalendarReviewRoute() {
   const params = useLocalSearchParams<CalendarReviewParams>();
+  if (
+    iosReminders &&
+    params.id &&
+    !params.calendarId &&
+    !params.eventId &&
+    !params.candidateId &&
+    !params.automatic &&
+    !params.managedHistory
+  )
+    return (
+      <IOSCalendarManualLink
+        key={params.id}
+        id={params.id}
+        origin={retainedOriginParams(params)}
+        review
+      />
+    );
   const sourceKey = iosReminders
     ? JSON.stringify([params.expectedConnectionRevision, params.calendarId, params.eventId])
     : 'calendar-review';
@@ -85,7 +103,8 @@ function CalendarReview({ params }: { params: CalendarReviewParams }) {
   const imported = iosReminders || !params.id,
     client = useQueryClient(),
     confirm = useAppearanceConfirmation();
-  const { scheduleDateTime, formatDate } = useTimeFormatting();
+  const { scheduleDateTime } = useTimeFormatting();
+  const fieldText = useCalendarFieldText();
   const [savedPreview, setPreview] = useState<CalendarLinkPreview | null>(null),
     [choices, setChoices] = useState<CalendarImportChoices>(
       !iosReminders && params.managedHistory === 'true' ? { mode: 'None' } : {},
@@ -458,23 +477,7 @@ function CalendarReview({ params }: { params: CalendarReviewParams }) {
     !!timing &&
     timing.mode !== 'None' &&
     timing.alarmAtMs <= now &&
-    timing.alarmAtMs !== preview?.timings?.remilo.alarmAtMs;
-  const fieldText = (field: keyof CalendarFields, fields: Partial<CalendarFields>) => {
-    if (fields[field] === undefined) return t('m_31893018064e');
-    if (field !== 'schedule')
-      return fields[field] || (field === 'notes' ? t('m_efe1cde67784') : t('m_4850b174b713'));
-    const schedule = fields.schedule!;
-    return (
-      (schedule.allDay
-        ? formatDate(schedule.eventStartMs, schedule.zoneId) + t('m_b3d544d5d55c')
-        : scheduleDateTime(schedule.eventStartMs, schedule.zoneId) +
-          ' – ' +
-          scheduleDateTime(schedule.eventEndMs, schedule.zoneId)) +
-      ' · ' +
-      schedule.zoneId +
-      (schedule.recurrence ? t('m_9e79a8b1aee5') : '')
-    );
-  };
+    timing.alarmAtMs !== preview?.timings?.remilo?.alarmAtMs;
   const recurring = !!preview?.recurrence;
   const syncSelected =
     !iosReminders &&
@@ -768,85 +771,13 @@ function CalendarReview({ params }: { params: CalendarReviewParams }) {
               {dirty && <ActionFeedback message={t('m_eba734df0aa9')} tone="warning" />}
             </>
           ) : (
-            preview.local && (
-              <>
-                {(['title', 'notes', 'schedule'] as const).map((field) => (
-                  <ConnectedGroup
-                    key={field}
-                    title={
-                      field === 'title'
-                        ? t('m_7e8cd2056da7')
-                        : field === 'notes'
-                          ? t('m_8a7525b1492f')
-                          : t('m_f4830a1dae29')
-                    }
-                  >
-                    <View key="choices" style={{ padding: 16, gap: 8 }}>
-                      {preview.baseline && (
-                        <View style={{ gap: 4 }}>
-                          <Copy muted size={14}>
-                            {t('ui_calendar_last_confirmed')}
-                          </Copy>
-                          <Copy>{fieldText(field, preview.baseline)}</Copy>
-                        </View>
-                      )}
-                      <Choice
-                        label={t('m_ab4821c44cdf')}
-                        description={fieldText(field, preview.local!)}
-                        selected={selections[field] === 'remilo'}
-                        disabled={busy || uncertain}
-                        onPress={() => setSelections((old) => ({ ...old, [field]: 'remilo' }))}
-                      />
-                      <Choice
-                        label={t('m_c017c30b1471')}
-                        description={fieldText(field, preview.remote)}
-                        selected={selections[field] === 'google'}
-                        disabled={busy || uncertain}
-                        onPress={() => setSelections((old) => ({ ...old, [field]: 'google' }))}
-                      />
-                      {!selections[field] && <Copy muted>{t('m_52f9493747f8')}</Copy>}
-                    </View>
-                  </ConnectedGroup>
-                ))}
-                {resolved && (
-                  <ConnectedGroup title={t('m_3b8981de73a5')}>
-                    <View key="resolution" style={{ padding: 16, gap: 12 }}>
-                      <Copy heading>{resolved.title}</Copy>
-                      <Copy>{resolved.notes || t('m_efe1cde67784')}</Copy>
-                      <Copy>{fieldText('schedule', resolved)}</Copy>
-                      {timing && (
-                        <>
-                          <ReadOnlyRow
-                            label={t('m_9071738f1459')}
-                            value={scheduleDateTime(timing.dueAtMs, resolved.schedule.zoneId)}
-                          />
-                          {timing.mode === 'None' ? (
-                            <Copy>{modeLabel('None')}</Copy>
-                          ) : (
-                            <ReadOnlyRow
-                              label={modeLabel(
-                                timing.mode === 'Notification' ? 'Notification' : 'Alarm',
-                              )}
-                              value={scheduleDateTime(timing.alarmAtMs, resolved.schedule.zoneId)}
-                            />
-                          )}
-                        </>
-                      )}
-                    </View>
-                  </ConnectedGroup>
-                )}
-                <Copy muted>{t('m_32af1909c259')}</Copy>
-                {elapsedChange && <ActionFeedback tone="warning" message={t('m_8d7bb691765b')} />}
-                {preview.nextAlertMs !== null && (
-                  <Copy>
-                    {t('ui_calendar_retained_alert_time', {
-                      time: scheduleDateTime(preview.nextAlertMs),
-                    })}
-                  </Copy>
-                )}
-                <Copy muted>{t('m_b2ab1c6e45a0')}</Copy>
-              </>
-            )
+            <CalendarResolutionFields
+              preview={preview}
+              selections={selections}
+              disabled={busy || uncertain}
+              blockedMessage={elapsedChange ? t('m_8d7bb691765b') : undefined}
+              onSelect={(field, side) => setSelections((old) => ({ ...old, [field]: side }))}
+            />
           )}
           {!busy && !uncertain && (
             <Button label={t('m_962d33506a8f')} variant="secondary" onPress={() => void load()} />

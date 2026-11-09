@@ -22,22 +22,45 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
         fileprivate let payload: PatchPayload
         private let evidence: RemiloIOSGoogleCalendarManualLink.Evidence?
         private let schedule: Event.Schedule?
-        private let calendarZone: String
+        fileprivate let calendarZone: String
 
         init(operationID: UUID, account: Publication.Account, local: Publication.Local, calendarID: String,
              reviewedRemote: Transport.Event, calendarZone: String, desired: Event.Fields,
              suppressGoogleReminders: Bool = false, evidence: RemiloIOSGoogleCalendarManualLink.Evidence? = nil) throws {
             guard let etag = reviewedRemote.strongETag, !reviewedRemote.cancelled,
-                  let object = RemiloIOSGoogleCalendarWriteTransport.object(reviewedRemote.json),
+                  let object = RemiloIOSGoogleCalendarWriteTransport.object(reviewedRemote.json) else { throw Failure.invalidInput }
+            if let evidence, !evidence.identifies(reviewedRemote) { throw Failure.invalidInput }
+            let before = try Event.fields(object, calendarZone: calendarZone).fields
+            try self.init(operationID: operationID, account: account, local: local, calendarID: calendarID,
+                          eventID: reviewedRemote.id, etag: etag, before: before, calendarZone: calendarZone,
+                          desired: desired, suppressGoogleReminders: suppressGoogleReminders, evidence: evidence)
+        }
+
+        init(_ transfer: RemiloIOSGoogleCalendarManualLink.Transfer) throws {
+            let before = transfer.remote.fields
+            let desired = transfer.desired
+            if before.schedule != desired.schedule, desired.schedule.allDay {
+                let zone = before.schedule.allDay ? before.schedule.zoneId : transfer.remote.calendarZone
+                guard zone == desired.schedule.zoneId else { throw RemiloIOSGoogleCalendarManualLink.Failure.unsupported }
+            }
+            try self.init(operationID: transfer.operationID, account: transfer.account, local: transfer.local.version,
+                          calendarID: transfer.remote.source.calendarID, eventID: transfer.remote.source.eventID,
+                          etag: transfer.remote.etag, before: before, calendarZone: transfer.remote.calendarZone,
+                          desired: desired, suppressGoogleReminders: false, evidence: transfer.evidence)
+        }
+
+        private init(operationID: UUID, account: Publication.Account, local: Publication.Local, calendarID: String,
+                     eventID: String, etag: String, before: Event.Fields, calendarZone: String, desired: Event.Fields,
+                     suppressGoogleReminders: Bool, evidence: RemiloIOSGoogleCalendarManualLink.Evidence?) throws {
+            guard Transport.Event.validatedStrongETag(etag) != nil,
                   account.connectionRevision > 0, account.accountGeneration > 0, local.revision > 0, local.generation >= 0,
-                  !local.occurrenceID.isEmpty, !calendarID.isEmpty, !reviewedRemote.id.isEmpty,
+                  !local.occurrenceID.isEmpty, !calendarID.isEmpty, !eventID.isEmpty,
                   !desired.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
                   desired.title.utf16.count <= 200, desired.notes.utf16.count <= 10_000 else { throw Failure.invalidInput }
             if let evidence {
                 guard evidence.source.belongs(to: account), evidence.source.calendarID == calendarID,
-                      evidence.identifies(reviewedRemote) else { throw Failure.invalidInput }
+                      evidence.source.eventID == eventID else { throw Failure.invalidInput }
             }
-            let before = try Event.fields(object, calendarZone: calendarZone).fields
             guard before.schedule.recurrence == nil, desired.schedule.recurrence == nil else { throw Failure.invalidInput }
             let title = before.title == desired.title ? nil : desired.title
             let notes = before.notes == desired.notes ? nil : desired.notes
@@ -48,7 +71,7 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
             self.account = account
             self.local = local
             self.calendarID = calendarID
-            eventID = reviewedRemote.id
+            self.eventID = eventID
             self.etag = etag
             self.evidence = evidence
             self.schedule = schedule
@@ -211,7 +234,8 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
                budget: HTTP.Budget = .init(),
                permitSend: @Sendable (Patch) async throws -> Permission) async throws -> PatchOutcome {
         guard patch.account.matches(access) else { throw Failure.accountChanged }
-        _ = try await transport.ownedCalendar(access, id: patch.calendarID, budget: budget)
+        let calendar = try await transport.ownedCalendar(access, id: patch.calendarID, budget: budget)
+        if phase == .notSent, (calendar.timeZone ?? "") != patch.calendarZone { return .staleRemote }
         let lookup = try await transport.lookup(access, calendarID: patch.calendarID, eventID: patch.eventID, budget: budget)
         guard case .found(let observed) = lookup else {
             if case .deleted = lookup { return .remoteRemoved }

@@ -109,10 +109,19 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
     event: import('./RemiloAlarm.types').CalendarEventRef,
     choices: import('./RemiloAlarm.types').CalendarImportChoices,
   ): Promise<import('./RemiloAlarm.types').CalendarLinkPreview>;
-  previewCalendarLink(id: string): Promise<import('./RemiloAlarm.types').CalendarLinkPreview>;
-  previewCalendarUpdate(id: string): Promise<import('./RemiloAlarm.types').CalendarLinkPreview>;
+  getCalendarLinkCandidate?(id: string, expectedConnectionRevision?: number): Promise<boolean>;
+  previewCalendarLink(
+    id: string,
+    expectedConnectionRevision?: number,
+  ): Promise<import('./RemiloAlarm.types').CalendarLinkPreview>;
+  previewCalendarUpdate(
+    id: string,
+    expectedConnectionRevision?: number,
+  ): Promise<import('./RemiloAlarm.types').CalendarLinkPreview>;
   checkCalendarLink(id: string): Promise<import('./RemiloAlarm.types').CalendarLink>;
-  getCalendarLinks(): Promise<import('./RemiloAlarm.types').CalendarLink[]>;
+  getCalendarLinks(
+    expectedConnectionRevision?: number,
+  ): Promise<import('./RemiloAlarm.types').CalendarLink[]>;
   getCalendarContext(
     id: string,
   ): Promise<(import('./RemiloAlarm.types').Occurrence & { calendarSeriesId?: string }) | null>;

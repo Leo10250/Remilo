@@ -14,7 +14,7 @@ final class RemiloIOSGoogleCalendarPublicationRuntime {
         case ineligible = "INELIGIBLE"
     }
 
-    struct LocalSnapshot: Equatable, Sendable {
+    struct LocalSnapshot: Codable, Equatable, Sendable {
         let version: Publication.Local
         let fields: Publication.Event.Fields
     }

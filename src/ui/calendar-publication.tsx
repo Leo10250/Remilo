@@ -15,6 +15,7 @@ import {
 } from '../domain/calendar';
 import type { OriginParams } from '../domain/navigation';
 import { useCalendarAction, useCalendarAuthorization } from './calendar-sync';
+import { useCalendarLinks, useIOSCalendarLinkCandidate } from './calendar-links';
 import { calendarAuthorizationError, rememberCalendarConnection } from './calendar-local-import';
 import { ActionFeedback, Button, ConnectedGroup, Copy, Status } from './components';
 import { engine, iosReminders, nativeAvailable, useIOSCalendarPublish } from './native';
@@ -55,6 +56,15 @@ export function CalendarPublicationStatus({
 }) {
   'use no memo';
   const t = useTranslation();
+  const reviewPublished =
+    !!iosConnection && publication.state === 'Published' && !publication.readOnly;
+  const { links } = useCalendarLinks(reviewPublished);
+  const manualCandidate = useIOSCalendarLinkCandidate(
+    publication.occurrenceId,
+    iosConnection,
+    reviewPublished,
+  );
+  const manualLink = links.data?.find((link) => link.occurrenceId === publication.occurrenceId);
   const action = useCalendarAction(),
     auth = useCalendarAuthorization(),
     [error, setError] = useLocalizedState('');
@@ -230,6 +240,29 @@ export function CalendarPublicationStatus({
                 pathname: '/calendar-review',
                 params: { ...routeParams, id: publication.occurrenceId },
               } as Href)
+            }
+          />
+        )}
+        {manualCandidate.eligible && links.isSuccess && (
+          <Button
+            label={t(
+              !manualLink
+                ? 'm_45f738fd2ff1'
+                : manualLink.state === 'Detached'
+                  ? 'm_1b01ea836cde'
+                  : 'm_6a47708f4e14',
+            )}
+            variant="secondary"
+            disabled={busy}
+            onPress={() =>
+              router.push({
+                pathname: '/calendar-review',
+                params: {
+                  ...routeParams,
+                  id: publication.occurrenceId,
+                  originReminderId: publication.occurrenceId,
+                },
+              })
             }
           />
         )}

@@ -73,6 +73,7 @@ public final class RemiloAlarmModule: Module {
         var capabilities = await RemiloIOSDelivery.capabilities()
         capabilities["calendarOneOffImport"] = RemiloIOSGoogleCalendarBridge.available
         capabilities["calendarOneOffPublish"] = RemiloIOSGoogleCalendarBridge.available
+        capabilities["calendarManualLink"] = RemiloIOSGoogleCalendarBridge.available
         if capabilities["unlocked"] as? Bool == true, capabilities["exactAlarms"] as? Bool == true,
            let group = try? await RemiloIOSEngine.shared.activeDeliveryGroup() {
           capabilities["activeSessionId"] = group["sessionId"]
@@ -277,6 +278,18 @@ public final class RemiloAlarmModule: Module {
     }
     AsyncFunction("previewCalendarPublication") { (id: String, expectedRevision: Double?, promise: Promise) in
       resolveCalendar(promise) { try RemiloIOSGoogleCalendarBridge.shared.previewPublication(id, expectedRevision: expectedRevision) }
+    }
+    AsyncFunction("getCalendarLinkCandidate") { (id: String, expectedRevision: Double?, promise: Promise) in
+      resolveCalendar(promise) { try await RemiloIOSGoogleCalendarBridge.shared.linkCandidate(id, expectedRevision: expectedRevision) }
+    }
+    AsyncFunction("getCalendarLinks") { (expectedRevision: Double?, promise: Promise) in
+      resolveCalendar(promise) { try await RemiloIOSGoogleCalendarBridge.shared.links(expectedRevision: expectedRevision) }
+    }
+    AsyncFunction("previewCalendarLink") { (id: String, expectedRevision: Double?, promise: Promise) in
+      resolveCalendar(promise) { try await RemiloIOSGoogleCalendarBridge.shared.previewLink(id, expectedRevision: expectedRevision) }
+    }
+    AsyncFunction("previewCalendarUpdate") { (id: String, expectedRevision: Double?, promise: Promise) in
+      resolveCalendar(promise) { try await RemiloIOSGoogleCalendarBridge.shared.previewLink(id, expectedRevision: expectedRevision) }
     }
     AsyncFunction("applyCalendarCommand") { (command: [String: Any], promise: Promise) in
       resolveCalendar(promise) { try await RemiloIOSGoogleCalendarBridge.shared.apply(command) }

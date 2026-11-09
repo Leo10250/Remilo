@@ -38,6 +38,7 @@ export type Capabilities = {
   notificationAuthorization?: 'notDetermined' | 'denied' | 'authorized';
   calendarOneOffImport?: boolean;
   calendarOneOffPublish?: boolean;
+  calendarManualLink?: boolean;
   exactAlarms: boolean;
   notifications: boolean;
   channelEnabled: boolean;
@@ -586,9 +587,14 @@ export type CalendarLinkPreview = {
   googleReminders: boolean | null;
   checkedAtMs: number;
   nextAlertMs: number | null;
+  retainedAlertMs?: number | null;
+  manualScheduleBlocked?: string | null;
   recurrence?: RecurrenceDraft | null;
   upcoming?: { eventStartMs: number; alarmAtMs: number; nominalSlot?: string }[] | null;
-  timings: Record<'remilo' | 'google', { mode: string; dueAtMs: number; alarmAtMs: number }> | null;
+  timings: Record<
+    'remilo' | 'google',
+    { mode: string; dueAtMs: number; alarmAtMs: number } | null
+  > | null;
 };
 export type CalendarLink = {
   occurrenceId: string;
@@ -1035,6 +1041,7 @@ export type CalendarLegacyCommand =
       operationId: string;
       occurrenceId: string;
       expectedLinkRevision: number;
+      expectedConnectionRevision?: number;
     }
   | { kind: 'RetryCalendarOperation'; operationId: string; expectedConnectionRevision?: number };
 export type CalendarCommand =
