@@ -13,6 +13,9 @@
 "widget.paused" = "Paused";
 "widget.openToRefresh" = "Open Remilo to refresh this widget.";
 "widget.done" = "Done";
+"widget.profile" = "Widget profile";
+"widget.profileUnavailable" = "Widget profile unavailable";
+"widget.retry" = "Retry the same action";
 "widget.empty" = "No reminders for today.";
 "widget.overdue" = "Overdue";
 "widget.example" = "Example preview · Sample content only";

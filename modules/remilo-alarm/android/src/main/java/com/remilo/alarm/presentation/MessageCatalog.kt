@@ -2243,6 +2243,17 @@ object MessageCatalog {
     "widget_not_started" to Entry(R.string.l10n_widget_not_started, false, listOf(), "Not started yet", false),
     "widget_today_reminders" to Entry(R.string.l10n_widget_today_reminders, false, listOf(), "Today's reminders", false),
     "widget_empty" to Entry(R.string.l10n_widget_empty, false, listOf(), "No reminders for today.", false),
+    "ios_widget_profiles" to Entry(R.string.l10n_ios_widget_profiles, false, listOf(), "Widget profiles", false),
+    "ios_widget_profile" to Entry(R.string.l10n_ios_widget_profile, false, listOf(), "Widget profile", false),
+    "ios_widget_new_profile" to Entry(R.string.l10n_ios_widget_new_profile, false, listOf(), "New widget profile", false),
+    "ios_widget_edit_profile" to Entry(R.string.l10n_ios_widget_edit_profile, false, listOf(), "Edit widget profile", false),
+    "ios_widget_profile_name" to Entry(R.string.l10n_ios_widget_profile_name, false, listOf(), "Profile name", false),
+    "ios_widget_profile_setup" to Entry(R.string.l10n_ios_widget_profile_setup, false, listOf(), "Add a Remilo widget to the Home Screen. Then touch and hold it, tap Edit Widget, and choose a profile.", false),
+    "ios_widget_profile_history" to Entry(R.string.l10n_ios_widget_profile_history, false, listOf(), "Each profile keeps its own Undo history. Widgets using the same profile share that history.", false),
+    "ios_widget_profile_unavailable" to Entry(R.string.l10n_ios_widget_profile_unavailable, false, listOf(), "Widget profile unavailable", false),
+    "ios_widget_profile_pending" to Entry(R.string.l10n_ios_widget_profile_pending, false, listOf(), "Retry the pending widget action before editing this profile.", false),
+    "ios_widget_remove_profile" to Entry(R.string.l10n_ios_widget_remove_profile, false, listOf(), "Remove profile", false),
+    "ios_widget_remove_profile_detail" to Entry(R.string.l10n_ios_widget_remove_profile_detail, false, listOf("name"), "Choose another profile in any widgets using “{name}”. This will discard any pending widget action.", false),
     "ios_widget_open_refresh" to Entry(R.string.l10n_ios_widget_open_refresh, false, listOf(), "Open Remilo to refresh this widget.", false),
     "ios_widget_reminder_count" to Entry(R.plurals.l10n_ios_widget_reminder_count, true, listOf("count"), "{count} reminders", false),
     "widget_reminder_count" to Entry(R.string.l10n_widget_reminder_count, false, listOf("count"), "{count} reminders", false),
@@ -2289,7 +2300,9 @@ object MessageCatalog {
     "routine_snooze_day_end" to Entry(R.string.l10n_routine_snooze_day_end, false, listOf(), "Snooze would pass the end of today.", false),
     "routine_mode_validation" to Entry(R.string.l10n_routine_mode_validation, false, listOf(), "Choose Alarm, Notification or No alert.", false),
     "routine_vibration_validation" to Entry(R.string.l10n_routine_vibration_validation, false, listOf(), "Choose a vibration setting.", false),
-    "widget_retry_same_action" to Entry(R.string.l10n_widget_retry_same_action, false, listOf(), "Retry the same action", false),
+    "widget_retry_same_action" to Entry(R.string.l10n_widget_retry_same_action, false, listOf(), "Retry the same action", false)
+  )
+  private fun chunk28(): Map<String, Entry> = mapOf(
     "routine_complete_continue" to Entry(R.string.l10n_routine_complete_continue, false, listOf(), "Complete & continue", false),
     "routine_complete_exercise" to Entry(R.string.l10n_routine_complete_exercise, false, listOf(), "Complete exercise", false),
     "routine_view_previous" to Entry(R.string.l10n_routine_view_previous, false, listOf(), "View previous exercise", false),
@@ -2300,9 +2313,7 @@ object MessageCatalog {
     "routine_focus_announcement" to Entry(R.string.l10n_routine_focus_announcement, false, listOf("name", "position", "total"), "Current step: {name}. {position} of {total}.", false),
     "routine_day_names_more" to Entry(R.string.l10n_routine_day_names_more, false, listOf("names", "count"), "{names} · +{count} more", false),
     "routine_exercise_removed_named" to Entry(R.string.l10n_routine_exercise_removed_named, false, listOf("name"), "{name} removed", false),
-    "routine_undo_removed_named" to Entry(R.string.l10n_routine_undo_removed_named, false, listOf("name"), "Undo removal of {name}", false)
-  )
-  private fun chunk28(): Map<String, Entry> = mapOf(
+    "routine_undo_removed_named" to Entry(R.string.l10n_routine_undo_removed_named, false, listOf("name"), "Undo removal of {name}", false),
     "routine_first_exercise_hint" to Entry(R.string.l10n_routine_first_exercise_hint, false, listOf(), "Choose a day to add your first exercise.", false),
     "routine_change_summary" to Entry(R.string.l10n_routine_change_summary, false, listOf("count"), "{count} days changed", false),
     "routine_change_details" to Entry(R.string.l10n_routine_change_details, false, listOf(), "Review changes", false),
@@ -2371,7 +2382,9 @@ object MessageCatalog {
     "routine_trashed" to Entry(R.string.l10n_routine_trashed, false, listOf(), "Routine moved to Trash", false),
     "routine_restored" to Entry(R.string.l10n_routine_restored, false, listOf(), "Routine restored", false),
     "routine_purged" to Entry(R.string.l10n_routine_purged, false, listOf(), "Routine permanently deleted", false),
-    "routine_in_trash" to Entry(R.string.l10n_routine_in_trash, false, listOf(), "Routine in Trash", false),
+    "routine_in_trash" to Entry(R.string.l10n_routine_in_trash, false, listOf(), "Routine in Trash", false)
+  )
+  private fun chunk29(): Map<String, Entry> = mapOf(
     "routine_trash_days" to Entry(R.string.l10n_routine_trash_days, false, listOf("count"), "{count} recorded days", false),
     "widget_resume" to Entry(R.string.l10n_widget_resume, false, listOf(), "Resume", false),
     "widget_next" to Entry(R.string.l10n_widget_next, false, listOf("name"), "Next: {name}", false),
@@ -2382,9 +2395,7 @@ object MessageCatalog {
     "widget_preview_next" to Entry(R.string.l10n_widget_preview_next, false, listOf(), "Next: Side plank", false),
     "widget_refresh" to Entry(R.string.l10n_widget_refresh, false, listOf(), "Refresh", false),
     "widget_preview_compact" to Entry(R.string.l10n_widget_preview_compact, false, listOf(), "Compact", false),
-    "widget_preview_expanded" to Entry(R.string.l10n_widget_preview_expanded, false, listOf(), "Expanded", false)
-  )
-  private fun chunk29(): Map<String, Entry> = mapOf(
+    "widget_preview_expanded" to Entry(R.string.l10n_widget_preview_expanded, false, listOf(), "Expanded", false),
     "publication_checked_confirmed" to Entry(R.string.l10n_publication_checked_confirmed, false, listOf(), "Publication checked. The original Google Calendar copy is confirmed.", false),
     "publication_checked_cancelled" to Entry(R.string.l10n_publication_checked_cancelled, false, listOf(), "Publication was cancelled before it was sent. No Google event was created.", false),
     "publication_checked_inactive" to Entry(R.string.l10n_publication_checked_inactive, false, listOf(), "The original publication is still unconfirmed. This read-only check cannot restore a reminder or create or change a Google event.", false),
@@ -2453,7 +2464,9 @@ object MessageCatalog {
     "postpone_custom" to Entry(R.string.l10n_postpone_custom, false, listOf(), "Custom", false),
     "postpone_date_time" to Entry(R.string.l10n_postpone_date_time, false, listOf(), "Date & time", false),
     "postpone_stale" to Entry(R.string.l10n_postpone_stale, false, listOf(), "These reminders changed. Close and choose again.", false),
-    "postpone_saved_times_locked" to Entry(R.string.l10n_postpone_saved_times_locked, false, listOf(), "Saved times are available after unlocking.", false),
+    "postpone_saved_times_locked" to Entry(R.string.l10n_postpone_saved_times_locked, false, listOf(), "Saved times are available after unlocking.", false)
+  )
+  private fun chunk30(): Map<String, Entry> = mapOf(
     "postpone_all_plain" to Entry(R.string.l10n_postpone_all_plain, false, listOf(), "Postpone all", false),
     "postpone_submitting" to Entry(R.string.l10n_postpone_submitting, false, listOf(), "Postponing…", false),
     "postpone_submitting_group" to Entry(R.string.l10n_postpone_submitting_group, false, listOf("count"), "Postponing {count} reminders…", false),
@@ -2464,9 +2477,7 @@ object MessageCatalog {
     "postpone_failed_schedule" to Entry(R.string.l10n_postpone_failed_schedule, false, listOf(), "Could not schedule Postpone. Review alert problems in Remilo.", false),
     "postpone_partial" to Entry(R.string.l10n_postpone_partial, false, listOf("scheduled", "count"), "{scheduled} of {count} alerts scheduled. Review alert problems in Remilo.", false),
     "postpone_selected" to Entry(R.string.l10n_postpone_selected, false, listOf(), "Selected", false),
-    "postpone_invalid_request" to Entry(R.string.l10n_postpone_invalid_request, false, listOf(), "This Postpone request is invalid. Close and choose the reminder again.", false)
-  )
-  private fun chunk30(): Map<String, Entry> = mapOf(
+    "postpone_invalid_request" to Entry(R.string.l10n_postpone_invalid_request, false, listOf(), "This Postpone request is invalid. Close and choose the reminder again.", false),
     "postpone_request_waiting" to Entry(R.string.l10n_postpone_request_waiting, false, listOf(), "Finish the current postponement before opening another.", false),
     "postpone_load_failed" to Entry(R.string.l10n_postpone_load_failed, false, listOf(), "Could not load these reminders. Try again.", false),
     "postpone_return_home" to Entry(R.string.l10n_postpone_return_home, false, listOf(), "Return to Home", false),

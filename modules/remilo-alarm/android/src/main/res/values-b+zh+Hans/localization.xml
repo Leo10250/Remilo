@@ -2237,6 +2237,17 @@
   <string name="l10n_widget_not_started">尚未开始</string>
   <string name="l10n_widget_today_reminders">今天的提醒</string>
   <string name="l10n_widget_empty">今天没有提醒。</string>
+  <string name="l10n_ios_widget_profiles">小组件配置</string>
+  <string name="l10n_ios_widget_profile">小组件配置</string>
+  <string name="l10n_ios_widget_new_profile">新建小组件配置</string>
+  <string name="l10n_ios_widget_edit_profile">编辑小组件配置</string>
+  <string name="l10n_ios_widget_profile_name">配置名称</string>
+  <string name="l10n_ios_widget_profile_setup">在主屏幕添加 Remilo 小组件后，按住该小组件，轻点“编辑小组件”，再选择一项配置。</string>
+  <string name="l10n_ios_widget_profile_history">每项配置单独记录可撤销的操作。使用同一项配置的小组件共用这份记录。</string>
+  <string name="l10n_ios_widget_profile_unavailable">小组件配置不可用</string>
+  <string name="l10n_ios_widget_profile_pending">请先在小组件中重试待处理的操作，再编辑此配置。</string>
+  <string name="l10n_ios_widget_remove_profile">移除配置</string>
+  <string name="l10n_ios_widget_remove_profile_detail">请为使用“%1$s”的小组件重新选择配置。此配置中待处理的操作将被放弃。</string>
   <string name="l10n_ios_widget_open_refresh">打开 Remilo 刷新小组件。</string>
   <plurals name="l10n_ios_widget_reminder_count">
     <item quantity="other">%1$s 项提醒</item>

@@ -42,6 +42,32 @@ public final class RemiloAlarmModule: Module {
     AsyncFunction("getSettings") { (promise: Promise) in
       resolve(promise) { try RemiloIOSEngine.shared.settings() }
     }
+    AsyncFunction("getWidgetSupport") { (promise: Promise) in
+      resolve(promise) {
+        ["pinSupported": false, "instanceCount": 0, "profilesAvailable": Self.widgetProfilesAvailable] as [String: Any]
+      }
+    }
+    AsyncFunction("getWidgetProfiles") { (promise: Promise) in
+      resolve(promise) {
+        guard Self.widgetProfilesAvailable else { throw IOSInputFailure("UNSUPPORTED") }
+        return try RemiloIOSWidgetProfiles.shared.list()
+      }
+    }
+    AsyncFunction("saveWidgetProfile") { (id: String, title: String, routineID: String, revision: Int, promise: Promise) in
+      resolve(promise) {
+        guard Self.widgetProfilesAvailable else { throw IOSInputFailure("UNSUPPORTED") }
+        return try await RemiloIOSWidgetProfiles.shared.save(
+          id: id, title: title, routineID: routineID, expectedRevision: revision
+        )
+      }
+    }
+    AsyncFunction("removeWidgetProfile") { (id: String, revision: Int, promise: Promise) in
+      resolve(promise) {
+        guard Self.widgetProfilesAvailable else { throw IOSInputFailure("UNSUPPORTED") }
+        try await RemiloIOSWidgetProfiles.shared.remove(id: id, expectedRevision: revision)
+        return nil
+      }
+    }
     AsyncFunction("getCapabilities") { (promise: Promise) in
       resolve(promise) {
         var capabilities = await RemiloIOSDelivery.capabilities()
@@ -221,6 +247,12 @@ public final class RemiloAlarmModule: Module {
     AsyncFunction("getSoundPreview") { (promise: Promise) in
       resolve(promise) { RemiloIOSSoundPreview.shared.snapshot }
     }
+  }
+
+  private static var widgetProfilesAvailable: Bool {
+    guard let extensions = Bundle.main.builtInPlugInsURL else { return false }
+    let widget = extensions.appendingPathComponent("RemiloWidgets.appex", isDirectory: true)
+    return FileManager.default.fileExists(atPath: widget.path) && RemiloWidgetSnapshotFile.isAvailable
   }
 
   private func resolve(_ promise: Promise, _ action: @MainActor @escaping () async throws -> Any?) {

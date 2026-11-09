@@ -76,6 +76,9 @@ function Navigation() {
           <Stack.Screen name="calendar-review" />
           <Stack.Screen name="calendar-reviews" />
         </Stack.Protected>
+        <Stack.Protected guard={iosReminders}>
+          <Stack.Screen name="widget-profiles" />
+        </Stack.Protected>
       </Stack>
       <NativeDeliveryRequestHost />
     </>

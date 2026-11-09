@@ -10,7 +10,10 @@ if [ "${REMILO_WIDGET_FIXTURE:-0}" = 1 ]; then
     modules/remilo-alarm/ios/WidgetShared/RemiloWidgetSnapshot.swift \
     modules/remilo-alarm/ios/WidgetShared/RemiloWidgetCopy.generated.swift \
     modules/remilo-alarm/ios/WidgetShared/RemiloWidgetDoneAction.swift \
+    modules/remilo-alarm/ios/WidgetShared/RemiloWidgetProfileAction.swift \
     modules/remilo-alarm/ios/RemiloIOSWidgetProjection.swift \
+    modules/remilo-alarm/ios/RemiloIOSWidgetProfileStore.swift \
+    modules/remilo-alarm/ios/RemiloIOSWidgetProfiles.swift \
     verification/ios-engine/WidgetProjectionChecks.swift
 fi
 xcrun swiftc -swift-version 5 -o "$build_dir/checks" \

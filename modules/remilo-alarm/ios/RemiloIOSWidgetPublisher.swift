@@ -44,6 +44,7 @@ final class RemiloIOSWidgetPublisher {
         pending = Task {
             defer { pending = nil }
             try? await Task.sleep(for: .milliseconds(250))
+            if UIApplication.shared.isProtectedDataAvailable { try? await RemiloIOSWidgetProfiles.shared.reconcile() }
             publishCurrent()
         }
     }
@@ -52,8 +53,10 @@ final class RemiloIOSWidgetPublisher {
         guard UIApplication.shared.isProtectedDataAvailable else { return }
         do {
             let state = try RemiloIOSEngine.shared.read()
+            let profiles = (try? RemiloIOSWidgetProfiles.shared.profiles()) ?? []
             let snapshot = RemiloIOSWidgetProjection.snapshot(
-                state, at: iosMillis(Date()), in: .current, language: RemiloIOSLanguage.resolve(state.settings.language)
+                state, at: iosMillis(Date()), in: .current, language: RemiloIOSLanguage.resolve(state.settings.language),
+                profiles: profiles
             )
             if try RemiloWidgetSnapshotFile.publish(snapshot) {
                 WidgetCenter.shared.reloadAllTimelines()

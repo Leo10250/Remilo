@@ -292,6 +292,10 @@ exact Retry. Text opens the exact dated details. Today may pin Focus above today
 and overdue ordinary reminders from all lists. Rest/empty/error states explain their
 state; constrained/large-text layouts use useful summaries rather than clipping.
 
+On iOS, the signed WidgetKit build uses profiles selected in the Home Screen
+widget editor. Separate profiles have separate Undo histories. Placements using
+the same profile share its history and display the same routine progress.
+
 Setup/picker previews use labeled inert examples in the real theme with visible
 loading/errors. A new Focus draft may default to the first available routine; a saved
 missing selection never silently retargets. Widgets require no React/network for

@@ -272,6 +272,14 @@ snapshot before returning. Equal captures share one operation receipt.
 WidgetKit can display an older timeline, so the native date and revision
 checks govern whether the action applies. [Apple interactive widgets](https://developer.apple.com/documentation/widgetkit/adding-interactivity-to-widgets-and-live-activities)
 
+An optional named iOS widget profile adds its own Undo history and exact
+Retry. Two placements selecting the same profile share that history. The
+app-private profile store records a pending action before submitting it to
+the engine. If acknowledgement is interrupted, recovery settles an existing
+receipt or leaves the same pending action for Retry. Undo requires the latest
+completion on that step to be the one recorded by the profile. Profile
+configuration and progress-action history stay outside portable backups.
+
 ## Portable data and platform handoffs
 
 [BackupCodec](../modules/remilo-alarm/android/src/main/java/com/remilo/alarm/data/BackupCodec.kt)

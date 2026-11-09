@@ -5,7 +5,8 @@ enum WidgetProjectionChecks {
     static func run() async throws {
         try projection()
         try await exactWidgetAction()
-        print("iOS widget snapshot and action checks passed")
+        try await profileActionsRecoverAndIsolateUndo()
+        print("iOS widget snapshot, profile and action checks passed")
     }
 
     private static func projection() throws {
@@ -123,6 +124,144 @@ enum WidgetProjectionChecks {
         let complete = try store.load()
         precondition(complete.reminders[first.occurrenceID]?.completed == true)
         precondition(complete.routineSessions[first.occurrenceID]?.changes.map(\.id) == [first.operationID, second.operationID])
+    }
+
+    @MainActor
+    private static func profileActionsRecoverAndIsolateUndo() async throws {
+        let engineStore = FixtureStore()
+        defer { engineStore.remove() }
+        let engine = engineStore.engine()
+        let profileStore = ProfileFixture()
+        var profiles = profileStore.coordinator(engine: engine)
+        let zone = TimeZone.current
+        let today = RemiloIOSRoutineAuthoring.localDate(Date(), in: zone)
+        let days = (0..<7).map { day -> [String: Any] in
+            [
+                "type": "Exercises",
+                "exercises": [
+                    ["id": "first-\(day)", "name": "First", "target": "", "notes": ""],
+                    ["id": "second-\(day)", "name": "Second", "target": "", "notes": ""],
+                ],
+            ]
+        }
+        let created = try await engine.apply([
+            "kind": "CreateRoutine", "startsOn": today, "operationId": "create-profile-routine",
+            "title": "Routine", "mode": "None", "minutes": 720, "days": days,
+        ])
+        let routine = created["routine"] as! [String: Any]
+        let routineID = routine["id"] as! String
+        let a = UUID().uuidString
+        let b = UUID().uuidString
+        _ = try await profiles.save(id: a, title: "A", routineID: routineID, expectedRevision: 0)
+        _ = try await profiles.save(id: b, title: "B", routineID: routineID, expectedRevision: 0)
+        let replayedProfile = try await profiles.save(id: a, title: "A", routineID: routineID, expectedRevision: 0)
+        precondition(replayedProfile["revision"] as? Int == 1)
+
+        func projected(_ id: String) throws -> RemiloWidgetSnapshot.Profile {
+            let snapshot = try RemiloIOSWidgetProjection.snapshot(
+                engineStore.load(), at: iosMillis(Date()), in: zone, language: "en", profiles: profiles.profiles()
+            )
+            return snapshot.profiles!.first { $0.id == id }!
+        }
+        let first = try projected(a).done!
+        precondition(RemiloWidgetProfileAction.decode(token: first.token!) == first)
+        precondition(RemiloWidgetProfileAction.decode(token: String(repeating: "X", count: 4_097)) == nil)
+        engineStore.interruptNextWrite = true
+        do {
+            _ = try await profiles.perform(first)
+            preconditionFailure("Expected interrupted routine write")
+        } catch FixtureStore.Failure.writeInterrupted {}
+        profiles = profileStore.coordinator(engine: engineStore.engine())
+        try await profiles.reconcile()
+        let waiting = try projected(a)
+        precondition(waiting.retry == first && waiting.done == nil && waiting.undo == nil)
+        let beforeRetry = try engineStore.load()
+        precondition(beforeRetry.routineSessions[first.occurrenceID]?.done.isEmpty == true)
+
+        profileStore.interruptAcknowledgement = true
+        do {
+            _ = try await profiles.perform(waiting.retry!)
+            preconditionFailure("Expected interrupted profile acknowledgement")
+        } catch ProfileFixture.Failure.writeInterrupted {}
+        profiles = profileStore.coordinator(engine: engineStore.engine())
+        try await profiles.reconcile()
+        let afterRecovery = try projected(a)
+        precondition(afterRecovery.retry == nil && afterRecovery.undo?.undoOperationID == first.operationID)
+        let committed = try engineStore.load()
+        precondition(committed.routineSessions[first.occurrenceID]?.changes.map(\.id) == [first.operationID])
+        let other = try projected(b)
+        precondition(other.undo == nil)
+        let forged = RemiloWidgetProfileAction(
+            profileID: b, profileRevision: 1, occurrenceID: first.occurrenceID, date: today,
+            sessionRevision: 1, stepID: first.stepID, undoOperationID: first.operationID
+        )
+        let rejected = try await profiles.perform(forged)
+        precondition(rejected["errorCode"] as? String == "STALE_WIDGET")
+
+        _ = try await profiles.save(id: a, title: "Renamed", routineID: routineID, expectedRevision: 1)
+        let renamed = try projected(a)
+        precondition(renamed.undo?.undoOperationID == first.operationID && renamed.done?.profileRevision == 2)
+        let second = renamed.done!
+        _ = try await profiles.perform(second)
+        let finished = try engineStore.load()
+        precondition(finished.reminders[first.occurrenceID]?.completed == true)
+        let undo = try projected(a).undo!
+        precondition(undo.undoOperationID == second.operationID)
+        let undone = try await profiles.perform(undo)
+        precondition(undone["status"] as? String == "Applied")
+        let reopened = try engineStore.load()
+        precondition(reopened.routineSessions[first.occurrenceID]?.done == Set([first.stepID]))
+
+        // An external check on the same step supersedes that widget's older completion.
+        let externalEngine = engineStore.engine()
+        let session = reopened.routineSessions[first.occurrenceID]!
+        for (index, done) in [false, true].enumerated() {
+            _ = try await externalEngine.apply([
+                "kind": "SetRoutineExercise", "operationId": "app-\(index)",
+                "occurrenceId": session.occurrenceID, "date": today, "stepId": first.stepID,
+                "expectedRevision": session.revision + index, "completed": done,
+            ])
+        }
+        profiles = profileStore.coordinator(engine: externalEngine)
+        let corrected = try projected(a)
+        precondition(corrected.undo == nil)
+        engineStore.interruptNextWrite = true
+        do {
+            _ = try await profiles.perform(corrected.done!)
+            preconditionFailure("Expected a pending action before midnight")
+        } catch FixtureStore.Failure.writeInterrupted {}
+        let tomorrow = try RemiloIOSRoutineAuthoring.date(today, plusDays: 1)
+        let tomorrowMs = try RemiloIOSRoutineAuthoring.time(tomorrow, minutes: 0, in: zone)
+        try await profiles.reconcile(now: iosDate(tomorrowMs), zone: zone)
+        let expired = try projected(a)
+        precondition(expired.retry == nil)
+        let afterExpiry = try engineStore.load()
+        precondition(afterExpiry.receipts[corrected.done!.operationID] == nil)
+        try await profiles.remove(id: a, expectedRevision: 2)
+        let replay = try await profiles.perform(first)
+        precondition(replay["status"] as? String == "Applied")
+        let retired = try await profiles.perform(corrected.done!)
+        precondition(retired["errorCode"] as? String == "STALE_WIDGET")
+    }
+
+    @MainActor
+    private final class ProfileFixture {
+        enum Failure: Error { case writeInterrupted }
+        var bytes: Data?
+        var interruptAcknowledgement = false
+
+        func coordinator(engine: RemiloIOSEngine) -> RemiloIOSWidgetProfiles {
+            RemiloIOSWidgetProfiles(engine: engine, load: {
+                guard let bytes = self.bytes else { return IOSWidgetProfileDatabase() }
+                return try JSONDecoder().decode(IOSWidgetProfileDatabase.self, from: bytes)
+            }, save: { state in
+                if self.interruptAcknowledgement && state.profiles.values.allSatisfy({ $0.pending == nil }) {
+                    self.interruptAcknowledgement = false
+                    throw Failure.writeInterrupted
+                }
+                self.bytes = try JSONEncoder().encode(state)
+            })
+        }
     }
 
     private static func record(

@@ -234,6 +234,20 @@ text, both languages, and behavior across lock, midnight, and time-zone changes.
 In a medium or large Routine Focus widget, tap Done while Remilo is closed and
 confirm only the displayed step changes. Tap an older rendering after changing
 the dated session in Remilo and check that stale progress stays unchanged.
+In Remilo's widget settings, create two profiles for the same routine and
+select a different profile in each widget's Edit Widget panel. Complete a step
+in one widget and verify that only that profile offers Undo. Check Undo after
+the last step and after a later completion from inside Remilo. The optional
+Swift fixture covers interrupted commits and exact Retry.
+Create two profiles for the same routine in Remilo Settings and assign them to
+two placements in Edit Widget. Complete successive steps from the two widgets.
+Confirm each Undo targets only its profile's last valid completion. Retry an
+uncertain action with the same captured step and verify that it applies once.
+
+The host's conditional entitlement path belongs to the Xcode project
+configuration. Expo autolinking reads target-level paths as inputs to its
+provider-generation script. An empty expansion at target level makes the
+whole iOS directory an input, including the provider the script generates.
 
 For an AltStore Classic test, the input IPA needs the widget embedded and the
 App Group present in both original code signatures so AltStore can read and

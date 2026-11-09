@@ -280,13 +280,13 @@ export default function Settings() {
             disabled={pending}
             onPress={openAlarmCheck}
           />
-          {!iosReminders && (
-            <WidgetSetupRow
-              key="widget"
-              description={t('ui_widget_settings_description')}
-              disabled={pending}
-            />
-          )}
+          <WidgetSetupRow
+            key="widget"
+            description={t(
+              iosReminders ? 'ios_widget_profile_history' : 'ui_widget_settings_description',
+            )}
+            disabled={pending}
+          />
           {!iosReminders && (
             <SettingRow
               intent="navigation"

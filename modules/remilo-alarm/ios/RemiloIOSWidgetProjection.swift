@@ -1,7 +1,9 @@
 import Foundation
 
 enum RemiloIOSWidgetProjection {
-    static func snapshot(_ state: IOSDatabase, at now: Int64, in zone: TimeZone, language: String) -> RemiloWidgetSnapshot {
+    static func snapshot(
+        _ state: IOSDatabase, at now: Int64, in zone: TimeZone, language: String, profiles: [IOSWidgetProfile] = []
+    ) -> RemiloWidgetSnapshot {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = zone
         let instant = iosDate(now)
@@ -29,7 +31,34 @@ enum RemiloIOSWidgetProjection {
         return RemiloWidgetSnapshot(
             schemaVersion: RemiloWidgetSnapshot.currentVersion, date: date,
             dayStartsAtMs: dayRange.lowerBound, dayEndsAtMs: dayRange.upperBound, zoneID: zone.identifier,
-            language: language, reminders: reminders, reminderCount: today.count, routines: routines
+            language: language, reminders: reminders, reminderCount: today.count, routines: routines,
+            profiles: profiles.isEmpty ? nil : profiles.map { profile($0, date: date, state: state) }
+        )
+    }
+
+    private static func profile(_ profile: IOSWidgetProfile, date: String, state: IOSDatabase) -> RemiloWidgetSnapshot.Profile {
+        var done: RemiloWidgetProfileAction?
+        var undo: RemiloWidgetProfileAction?
+        var undoName: String?
+        var retry: RemiloWidgetProfileAction?
+        if let pending = profile.pending {
+            if pending.date == date && pending.isValid && pending.profileRevision == profile.revision {
+                retry = pending
+            }
+        } else if let session = IOSWidgetProfilePolicy.session(profile, date: date, state: state) {
+            if let step = session.steps.first(where: { !session.done.contains($0.id) }) {
+                done = IOSWidgetProfilePolicy.action(profile, session: session, stepID: step.id)
+            }
+            if let completion = IOSWidgetProfilePolicy.latestCompletion(profile, session: session) {
+                undo = IOSWidgetProfilePolicy.action(
+                    profile, session: session, stepID: completion.stepID, undoOperationID: completion.operationID
+                )
+                undoName = session.steps.first(where: { $0.id == completion.stepID })?.name
+            }
+        }
+        return RemiloWidgetSnapshot.Profile(
+            id: profile.id, title: profile.title, routineID: profile.routineID,
+            done: done, undo: undo, undoName: undoName, retry: retry
         )
     }
 

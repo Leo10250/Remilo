@@ -20,6 +20,13 @@ export type RemiloAlarmModuleEvents = {
   onTimeDisplayPreferencesChanged: (preferences: TimeDisplayPreferences) => void;
 };
 export type ListRecord = { id: string; name: string; revision: number; overdueCount: number };
+export type WidgetProfile = {
+  id: string;
+  title: string;
+  routineId: string;
+  revision: number;
+  hasPending: boolean;
+};
 export type SessionActionMember = { occurrenceId: string; expectedGeneration: number };
 export type SessionActions = {
   sessionId: string;

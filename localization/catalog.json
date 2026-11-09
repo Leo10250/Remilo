@@ -28,6 +28,11 @@
     "openToRefresh": "ios_widget_open_refresh",
     "done": "widget_done",
     "markDone": "routine_mark_named",
+    "profile": "ios_widget_profile",
+    "profileUnavailable": "ios_widget_profile_unavailable",
+    "undo": "widget_undo",
+    "undoCompletion": "widget_undo_completion_named",
+    "retry": "widget_retry_same_action",
     "empty": "widget_empty",
     "agendaCount": "widget_agenda_count",
     "reminderCount": "ios_widget_reminder_count",
@@ -15247,6 +15252,85 @@
       "zh-Hans": "今天没有提醒。",
       "args": {},
       "context": "Android widget and setup",
+      "calendarStatus": false
+    },
+    "ios_widget_profiles": {
+      "en": "Widget profiles",
+      "zh-Hans": "小组件配置",
+      "args": {},
+      "context": "iOS settings page listing independently configured Home Screen widgets",
+      "calendarStatus": false
+    },
+    "ios_widget_profile": {
+      "en": "Widget profile",
+      "zh-Hans": "小组件配置",
+      "args": {},
+      "context": "WidgetKit picker parameter for selecting a saved widget profile",
+      "calendarStatus": false
+    },
+    "ios_widget_new_profile": {
+      "en": "New widget profile",
+      "zh-Hans": "新建小组件配置",
+      "args": {},
+      "context": "iOS widget profile creation action and page title",
+      "calendarStatus": false
+    },
+    "ios_widget_edit_profile": {
+      "en": "Edit widget profile",
+      "zh-Hans": "编辑小组件配置",
+      "args": {},
+      "context": "iOS page title for editing a saved widget profile",
+      "calendarStatus": false
+    },
+    "ios_widget_profile_name": {
+      "en": "Profile name",
+      "zh-Hans": "配置名称",
+      "args": {},
+      "context": "User-authored name identifying one widget profile in the Home Screen picker",
+      "calendarStatus": false
+    },
+    "ios_widget_profile_setup": {
+      "en": "Add a Remilo widget to the Home Screen. Then touch and hold it, tap Edit Widget, and choose a profile.",
+      "zh-Hans": "在主屏幕添加 Remilo 小组件后，按住该小组件，轻点“编辑小组件”，再选择一项配置。",
+      "args": {},
+      "context": "Instructions on the iOS widget profile page. Edit Widget is the Apple Home Screen menu item.",
+      "calendarStatus": false
+    },
+    "ios_widget_profile_history": {
+      "en": "Each profile keeps its own Undo history. Widgets using the same profile share that history.",
+      "zh-Hans": "每项配置单独记录可撤销的操作。使用同一项配置的小组件共用这份记录。",
+      "args": {},
+      "context": "Explains widget Undo action ownership. Actual routine progress remains shared.",
+      "calendarStatus": false
+    },
+    "ios_widget_profile_unavailable": {
+      "en": "Widget profile unavailable",
+      "zh-Hans": "小组件配置不可用",
+      "args": {},
+      "context": "A widget's saved profile is missing, or the build cannot access widget profiles",
+      "calendarStatus": false
+    },
+    "ios_widget_profile_pending": {
+      "en": "Retry the pending widget action before editing this profile.",
+      "zh-Hans": "请先在小组件中重试待处理的操作，再编辑此配置。",
+      "args": {},
+      "context": "A captured widget action is awaiting confirmation. The user can retry it on the widget.",
+      "calendarStatus": false
+    },
+    "ios_widget_remove_profile": {
+      "en": "Remove profile",
+      "zh-Hans": "移除配置",
+      "args": {},
+      "context": "Destructive action for a saved widget profile. Does not delete a routine.",
+      "calendarStatus": false
+    },
+    "ios_widget_remove_profile_detail": {
+      "en": "Choose another profile in any widgets using “{name}”. This will discard any pending widget action.",
+      "zh-Hans": "请为使用“{name}”的小组件重新选择配置。此配置中待处理的操作将被放弃。",
+      "args": {
+        "name": "string"
+      },
+      "context": "Remove confirmation. Name is user-authored. Unconfirmed means the exact pending widget operation will not be retried.",
       "calendarStatus": false
     },
     "ios_widget_open_refresh": {

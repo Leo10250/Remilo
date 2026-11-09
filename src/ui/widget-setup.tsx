@@ -1,9 +1,20 @@
+import { useQuery } from '@tanstack/react-query';
+import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { errorText } from '../localization';
 import { useTranslation } from '../localization/react';
 import { ActionFeedback, RowSupport, SettingRow } from './components';
-import { engine, nativeAvailable } from './native';
+import { engine, iosReminders, nativeAvailable } from './native';
+
+export function useWidgetProfileSupport() {
+  return useQuery({
+    queryKey: ['widget-profile-support'],
+    queryFn: () => engine().getWidgetSupport(),
+    enabled: nativeAvailable && iosReminders,
+    select: (support) => support.profilesAvailable === true,
+  });
+}
 
 export function WidgetSetupRow({
   routineId,
@@ -21,21 +32,28 @@ export function WidgetSetupRow({
     running = useRef(false);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState<string>();
+  const profileSupport = useWidgetProfileSupport();
   useEffect(() => {
     live.current = true;
     return () => {
       live.current = false;
     };
   }, []);
+  if (iosReminders && !profileSupport.data) return null;
   return (
     <View>
       <SettingRow
-        intent={routineId ? 'action' : 'navigation'}
-        label={t(routineId ? 'widget_add' : 'widget_name')}
+        intent={routineId && !iosReminders ? 'action' : 'navigation'}
+        label={t(iosReminders ? 'ios_widget_profiles' : routineId ? 'widget_add' : 'widget_name')}
         description={description}
         icon="event"
         disabled={disabled || busy || !nativeAvailable}
         onPress={() => {
+          if (iosReminders) {
+            onOpen?.();
+            router.push({ pathname: '/widget-profiles', params: { routineId } });
+            return;
+          }
           if (running.current) return;
           running.current = true;
           setBusy(true);

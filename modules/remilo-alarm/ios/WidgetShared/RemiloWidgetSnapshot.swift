@@ -30,6 +30,16 @@ struct RemiloWidgetSnapshot: Codable, Equatable {
         let nextName: String?
     }
 
+    struct Profile: Codable, Equatable {
+        let id: String
+        let title: String
+        let routineID: String
+        let done: RemiloWidgetProfileAction?
+        let undo: RemiloWidgetProfileAction?
+        let undoName: String?
+        let retry: RemiloWidgetProfileAction?
+    }
+
     let schemaVersion: Int
     let date: String
     let dayStartsAtMs: Int64
@@ -39,6 +49,7 @@ struct RemiloWidgetSnapshot: Codable, Equatable {
     let reminders: [Reminder]
     let reminderCount: Int
     let routines: [Routine]
+    var profiles: [Profile]? = nil
 
     static let currentVersion = 1
 

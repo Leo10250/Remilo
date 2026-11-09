@@ -13,6 +13,9 @@
 "widget.paused" = "已暂停";
 "widget.openToRefresh" = "打开 Remilo 刷新小组件。";
 "widget.done" = "完成";
+"widget.profile" = "小组件配置";
+"widget.profileUnavailable" = "小组件配置不可用";
+"widget.retry" = "重试此次操作";
 "widget.empty" = "今天没有提醒。";
 "widget.overdue" = "已逾期";
 "widget.example" = "示例预览 · 仅含示例内容";

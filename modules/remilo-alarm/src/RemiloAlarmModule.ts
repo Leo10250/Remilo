@@ -26,6 +26,7 @@ import {
   type ListRecord,
   type SoundPreviewSnapshot,
   type ResolvedReminderDraft,
+  type WidgetProfile,
 } from './RemiloAlarm.types';
 
 declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
@@ -40,7 +41,19 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
   prepareBackupImport(uri: string): Promise<ImportPreview & { handle: string; imageCount: number }>;
   applyPreparedImport(handle: string, copies: string[], operation: string): Promise<CommandResult>;
   releasePreparedImport(handle: string): Promise<boolean>;
-  getWidgetSupport(): Promise<{ pinSupported: boolean; instanceCount: number }>;
+  getWidgetSupport(): Promise<{
+    pinSupported: boolean;
+    instanceCount: number;
+    profilesAvailable?: boolean;
+  }>;
+  getWidgetProfiles?(): Promise<WidgetProfile[]>;
+  saveWidgetProfile?(
+    id: string,
+    title: string,
+    routineId: string,
+    expectedRevision: number,
+  ): Promise<WidgetProfile>;
+  removeWidgetProfile?(id: string, expectedRevision: number): Promise<void>;
   openWidgetSetup(routineId: string | null): Promise<{ opened: boolean }>;
   getTimeDisplayPreferences(): Promise<TimeDisplayPreferences>;
   getCapabilities(): Promise<Capabilities>;

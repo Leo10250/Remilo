@@ -37,8 +37,36 @@ private struct RoutineChoiceQuery: EntityQuery {
     }
 }
 
+private struct ProfileChoice: AppEntity {
+    static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "widget.profile")
+    static let defaultQuery = ProfileChoiceQuery()
+
+    let id: String
+    let title: String
+
+    var displayRepresentation: DisplayRepresentation {
+        DisplayRepresentation(title: "\(title)")
+    }
+}
+
+private struct ProfileChoiceQuery: EntityQuery {
+    func entities(for identifiers: [String]) async throws -> [ProfileChoice] {
+        let snapshot = try? RemiloWidgetSnapshotFile.read()
+        let language = snapshot?.language ?? widgetSystemLanguage()
+        return identifiers.map { id in
+            let title = snapshot?.profiles?.first(where: { $0.id == id })?.title
+            return ProfileChoice(id: id, title: title ?? RemiloWidgetCopy.profileUnavailable(language))
+        }
+    }
+
+    func suggestedEntities() async throws -> [ProfileChoice] {
+        (try? RemiloWidgetSnapshotFile.read())?.profiles?.map { ProfileChoice(id: $0.id, title: $0.title) } ?? []
+    }
+}
+
 private protocol RemiloWidgetConfiguration: WidgetConfigurationIntent {
     var routine: RoutineChoice? { get }
+    var profile: ProfileChoice? { get }
 }
 
 private struct TodayConfiguration: RemiloWidgetConfiguration {
@@ -46,6 +74,7 @@ private struct TodayConfiguration: RemiloWidgetConfiguration {
     static let description = IntentDescription("widget.todayHint")
 
     @Parameter(title: "widget.chooseRoutine") var routine: RoutineChoice?
+    @Parameter(title: "widget.profile") var profile: ProfileChoice?
 }
 
 private struct RoutineFocusConfiguration: RemiloWidgetConfiguration {
@@ -53,34 +82,40 @@ private struct RoutineFocusConfiguration: RemiloWidgetConfiguration {
     static let description = IntentDescription("widget.focusHint")
 
     @Parameter(title: "widget.chooseRoutine") var routine: RoutineChoice?
+    @Parameter(title: "widget.profile") var profile: ProfileChoice?
 }
 
 private struct RemiloWidgetEntry: TimelineEntry {
     let date: Date
     let snapshot: RemiloWidgetSnapshot?
     let routineID: String?
+    let profileID: String?
     let example: Bool
 }
 
 private struct RemiloWidgetTimeline<Configuration: RemiloWidgetConfiguration>: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> RemiloWidgetEntry {
-        RemiloWidgetEntry(date: Date(), snapshot: nil, routineID: nil, example: true)
+        RemiloWidgetEntry(date: Date(), snapshot: nil, routineID: nil, profileID: nil, example: true)
     }
 
     func snapshot(for configuration: Configuration, in context: Context) async -> RemiloWidgetEntry {
         if context.isPreview { return placeholder(in: context) }
         let now = Date()
-        return RemiloWidgetEntry(date: now, snapshot: currentSnapshot(at: now), routineID: configuration.routine?.id, example: false)
+        return RemiloWidgetEntry(
+            date: now, snapshot: currentSnapshot(at: now), routineID: configuration.routine?.id,
+            profileID: configuration.profile?.id, example: false
+        )
     }
 
     func timeline(for configuration: Configuration, in context: Context) async -> Timeline<RemiloWidgetEntry> {
         let now = Date()
         let snapshot = currentSnapshot(at: now)
         let selected = configuration.routine?.id
-        let current = RemiloWidgetEntry(date: now, snapshot: snapshot, routineID: selected, example: false)
+        let profileID = configuration.profile?.id
+        let current = RemiloWidgetEntry(date: now, snapshot: snapshot, routineID: selected, profileID: profileID, example: false)
         guard let snapshot else { return Timeline(entries: [current], policy: .after(now.addingTimeInterval(60 * 60))) }
         let midnight = Date(timeIntervalSince1970: Double(snapshot.dayEndsAtMs) / 1_000)
-        let expired = RemiloWidgetEntry(date: midnight, snapshot: nil, routineID: selected, example: false)
+        let expired = RemiloWidgetEntry(date: midnight, snapshot: nil, routineID: selected, profileID: profileID, example: false)
         return Timeline(entries: [current, expired], policy: .after(midnight))
     }
 
@@ -119,9 +154,23 @@ private struct RemiloWidgetContent: View {
     let focusOnly: Bool
 
     private var language: String { entry.snapshot?.language ?? widgetSystemLanguage() }
+    private var profile: RemiloWidgetSnapshot.Profile? {
+        guard let id = entry.profileID else { return nil }
+        return entry.snapshot?.profiles?.first { $0.id == id }
+    }
     private var routine: RemiloWidgetSnapshot.Routine? {
+        if entry.profileID != nil {
+            guard let profile else { return nil }
+            return entry.snapshot?.routines.first { $0.id == profile.routineID }
+        }
         if let id = entry.routineID { return entry.snapshot?.routines.first { $0.id == id } }
         return focusOnly ? entry.snapshot?.routines.first : nil
+    }
+
+    private var missingRoutineCopy: String {
+        if entry.profileID != nil && profile == nil { return RemiloWidgetCopy.profileUnavailable(language) }
+        if entry.profileID != nil || entry.routineID != nil { return RemiloWidgetCopy.unavailable(language) }
+        return RemiloWidgetCopy.chooseRoutineHint(language)
     }
 
     var body: some View {
@@ -138,12 +187,12 @@ private struct RemiloWidgetContent: View {
                         ViewThatFits(in: .vertical) {
                             routineSection(
                                 routine, date: snapshot.date, concise: typeSize.isAccessibilitySize,
-                                allowDone: !typeSize.isAccessibilitySize
+                                allowActions: !typeSize.isAccessibilitySize
                             )
                             routineSection(routine, date: snapshot.date, concise: true)
                         }
                     } else {
-                        status(entry.routineID == nil ? RemiloWidgetCopy.chooseRoutineHint(language) : RemiloWidgetCopy.unavailable(language))
+                        status(missingRoutineCopy)
                     }
                 } else {
                     ViewThatFits(in: .vertical) {
@@ -182,9 +231,9 @@ private struct RemiloWidgetContent: View {
     private func today(_ snapshot: RemiloWidgetSnapshot, concise: Bool) -> some View {
         VStack(alignment: .leading, spacing: 7) {
             if let routine {
-                routineSection(routine, date: snapshot.date, concise: true, allowDone: !concise)
-            } else if entry.routineID != nil {
-                status(RemiloWidgetCopy.unavailable(language))
+                routineSection(routine, date: snapshot.date, concise: true, allowActions: !concise)
+            } else if entry.routineID != nil || entry.profileID != nil {
+                status(missingRoutineCopy)
             }
             if snapshot.reminders.isEmpty {
                 status(RemiloWidgetCopy.empty(language))
@@ -223,7 +272,7 @@ private struct RemiloWidgetContent: View {
     }
 
     private func routineSection(
-        _ routine: RemiloWidgetSnapshot.Routine, date: String, concise: Bool, allowDone: Bool = false
+        _ routine: RemiloWidgetSnapshot.Routine, date: String, concise: Bool, allowActions: Bool = false
     ) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             let section = routineLabel(routine, concise: concise)
@@ -232,18 +281,52 @@ private struct RemiloWidgetContent: View {
             } else {
                 section
             }
-            if allowDone, family != .systemSmall, let step = routine.current,
-               let occurrenceID = routine.occurrenceID, let revision = routine.revision,
-               let action = RemiloWidgetDoneAction(occurrenceID: occurrenceID, date: date, revision: revision, stepID: step.id) {
-                Button(intent: RemiloWidgetDoneIntent(action)) {
-                    Text(verbatim: RemiloWidgetCopy.done(language))
-                        .font(.caption.weight(.semibold))
+            if allowActions, family != .systemSmall {
+                if let profile {
+                    profileActions(profile, step: routine.current)
+                } else if let step = routine.current, let occurrenceID = routine.occurrenceID, let revision = routine.revision,
+                          let action = RemiloWidgetDoneAction(occurrenceID: occurrenceID, date: date, revision: revision, stepID: step.id) {
+                    Button(intent: RemiloWidgetDoneIntent(action)) {
+                        Text(verbatim: RemiloWidgetCopy.done(language)).font(.caption.weight(.semibold))
+                    }
+                    .buttonStyle(.bordered)
+                    .accessibilityLabel(Text(verbatim: RemiloWidgetCopy.markDone(language, name: step.name)))
+                    .privacySensitive()
                 }
-                .buttonStyle(.bordered)
-                .accessibilityLabel(Text(verbatim: RemiloWidgetCopy.markDone(language, name: step.name)))
-                .privacySensitive()
             }
         }
+    }
+
+    @ViewBuilder
+    private func profileActions(_ profile: RemiloWidgetSnapshot.Profile, step: RemiloWidgetSnapshot.Routine.Step?) -> some View {
+        if let token = profile.retry?.token {
+            let label = RemiloWidgetCopy.retry(language)
+            profileButton(token: token, label: label, accessibilityLabel: label)
+        } else {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                if let token = profile.done?.token, let step {
+                    profileButton(
+                        token: token, label: RemiloWidgetCopy.done(language),
+                        accessibilityLabel: RemiloWidgetCopy.markDone(language, name: step.name)
+                    )
+                }
+                if let token = profile.undo?.token, let name = profile.undoName {
+                    profileButton(
+                        token: token, label: RemiloWidgetCopy.undo(language, name: name),
+                        accessibilityLabel: RemiloWidgetCopy.undoCompletion(language, name: name)
+                    )
+                }
+            }
+        }
+    }
+
+    private func profileButton(token: String, label: String, accessibilityLabel: String) -> some View {
+        Button(intent: RemiloWidgetProfileIntent(token: token)) {
+            Text(verbatim: label).font(.caption.weight(.semibold)).lineLimit(1)
+        }
+        .buttonStyle(.bordered)
+        .accessibilityLabel(Text(verbatim: accessibilityLabel))
+        .privacySensitive()
     }
 
     private func routineLabel(_ routine: RemiloWidgetSnapshot.Routine, concise: Bool) -> some View {

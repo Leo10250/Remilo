@@ -35,3 +35,28 @@ struct RemiloWidgetDoneIntent: LiveActivityIntent {
         return .result()
     }
 }
+
+/// The same captured token is used by the first button and a visible Retry.
+struct RemiloWidgetProfileIntent: LiveActivityIntent {
+    static let title: LocalizedStringResource = "widget.profile"
+    static var supportedModes: IntentModes { .background }
+    static var authenticationPolicy: IntentAuthenticationPolicy { .requiresLocalDeviceAuthentication }
+    static var isDiscoverable: Bool { false }
+
+    @Parameter(title: "Widget action") var token: String
+
+    init() {}
+
+    init(token: String) { self.token = token }
+
+    @MainActor
+    func perform() async throws -> some IntentResult {
+        #if !REMILO_WIDGET_EXTENSION
+        if let action = RemiloWidgetProfileAction.decode(token: token), RemiloWidgetSnapshotFile.isAvailable {
+            _ = try? await RemiloIOSWidgetProfiles.shared.perform(action)
+            RemiloIOSWidgetPublisher.shared.publishCurrent()
+        }
+        #endif
+        return .result()
+    }
+}

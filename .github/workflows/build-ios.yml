@@ -96,6 +96,26 @@ jobs:
           persist-credentials: false
       - name: Check Calendar authorization, connection and browse policies
         run: sh verification/ios-calendar/run.sh
+      - name: Check host signing settings for both widget modes
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          set -o pipefail
+          for mode in NO YES; do
+            xcodebuild -project ios/Remilo.xcodeproj -target Remilo -configuration Release \
+              -sdk iphoneos "REMILO_WIDGETS_ENABLED=$mode" -showBuildSettings -json |
+              ruby -rjson -e '
+                settings = JSON.parse(STDIN.read).find { |entry| entry["target"] == "Remilo" }.fetch("buildSettings")
+                path = settings.fetch("CODE_SIGN_ENTITLEMENTS", "")
+                root = settings.fetch("SRCROOT")
+                valid = if ARGV[0] == "YES"
+                  File.expand_path(path, root) == File.join(root, "Remilo", "RemiloWidgetsHost.entitlements")
+                else
+                  path.empty?
+                end
+                abort "Unexpected host entitlements for widget mode #{ARGV[0]}: #{path.inspect}" unless valid
+              ' "$mode"
+          done
       - name: Build the optional WidgetKit extension
         if: ${{ !cancelled() }}
         shell: bash

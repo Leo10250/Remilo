@@ -75,6 +75,31 @@ enum RemiloWidgetCopy {
         return "Mark \(name) as done"
     }
 
+    static func profile(_ language: String) -> String {
+        if language == "zh-Hans" { return "小组件配置" }
+        return "Widget profile"
+    }
+
+    static func profileUnavailable(_ language: String) -> String {
+        if language == "zh-Hans" { return "小组件配置不可用" }
+        return "Widget profile unavailable"
+    }
+
+    static func undo(_ language: String, name: String) -> String {
+        if language == "zh-Hans" { return "撤销 \(name)" }
+        return "Undo \(name)"
+    }
+
+    static func undoCompletion(_ language: String, name: String) -> String {
+        if language == "zh-Hans" { return "撤销完成：\(name)" }
+        return "Undo completion of \(name)"
+    }
+
+    static func retry(_ language: String) -> String {
+        if language == "zh-Hans" { return "重试此次操作" }
+        return "Retry the same action"
+    }
+
     static func empty(_ language: String) -> String {
         if language == "zh-Hans" { return "今天没有提醒。" }
         return "No reminders for today."

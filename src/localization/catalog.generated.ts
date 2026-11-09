@@ -2255,6 +2255,17 @@ export const catalogs = {
     "widget_not_started": "Not started yet",
     "widget_today_reminders": "Today's reminders",
     "widget_empty": "No reminders for today.",
+    "ios_widget_profiles": "Widget profiles",
+    "ios_widget_profile": "Widget profile",
+    "ios_widget_new_profile": "New widget profile",
+    "ios_widget_edit_profile": "Edit widget profile",
+    "ios_widget_profile_name": "Profile name",
+    "ios_widget_profile_setup": "Add a Remilo widget to the Home Screen. Then touch and hold it, tap Edit Widget, and choose a profile.",
+    "ios_widget_profile_history": "Each profile keeps its own Undo history. Widgets using the same profile share that history.",
+    "ios_widget_profile_unavailable": "Widget profile unavailable",
+    "ios_widget_profile_pending": "Retry the pending widget action before editing this profile.",
+    "ios_widget_remove_profile": "Remove profile",
+    "ios_widget_remove_profile_detail": "Choose another profile in any widgets using “{name}”. This will discard any pending widget action.",
     "ios_widget_open_refresh": "Open Remilo to refresh this widget.",
     "ios_widget_reminder_count": {
       "one": "{count} reminder",
@@ -4748,6 +4759,17 @@ export const catalogs = {
     "widget_not_started": "尚未开始",
     "widget_today_reminders": "今天的提醒",
     "widget_empty": "今天没有提醒。",
+    "ios_widget_profiles": "小组件配置",
+    "ios_widget_profile": "小组件配置",
+    "ios_widget_new_profile": "新建小组件配置",
+    "ios_widget_edit_profile": "编辑小组件配置",
+    "ios_widget_profile_name": "配置名称",
+    "ios_widget_profile_setup": "在主屏幕添加 Remilo 小组件后，按住该小组件，轻点“编辑小组件”，再选择一项配置。",
+    "ios_widget_profile_history": "每项配置单独记录可撤销的操作。使用同一项配置的小组件共用这份记录。",
+    "ios_widget_profile_unavailable": "小组件配置不可用",
+    "ios_widget_profile_pending": "请先在小组件中重试待处理的操作，再编辑此配置。",
+    "ios_widget_remove_profile": "移除配置",
+    "ios_widget_remove_profile_detail": "请为使用“{name}”的小组件重新选择配置。此配置中待处理的操作将被放弃。",
     "ios_widget_open_refresh": "打开 Remilo 刷新小组件。",
     "ios_widget_reminder_count": {
       "other": "{count} 项提醒"
@@ -7193,6 +7215,17 @@ export interface MessageArguments {
   widget_not_started: Record<string, never>;
   widget_today_reminders: Record<string, never>;
   widget_empty: Record<string, never>;
+  ios_widget_profiles: Record<string, never>;
+  ios_widget_profile: Record<string, never>;
+  ios_widget_new_profile: Record<string, never>;
+  ios_widget_edit_profile: Record<string, never>;
+  ios_widget_profile_name: Record<string, never>;
+  ios_widget_profile_setup: Record<string, never>;
+  ios_widget_profile_history: Record<string, never>;
+  ios_widget_profile_unavailable: Record<string, never>;
+  ios_widget_profile_pending: Record<string, never>;
+  ios_widget_remove_profile: Record<string, never>;
+  ios_widget_remove_profile_detail: { name: string };
   ios_widget_open_refresh: Record<string, never>;
   ios_widget_reminder_count: { count: number };
   widget_reminder_count: { count: number };
