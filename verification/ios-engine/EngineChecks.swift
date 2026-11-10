@@ -1095,6 +1095,14 @@ struct EngineChecks {
         let cleanFamily = try await create(clean, exceptions: [])
         let old = try cleanStore.load()
         let cleanSnapshot = try clean.calendarSeriesTextSnapshot(cleanFamily)!
+        let elapsedRule = try RemiloIOSRecurrence.Rule(anchor: anchor, frequency: "daily", count: 6, zoneID: "Asia/Tokyo")
+        let elapsedStart = start - 9 * 3_600_000
+        let elapsedChange = IOSCalendarSeriesScheduleChange(rule: elapsedRule, eventStartMs: elapsedStart, eventEndMs: elapsedStart + 1_800_000,
+                                                           title: "Earlier time zone", notes: "")
+        let elapsed = try await clean.applyCalendarSeriesSchedule(operationKey: "elapsed", snapshot: cleanSnapshot,
+                                                                  change: elapsedChange, authorize: { true })
+        let afterElapsed = try clean.calendarSeriesTextSnapshot(cleanFamily)
+        precondition(elapsed == .elapsedAlert && afterElapsed == cleanSnapshot)
         let shifted = try await clean.applyCalendarSeriesSchedule(operationKey: "shift", snapshot: cleanSnapshot, change: unsafe, authorize: { true })
         let revised = try cleanStore.load()
         let oldID = RemiloIOSSeries.occurrenceID(cleanFamily, anchor)

@@ -344,11 +344,13 @@ final class RemiloIOSGoogleCalendarRuntime {
         }
         let fields = review.source.fields
         if let change = try work.scheduleChange(for: review), let apply = authority.applySchedule {
-            switch try await apply(work.operationKey, local, change, current) {
+            let outcome = try await apply(work.operationKey, local, change, current)
+            switch outcome {
             case .deferred: return .deferred
-            case .needsReview:
+            case .needsReview, .elapsedAlert:
                 guard try current() else { return .deferred }
-                try await importJournal.finishSeriesText(work, confirmed: nil, reason: Import.Failure.staleRemote.rawValue)
+                let reason = outcome == .elapsedAlert ? Import.Failure.alertExpired.rawValue : Import.Failure.staleRemote.rawValue
+                try await importJournal.finishSeriesText(work, confirmed: nil, reason: reason)
                 return .review
             case .applied:
                 guard try current() else { return .deferred }

@@ -205,8 +205,7 @@ extension RemiloIOSEngine {
         }
         let rule = try new.replacingDeliveryOffsets(due: dueOffset, alarm: alarmOffset)
         let anchor = try Recurrence.resolve(rule, nominal: rule.anchor, deviceZone: zone)
-        guard anchor.eventStartMs == change.eventStartMs, anchor.eventEndMs == change.eventEndMs,
-              try !Recurrence.future(rule, afterMs: now, deviceZone: zone, mode: segment.template.mode, limit: 1).isEmpty else {
+        guard anchor.eventStartMs == change.eventStartMs, anchor.eventEndMs == change.eventEndMs else {
             return .needsReview
         }
 
@@ -215,6 +214,22 @@ extension RemiloIOSEngine {
             guard let index = try Recurrence.index(shifted, in: rule) else { return false }
             let slot = try Recurrence.resolve(rule, nominal: shifted, deviceZone: zone, index: index)
             return slot.eventEndMs > now || RemiloIOSSeries.deliveryTime(slot, mode: segment.template.mode) > now
+        }
+        if segment.template.mode != "None",
+           let first = try Recurrence.future(rule, afterMs: now, deviceZone: zone, mode: "None", limit: 1).first,
+           first.alarmAtMs <= now {
+            let id = RemiloIOSSeries.occurrenceID(segment.id, first.nominalSlot)
+            let saved = state.reminders[id]
+            let existingTarget = try Recurrence.index(first.nominalSlot, in: old).map { index in
+                try Recurrence.resolve(old, nominal: first.nominalSlot, deviceZone: zone, index: index).alarmAtMs
+            }
+            let preserved = state.isPurgedOccurrence(id) || saved.map {
+                (!$0.active && $0.deliveryState != "Replaced") || ($0.adjustment != nil && ($0.nextAlertMs ?? 0) > now)
+            } == true
+            guard preserved || existingTarget == first.alarmAtMs else { return .elapsedAlert }
+        }
+        guard try !Recurrence.future(rule, afterMs: now, deviceZone: zone, mode: segment.template.mode, limit: 1).isEmpty else {
+            return .needsReview
         }
         for exclusion in (state.portableExclusions ?? [:]).values {
             guard state.series[exclusion.segmentID]?.familyID == snapshot.familyID,
@@ -231,6 +246,8 @@ extension RemiloIOSEngine {
             let authored = record.independent == true && record.history.contains { $0.kind == "Edit" || $0.kind == "Create" }
             let terminal = !record.active && !retired
             if record.eventEndMs <= now && record.agendaAtMs <= now {
+                if let registration = record.registration, registration.mode == "Alarm",
+                   try replacementIsFuture(nominal), try RemiloIOSDelivery.isAlarmAlerting(registration.systemID) { return .deferred }
                 guard terminal, try replacementIsFuture(nominal) else { continue }
             }
             if recordSegment != segment.id {
@@ -265,6 +282,7 @@ extension RemiloIOSEngine {
             record.zoneID = slot.zoneID
             if record.dueLinked { record.dueAtMs = slot.dueAtMs }
             if record.alarmLinked { record.alarmAtMs = slot.alarmAtMs }
+            if !held, record.mode != "None", priorAlarm > now, record.alarmAtMs <= now { return .elapsedAlert }
             if record.title == snapshot.title { record.title = change.title }
             if record.notes == snapshot.notes { record.notes = change.notes }
             record.revision += 1

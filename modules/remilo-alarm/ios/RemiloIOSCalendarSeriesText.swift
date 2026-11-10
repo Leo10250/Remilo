@@ -15,5 +15,5 @@ struct IOSCalendarSeriesScheduleChange: Codable, Sendable {
 }
 
 enum IOSCalendarSeriesScheduleResult: Equatable, Sendable {
-    case applied, deferred, needsReview
+    case applied, deferred, needsReview, elapsedAlert
 }
