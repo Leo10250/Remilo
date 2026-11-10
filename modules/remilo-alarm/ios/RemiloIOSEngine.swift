@@ -166,10 +166,52 @@ final class RemiloIOSEngine {
         Self.calendarSeriesTextSnapshot(familyID, in: try read(), includeScheduleEdit: true)
     }
 
+    func calendarSeriesInstanceEdits(_ familyID: String, limit: Int) throws -> [IOSCalendarSeriesInstanceEdit] {
+        guard limit > 0 else { return [] }
+        let state = try read()
+        let now = iosMillis(Date())
+        guard let series = Self.calendarSeriesTextSnapshot(familyID, in: state) else { return [] }
+        return Array(state.reminders.values.compactMap { Self.calendarSeriesInstanceEdit($0, series: series, now: now) }
+            .sorted { $0.nominalSlot < $1.nominalSlot }.prefix(limit))
+    }
+
+    private static func calendarSeriesInstanceEdit(_ record: IOSReminder, series: IOSCalendarSeriesTextSnapshot,
+                                                   now: Int64) -> IOSCalendarSeriesInstanceEdit? {
+        guard record.active, record.independent == true, record.segmentID == series.segmentID,
+              let nominal = record.nominalSlot, record.id == RemiloIOSSeries.occurrenceID(series.segmentID, nominal),
+              let baseline = record.calendarInstanceEditBaseline,
+              max(baseline.eventEndMs, record.eventEndMs) > now else { return nil }
+        let desired = calendarInstanceFields(record)
+        guard baseline != desired else { return nil }
+        return .init(series: series, occurrenceID: record.id, nominalSlot: nominal, knownEventID: record.calendarInstanceID,
+                     revision: record.revision, generation: record.generation, baseline: baseline, desired: desired)
+    }
+
+    func withCalendarSeriesInstancePermit<Value: Sendable>(for edit: IOSCalendarSeriesInstanceEdit,
+                                                           commit: @MainActor @Sendable () throws -> Value) async throws -> Value? {
+        await acquire()
+        defer { release() }
+        try Task.checkCancellation()
+        let state = try read()
+        guard let series = Self.calendarSeriesTextSnapshot(edit.series.familyID, in: state),
+              let record = state.reminders[edit.occurrenceID],
+              Self.calendarSeriesInstanceEdit(record, series: series, now: iosMillis(Date())) == edit else { return nil }
+        return try commit()
+    }
+
+    private static func calendarInstanceFields(_ record: IOSReminder) -> IOSCalendarSeriesInstanceEdit.Fields {
+        .init(title: record.title, notes: record.notes, eventStartMs: record.eventStartMs, eventEndMs: record.eventEndMs,
+              allDay: record.allDay, zoneID: record.zoneID)
+    }
+
+    private static func isCalendarImportedFamily(_ familyID: String, in state: IOSDatabase) -> Bool {
+        state.receipts.contains { $0.key.hasPrefix(calendarCreatePrefix) && $0.value.seriesSegmentID == familyID }
+    }
+
     private static func calendarSeriesTextSnapshot(_ familyID: String, in state: IOSDatabase,
                                                     includeScheduleEdit: Bool = false) -> IOSCalendarSeriesTextSnapshot? {
         guard let root = state.series[familyID], root.familyID == familyID,
-              state.receipts.contains(where: { $0.key.hasPrefix(calendarCreatePrefix) && $0.value.seriesSegmentID == familyID }) else { return nil }
+              isCalendarImportedFamily(familyID, in: state) else { return nil }
         let current = state.series.values.filter { $0.familyID == familyID && $0.state != "Archived" }
         guard current.count == 1, let segment = current.first, segment.state == "Active" else { return nil }
         let baseline = root.calendarBaselineRule ?? root.rule
@@ -707,12 +749,18 @@ final class RemiloIOSEngine {
         switch kind {
         case "Edit":
             guard !record.deleted else { throw IOSInputFailure("IN_TRASH") }
-            let updated = try RemiloIOSProjection.draft(input, id: record.id, previous: record, state: state, now: now)
+            var updated = try RemiloIOSProjection.draft(input, id: record.id, previous: record, state: state, now: now)
             let timeChanged = updated.mode != record.mode || updated.alarmAtMs != record.alarmAtMs
             let soundChanged = (updated.sound ?? "remilo") != (record.sound ?? "remilo")
             changeRegistration = timeChanged || (soundChanged && (record.deferredSeriesOverride != true || record.registration != nil))
             if timeChanged, updated.active, updated.mode != "None", updated.alarmAtMs <= now {
                 throw input.invalid("alarmAtMs")
+            }
+            if let segmentID = record.segmentID, let familyID = state.series[segmentID]?.familyID,
+               record.active, updated.calendarInstanceEditBaseline == nil,
+               Self.isCalendarImportedFamily(familyID, in: state) {
+                let baseline = Self.calendarInstanceFields(record)
+                if baseline != Self.calendarInstanceFields(updated) { updated.calendarInstanceEditBaseline = baseline }
             }
             record = updated
             if record.segmentID != nil { record.independent = true }

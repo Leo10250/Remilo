@@ -1195,6 +1195,34 @@ struct EngineChecks {
             change: change(terminal, eventID: "google-terminal"), authorize: { true })
         let final = try store.load().reminders[terminal.id]!
         precondition(ignoredReplay == .ignored && needsReview == .needsReview && final.calendarInstanceID == nil)
+
+        let noEdit = try reopened.calendarSeriesInstanceEdits(family, limit: 2)
+        precondition(noEdit.isEmpty, "Postpone, Google inbound, and Reopen are not authored Calendar changes")
+        _ = try await reopened.apply(["kind": "Edit", "operationId": "instance-sound", "occurrenceId": moved.id,
+                                     "expectedRevision": moved.revision, "sound": "system"])
+        let soundOnly = try reopened.calendarSeriesInstanceEdits(family, limit: 2)
+        precondition(soundOnly.isEmpty, "Changing alarm sound must not edit the Google occurrence")
+        let withSound = try store.load().reminders[moved.id]!
+        _ = try await reopened.apply(["kind": "Edit", "operationId": "instance-title", "occurrenceId": moved.id,
+                                      "expectedRevision": withSound.revision, "title": "A local occurrence edit"])
+        let captured = try reopened.calendarSeriesInstanceEdits(family, limit: 2)
+        guard let first = captured.first else { preconditionFailure("Expected durable occurrence edit") }
+        precondition(captured.count == 1 && first.nominalSlot == original.nominalSlot && first.knownEventID == update.eventID &&
+                     first.baseline.title == update.title && first.baseline.eventStartMs == update.eventStartMs &&
+                     first.desired.title == "A local occurrence edit")
+        _ = try await reopened.apply(["kind": "Edit", "operationId": "instance-notes", "occurrenceId": moved.id,
+                                      "expectedRevision": first.revision, "notes": "Edited again before syncing"])
+        let afterRestart = store.engine()
+        let latest = try afterRestart.calendarSeriesInstanceEdits(family, limit: 2)
+        guard let second = latest.first else { preconditionFailure("Expected occurrence edit after restart") }
+        precondition(latest.count == 1 && second.baseline == first.baseline && second.desired.notes == "Edited again before syncing")
+        let stale = try await afterRestart.withCalendarSeriesInstancePermit(for: first) { true }
+        let allowed = try await afterRestart.withCalendarSeriesInstancePermit(for: second) { true }
+        precondition(stale == nil && allowed == true)
+        _ = try await afterRestart.apply(["kind": "Done", "operationId": "instance-done-before-sync", "occurrenceId": moved.id,
+                                           "expectedRevision": second.revision])
+        let retired = try await afterRestart.withCalendarSeriesInstancePermit(for: second) { true }
+        precondition(retired == nil)
     }
 
     private static func calendarSeriesAllowsAFutureMoveAfterItsLastOriginal() async throws {
