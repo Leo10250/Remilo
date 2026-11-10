@@ -337,9 +337,11 @@ enum ManagedSetupChecks {
                          globalStatus?.request.children?.count == 2 && globalStatus?.request.startedAtMs == waiting?.request.startedAtMs &&
                          globalSummary.request?.id == syncID && fixture.posts == 0,
                          "Resume one global request, reuse native link checks, and preserve a known review issue")
+            let beforeDisable = try await policyChecks(fixture: fixture, setup: reopened, journal: journal, connection: connection,
+                account: authorized.account, imports: .init(directory: directory, now: nowMs), runtime: { runtime().0 }, local: local)
             let retiredSync = UUID()
             _ = try await afterRestart.captureGlobalSync(retiredSync, expectedRevision: revision)
-            let disabled = try reopened.changeMode(.disabled, operationID: UUID(), expectedRevision: resumedView.bindingRevision,
+            let disabled = try reopened.changeMode(.disabled, operationID: UUID(), expectedRevision: beforeDisable.bindingRevision,
                                                    expectedConnectionRevision: revision)
             try await afterRestart.runGlobalSync(retiredSync, expectedRevision: revision) { _ in
                 preconditionFailure("An old global request cannot run after the Calendar scope changes")
@@ -350,7 +352,7 @@ enum ManagedSetupChecks {
             let disabledView = try setup.view(expectedRevision: revision)
             let heldAfterDisable = try setup.heldBinding(authorized.account)
             precondition(disabledView.mode == .disabled && disabledView.binding == resumedView.binding &&
-                         disabled.revision == resumedMode.revision + 1 && heldAfterDisable == nil)
+                         disabled.revision == beforeDisable.bindingRevision + 1 && heldAfterDisable == nil)
             return
         }
 
@@ -397,6 +399,75 @@ enum ManagedSetupChecks {
         precondition(complete.stage == "Confirmed" && complete.action == "None" && complete.currentScope)
     }
 
+    private static func policyChecks(fixture: Fixture, setup: Setup, journal: Setup.Journal, connection: Setup.Connection,
+                                     account: Setup.Account, imports: Runtime.ImportJournal,
+                                     runtime: () -> Runtime, local: LocalImports) async throws -> Setup.Journal.View {
+        let revision = account.connectionRevision
+        let before = try setup.view(expectedRevision: revision)
+        fixture.policyEvents = ["policy-pending"]
+        let staged = try await setup.scanIncoming(expectedRevision: revision)
+        guard let observation = staged.pending.first(where: { $0.eventID == "policy-pending" }) else {
+            preconditionFailure("Stage an eligible event under the original import defaults")
+        }
+        let permit = Setup.Inbox.Permit(scope: staged.scope, observation: observation)
+        let choices = Runtime.Import.Choices(mode: .alarm, sound: .system, allDayAlarmMinutes: before.policy.allDayAlarmMinutes)
+        let reviewed = try await connection.prepareImport(expectedRevision: revision, calendarID: permit.source.calendarID,
+            eventID: permit.source.eventID, recurringChoices: choices, managed: permit, canRead: { true })
+        _ = try await imports.captureManaged(permit, review: reviewed, choices: choices)
+
+        var updated = before.policy
+        updated.automaticImport = false
+        updated.exportNewReminders = true
+        updated.importMode = .notification
+        updated.allDayAlarmMinutes = 615
+        let stale = try setup.previewPolicy(before.policy, expectedRevision: revision)
+        let preview = try setup.previewPolicy(updated, expectedRevision: revision)
+        let operation = UUID()
+        let applied = try runtime().confirmManagedPolicy(operation, reviewID: preview.id, expectedRevision: revision)
+        let off = try setup.view(expectedRevision: revision)
+        let existingLinks = try await runtime().savedSyncSummary()
+        precondition(off.policy == applied.policy && !off.policy.automaticImport && off.authEpoch == before.authEpoch &&
+                     off.binding == before.binding && off.bindingRevision == before.bindingRevision + 1 &&
+                     existingLinks.automatic == 2,
+                     "Policy defaults have their own revision and do not revoke existing links")
+        let defaultExport = try setup.outgoingBinding(explicit: false)
+        precondition(defaultExport == off.binding)
+        do {
+            _ = try setup.confirmPolicy(UUID(), reviewID: stale.id, expectedRevision: revision)
+            preconditionFailure("A policy preview cannot overwrite a newer edit")
+        } catch Setup.Journal.Rejection.stalePreview {}
+        fixture.policyEvents = ["policy-pending", "policy-off"]
+        let finished = try await runtime().syncManagedIncoming(expectedRevision: revision)
+        let offProgress = try setup.savedIncomingProgress(expectedRevision: revision)
+        precondition(finished.imported == 1 && local.commands.last?.title == "policy-pending" &&
+                     local.commands.last?.mode == .some(.alarm) &&
+                     offProgress?.pending.contains { $0.eventID == "policy-off" || $0.eventID == "policy-pending" } == false,
+                     "Already captured imports retain their choices while new imports are off")
+
+        var enabled = off.policy
+        enabled.automaticImport = true
+        var suppression = enabled
+        suppression.disableGoogleReminders = true
+        do {
+            _ = try setup.previewPolicy(suppression, expectedRevision: revision)
+            preconditionFailure("Unavailable Google reminder suppression cannot be saved")
+        } catch Failure.invalidInput {}
+        let enable = try setup.previewPolicy(enabled, expectedRevision: revision)
+        _ = try runtime().confirmManagedPolicy(UUID(), reviewID: enable.id, expectedRevision: revision)
+        let requests = fixture.policyTokens.count
+        fixture.policyEvents = ["policy-new"]
+        let first = try await runtime().syncManagedIncoming(expectedRevision: revision)
+        precondition(first.imported == 1 && local.commands.last?.title == "policy-new" &&
+                     local.commands.last?.mode == .some(.notification) &&
+                     fixture.policyTokens.count == requests + 1 && fixture.policyTokens[requests] == nil,
+                     "Re-enabling imports starts a fresh Google scan with the new defaults")
+        let replayed = try setup.confirmPolicy(operation, reviewID: preview.id, expectedRevision: revision)
+        let current = try setup.view(expectedRevision: revision)
+        let lease = try journal.incomingScope(account).binding.linkLease
+        precondition(replayed == applied && current.policy.automaticImport && lease == staged.scope.binding.linkLease)
+        return current
+    }
+
     @MainActor
     private final class LocalImports {
         enum Failure: Error { case interrupted }
@@ -433,6 +504,8 @@ enum ManagedSetupChecks {
         private(set) var samples = 0
         private var incoming = false
         var stageResumeCandidates = false
+        var policyEvents: [String]?
+        private(set) var policyTokens: [String?] = []
         var scanAfterResume = false
         var recoveredVersion = "v2"
         private(set) var resumeStartedFrom: String?
@@ -505,7 +578,10 @@ enum ManagedSetupChecks {
         private func incomingPage(_ url: URL) throws -> HTTP.Response {
             let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
             let payload: [String: Any]
-            if scanAfterResume {
+            if let policyEvents {
+                policyTokens.append(query.first(where: { $0.name == "syncToken" })?.value)
+                payload = ["items": policyEvents.map { timedEvent($0, version: "v2") }, "nextSyncToken": "policy"]
+            } else if scanAfterResume {
                 let token = query.first(where: { $0.name == "syncToken" })?.value
                 let initial = resumeStartedFrom == nil
                 if initial { resumeStartedFrom = token }

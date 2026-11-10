@@ -78,6 +78,29 @@ final class RemiloIOSGoogleCalendarBridge {
         return Self.managedState(state, connection: view, progress: progress, operation: operation)
     }
 
+    func previewManagedPolicy(_ choices: [String: Any]) async throws -> [String: Any] {
+        let runtime = try runtime()
+        guard let setup = runtime.managedSetup else { throw Failure.invalidConfiguration }
+        let view = try await runtime.view()
+        let state = try setup.view(expectedRevision: view.revision)
+        let input = IOSInput(values: choices)
+        if choices["expectedRevision"] != nil,
+           try input.integer("expectedRevision", range: 1...9_007_199_254_740_991) != state.policy.revision {
+            throw ManagedSetup.Journal.Rejection.stalePreview
+        }
+        let policy = try Self.managedPolicy(choices, defaults: state.policy)
+        let review = try setup.previewPolicy(policy, expectedRevision: view.revision)
+        return [
+            "previewId": review.id.uuidString.lowercased(), "kind": "Policy",
+            "expectedRevision": review.bindingRevision, "expectedConnectionRevision": view.revision,
+            "expiresAtMs": review.expiresAtMs, "policy": Self.managedPolicy(review.policy),
+            "initialMode": (state.binding?.initialImport?.mode ?? state.policy.importMode).rawValue,
+            "calendarCandidates": [[String: Any]](), "selectedCalendarId": state.binding?.record.id ?? "",
+            "calendarZone": state.binding?.record.zoneId ?? "", "createCalendar": false, "warnings": [String](),
+            "complete": true, "items": [[String: Any]](),
+        ]
+    }
+
     func previewManagedSetup(_ choices: [String: Any]) async throws -> [String: Any] {
         let runtime = try runtime()
         guard let setup = runtime.managedSetup else { throw Failure.invalidConfiguration }
@@ -416,6 +439,15 @@ final class RemiloIOSGoogleCalendarBridge {
             return ["operationId": operation.uuidString.lowercased(), "captured": true,
                     "revision": receipt.revision, "mode": receipt.mode.rawValue]
         }
+        if kind == "ApplyManagedCalendarPolicy" {
+            guard let ids = command["selectedItemIds"] as? [String], ids.isEmpty,
+                  command["selectedCalendarId"] == nil else { throw Failure.invalidInput }
+            let view = try await runtime.view()
+            let receipt = try runtime.confirmManagedPolicy(operation, reviewID: Self.uuid(input, "previewId"),
+                                                            expectedRevision: view.revision)
+            return ["operationId": operation.uuidString.lowercased(), "captured": true,
+                    "revision": receipt.revision, "policy": Self.managedPolicy(receipt.policy)]
+        }
         if kind == "ConfirmManagedCalendarSetup" || kind == "RetryManagedCalendarOperation" {
             let view = try await runtime.view()
             guard let setup = runtime.managedSetup else { throw Failure.invalidConfiguration }
@@ -567,6 +599,12 @@ final class RemiloIOSGoogleCalendarBridge {
                     "pending": 0, "review": 0, "held": 0, "children": [String](), "currentScope": current]
         }
         guard view.connected else { return nil }
+        if let setup = runtime.managedSetup, let receipt = try setup.policyOperation(id, expectedRevision: revision) {
+            let current = try setup.view(expectedRevision: revision).bindingRevision == receipt.revision
+            return ["operationId": id.uuidString.lowercased(), "kind": "Policy", "stage": "Confirmed", "reason": "",
+                    "action": "None", "confirmed": 1, "pending": 0, "review": 0, "held": 0, "children": [String](),
+                    "currentScope": current]
+        }
         if let status = try runtime.globalSyncStatus(id, expectedRevision: revision) {
             return Self.globalSyncStatus(status.request, current: status.current, running: status.running)
         }
@@ -761,7 +799,7 @@ final class RemiloIOSGoogleCalendarBridge {
         else if let connection, !hasReadAccess(connection) { phase = "AccessRequired" }
         else { phase = scanComplete ? "Ready" : "InitialImport" }
         let review = progress?.pending.filter { if case .needsReview = $0.kind { return true }; return false }.count ?? 0
-        let pending = (progress?.pending.count ?? 0) - review
+        let pending = policy.automaticImport ? (progress?.pending.count ?? 0) - review : 0
         let problem = operation.flatMap { status -> [String: String]? in
             status.action == "None" ? nil : ["reason": status.reason, "action": status.action]
         }

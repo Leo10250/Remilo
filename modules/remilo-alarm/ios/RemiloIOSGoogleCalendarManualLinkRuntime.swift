@@ -394,13 +394,13 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
                                           occurrenceID: occurrenceID, expectedRevision: expectedLinkRevision)
     }
 
-    func reviewManagedResume(_ binding: Managed.Binding, policy: Managed.Policy, account: Account,
+    func reviewManagedResume(_ binding: Managed.Binding, account: Account,
                              canRead: @escaping @MainActor @Sendable () -> Bool) async throws -> [ResumeRow] {
         let records = try store.links(viewingAs: account).filter { record in
             guard record.state == .linked, let consent = record.automatic, consent.phase == .active,
                   consent.accountGeneration == account.accountGeneration, let lease = consent.managedLease,
                   Managed.sameDestination(lease, as: binding), lease.authEpoch <= binding.authEpoch else { return false }
-            return lease.publication == true || policy.automaticImport
+            return true
         }
         guard records.count <= 500 else { throw Failure.discoveryLimit }
         let budget = RemiloIOSGoogleCalendarHTTP.Budget()

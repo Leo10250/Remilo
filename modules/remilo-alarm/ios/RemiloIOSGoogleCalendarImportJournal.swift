@@ -354,7 +354,8 @@ actor RemiloIOSGoogleCalendarImportJournal {
                         choices: Import.Choices) throws -> UUID {
         guard permit.source == review.source.key, permit.observation.etag == review.source.etag,
               permit.scope.binding.belongs(to: review.account), permit.scope.binding.account.accountGeneration == review.account.accountGeneration,
-              choices.mode == permit.observation.importMode, choices.allDayAlarmMinutes == permit.scope.policy.allDayAlarmMinutes,
+              choices.mode == permit.observation.importMode,
+              choices.allDayAlarmMinutes == (permit.observation.allDayAlarmMinutes ?? permit.scope.policy.allDayAlarmMinutes),
               choices.title == nil, choices.alarmAtMs == nil, choices.listID == nil,
               choices.automaticSync, !choices.disableGoogleReminders else {
             throw Failure.staleRemote
@@ -408,8 +409,7 @@ actor RemiloIOSGoogleCalendarImportJournal {
                                 allowInstanceTransfers: Bool = false,
                                 waitingExports: Set<UUID> = []) throws -> [RecurringObservationResult] {
         guard limit > 0, scan.initialComplete, !scan.continuation, scan.scope.binding.belongs(to: account),
-              scan.scope.binding.account.accountGeneration == account.accountGeneration,
-              scan.scope.policy.automaticImport else { return [] }
+              scan.scope.binding.account.accountGeneration == account.accountGeneration else { return [] }
         var state = try read()
         var masters: [String: UUID] = [:]
         for (id, entry) in state.entries {

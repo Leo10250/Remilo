@@ -66,6 +66,7 @@ final class RemiloIOSGoogleCalendarManagedSetup {
     private let now: @Sendable () -> Date
     private var reviews: [Journal.Review] = []
     private var resumeReviews: [Journal.ResumeReview] = []
+    private var policyReviews: [Journal.PolicyReview] = []
     private var running: Set<UUID> = []
     private var scanningIncoming = false
 
@@ -84,7 +85,8 @@ final class RemiloIOSGoogleCalendarManagedSetup {
 
     /// One bounded foreground pass. The durable inbox stages source versions
     /// for subsequent exact import or reconciliation, independent of delivery.
-    func scanIncoming(expectedRevision: Int, budget: RemiloIOSGoogleCalendarHTTP.Budget = .init()) async throws -> Inbox.Progress {
+    func scanIncoming(expectedRevision: Int, budget: RemiloIOSGoogleCalendarHTTP.Budget = .init(),
+                      tracking: Set<String> = []) async throws -> Inbox.Progress {
         guard !scanningIncoming else { throw Journal.Rejection.operationPending }
         scanningIncoming = true
         defer { scanningIncoming = false }
@@ -115,7 +117,8 @@ final class RemiloIOSGoogleCalendarManagedSetup {
                 return try inbox.progress(scope, pages: pages, continuation: true)
             }
             try fence()
-            try inbox.record(page, request: request, now: Int64((now().timeIntervalSince1970 * 1_000).rounded()))
+            try inbox.record(page, request: request, now: Int64((now().timeIntervalSince1970 * 1_000).rounded()),
+                             tracking: scope.policy.automaticImport ? nil : tracking)
             pages += 1
             if page.next == nil { return try inbox.progress(scope, pages: pages, continuation: false) }
         }
@@ -126,6 +129,33 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         try requireForeground()
         do { return try journal.view(viewingAs: connection.savedAccount(expectedRevision: expectedRevision)) }
         catch Failure.needsAccess { return try journal.view() }
+    }
+
+    func previewPolicy(_ proposed: Journal.Policy, expectedRevision: Int) throws -> Journal.PolicyReview {
+        let account = try currentAccount(expectedRevision)
+        let review = try journal.reviewPolicy(proposed, account: account)
+        policyReviews.removeAll { $0.account != account }
+        if policyReviews.count == 8 { policyReviews.removeFirst() }
+        policyReviews.append(review)
+        return review
+    }
+
+    func confirmPolicy(_ operationID: UUID, reviewID: UUID, expectedRevision: Int) throws -> Journal.PolicyReceipt {
+        try requireForeground()
+        let account = try connection.savedAccount(expectedRevision: expectedRevision)
+        if let receipt = try journal.policyReplay(operationID, reviewID: reviewID, account: account) { return receipt }
+        guard try currentAccount(expectedRevision) == account,
+              let review = policyReviews.first(where: { $0.id == reviewID }) else { throw Journal.Rejection.stalePreview }
+        return try journal.applyPolicy(review, operationID: operationID, account: account)
+    }
+
+    func policyOperation(_ id: UUID, expectedRevision: Int) throws -> Journal.PolicyReceipt? {
+        try requireForeground()
+        return try journal.policyOperation(id, account: connection.savedAccount(expectedRevision: expectedRevision))
+    }
+
+    func collectionScope(_ account: Account) throws -> Inbox.Scope {
+        try journal.incomingScope(account)
     }
 
     func outgoingBinding(explicit: Bool) throws -> Journal.Binding? {
@@ -170,10 +200,12 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         var imports: [ResumeImportRow] = []
         var recurring: [ResumeSeriesRow] = []
         if let scope = try journal.heldIncomingScope(account) {
-            if let incoming { imports = try await incoming(journal.heldIncomingObservations(account), scope, account) }
+            if state.policy.automaticImport, let incoming {
+                imports = try await incoming(journal.heldIncomingObservations(account), scope, account)
+            }
             if let series { recurring = try await series(scope, account) }
         }
-        let links = try await manual?.reviewManagedResume(binding, policy: state.policy, account: account) { [self] in
+        let links = try await manual?.reviewManagedResume(binding, account: account) { [self] in
             canUseForeground() && (try? journal.view(viewingAs: account)) == state
         } ?? []
         guard try journal.view(viewingAs: account) == state else { throw Journal.Rejection.stalePreview }
@@ -349,6 +381,34 @@ final class RemiloIOSGoogleCalendarManagedSetup {
 
     func permitsIncoming(_ permit: Inbox.Permit, account: Account) throws -> Bool {
         try permitsObservation(permit, account: account, instance: false)
+    }
+
+    func permitsCapturedImport(_ permit: Inbox.Permit, account: Account) throws -> Bool {
+        guard canUseForeground(), try connection.isCurrentAccount(account) else { return false }
+        let scope: Inbox.Scope
+        do { scope = try journal.incomingScope(account) }
+        catch Failure.staleConnection { return false }
+        return try inbox.capturedPermit(permit, scope: scope) != nil
+    }
+
+    func holdsCapturedImport(_ permit: Inbox.Permit, account: Account) throws -> Bool {
+        let lease = permit.scope.binding.linkLease
+        if try journal.heldBinding(account)?.linkLease == lease { return true }
+        let scope: Inbox.Scope
+        do { scope = try journal.incomingScope(account) }
+        catch Failure.staleConnection { return false }
+        guard scope.binding.linkLease == lease, scope.policy != permit.scope.policy else { return false }
+        return try !inbox.hasCompleteCheckpoint(scope)
+    }
+
+    func finishCapturedImport(_ permit: Inbox.Permit, account: Account, reviewReason: String?) throws {
+        guard canUseForeground(), try connection.isCurrentAccount(account) else { throw Failure.staleConnection }
+        let scope: Inbox.Scope
+        do { scope = try journal.incomingScope(account) }
+        catch Failure.staleConnection { return }
+        if let current = try inbox.capturedPermit(permit, scope: scope) {
+            try inbox.finish(current, reviewReason: reviewReason)
+        }
     }
 
     func permitsIncomingInstance(_ permit: Inbox.Permit, account: Account) throws -> Bool {

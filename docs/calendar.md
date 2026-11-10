@@ -267,6 +267,12 @@ relinking may supersede it after fresh review. Pause holds managed work; Resume 
 and revalidates selected captured children. Other calendars' link permissions remain
 independent. A default destination change never retargets an existing operation.
 
+Changing managed import defaults preserves existing link authorization and the
+alert settings saved by captured imports. Turning automatic import off holds
+unclaimed candidates while existing links continue to sync. Turning it back on
+starts a fresh Google scan for new candidates. An initial recovery cohort keeps
+its original alert mode and all-day timing.
+
 ## Durable native protocol and background opportunities
 
 CalendarRuntime executes I/O separately; engine serialization owns native previews,

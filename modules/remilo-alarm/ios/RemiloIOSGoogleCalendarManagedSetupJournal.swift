@@ -31,6 +31,22 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         var disableGoogleReminders = false
     }
 
+    struct PolicyReview: Sendable {
+        let id: UUID
+        let account: Account
+        let bindingRevision: Int
+        let authEpoch: Int
+        let policy: Policy
+        let expiresAtMs: Int64
+    }
+
+    struct PolicyReceipt: Codable, Equatable, Sendable {
+        let account: Account
+        let reviewID: UUID
+        let revision: Int
+        let policy: Policy
+    }
+
     enum Target: Codable, Equatable, Sendable {
         case select(calendarID: String)
         case create(zoneID: String)
@@ -255,6 +271,9 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         var resumedLinkProofs: [ResumeLink]?
         var resumedSeriesProofs: [ResumeSeries]?
         var resumeCheckpointScope: Inbox.Scope?
+        var resetIncomingCursor: Bool?
+        var initialAllDayAlarmMinutes: Int?
+        var policyReceipts: [UUID: PolicyReceipt]?
         var syncRequests: [UUID: SyncRequest]?
 
         var mode: Mode { savedMode ?? (binding == nil ? .disabled : .enabled) }
@@ -316,7 +335,9 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
             guard Self.sameOwner(saved.account, account) else { throw Failure.operationReused }
             return saved
         }
-        guard state.operations[id] == nil, state.modeReceipts?[id] == nil else { throw Failure.operationReused }
+        guard state.operations[id] == nil, state.modeReceipts?[id] == nil, state.policyReceipts?[id] == nil else {
+            throw Failure.operationReused
+        }
         var requests = state.syncRequests ?? [:]
         let request = SyncRequest(id: id, account: account, bindingRevision: state.bindingRevision,
                                   authEpoch: state.authEpoch, sequence: requests.count + 1, setupOperationID: state.pendingOperationID)
@@ -347,10 +368,62 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         try write(state)
     }
 
+    func reviewPolicy(_ proposed: Policy, account: Account) throws -> PolicyReview {
+        let state = try read()
+        guard state.pendingOperationID == nil, state.binding?.belongs(to: account) != false,
+              proposed.revision == state.policy.revision else { throw Rejection.stalePreview }
+        guard (0...1439).contains(proposed.allDayAlarmMinutes), !proposed.disableGoogleReminders else { throw Failure.invalidInput }
+        return .init(id: UUID(), account: account, bindingRevision: state.bindingRevision, authEpoch: state.authEpoch,
+                     policy: proposed, expiresAtMs: now() + 600_000)
+    }
+
+    func policyOperation(_ id: UUID, account: Account) throws -> PolicyReceipt? {
+        guard let receipt = try read().policyReceipts?[id], Self.sameOwner(receipt.account, account) else { return nil }
+        return receipt
+    }
+
+    func policyReplay(_ id: UUID, reviewID: UUID, account: Account) throws -> PolicyReceipt? {
+        let state = try read()
+        if let receipt = state.policyReceipts?[id] {
+            guard Self.sameOwner(receipt.account, account), receipt.reviewID == reviewID else { throw Failure.operationReused }
+            return receipt
+        }
+        guard state.operations[id] == nil, state.modeReceipts?[id] == nil, state.syncRequests?[id] == nil else {
+            throw Failure.operationReused
+        }
+        return nil
+    }
+
+    func applyPolicy(_ review: PolicyReview, operationID: UUID, account: Account) throws -> PolicyReceipt {
+        if let saved = try policyReplay(operationID, reviewID: review.id, account: account) { return saved }
+        var state = try read()
+        guard review.account == account, state.pendingOperationID == nil, state.binding?.belongs(to: account) != false,
+              state.bindingRevision == review.bindingRevision, state.authEpoch == review.authEpoch,
+              state.policy.revision == review.policy.revision, now() <= review.expiresAtMs else { throw Rejection.stalePreview }
+        if let binding = state.binding, state.mode != .disabled {
+            let prior = Self.inboxScope(binding, in: state)
+            state.resumeCheckpointScope = try savedIncomingScope(prior, in: state)
+            if state.initialAllDayAlarmMinutes == nil,
+               try !managedInbox().progress(state.resumeCheckpointScope ?? prior, pages: 0, continuation: false).initialComplete {
+                state.initialAllDayAlarmMinutes = state.policy.allDayAlarmMinutes
+            }
+            if !state.policy.automaticImport && review.policy.automaticImport { state.resetIncomingCursor = true }
+        }
+        var policy = review.policy
+        policy.revision = try Self.advance(state.policy.revision)
+        state.bindingRevision = try Self.advance(state.bindingRevision)
+        state.policy = policy
+        let receipt = PolicyReceipt(account: account, reviewID: review.id, revision: state.bindingRevision, policy: policy)
+        var receipts = state.policyReceipts ?? [:]
+        receipts[operationID] = receipt
+        state.policyReceipts = receipts
+        try write(state)
+        return receipt
+    }
+
     func incomingScope(_ account: Account) throws -> RemiloIOSGoogleCalendarManagedInbox.Scope {
         let state = try read()
         let binding = try Self.activeBinding(in: state, account: account)
-        guard state.policy.automaticImport else { throw Failure.staleConnection }
         return Self.inboxScope(binding, in: state)
     }
 
@@ -375,12 +448,13 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
 
     func heldIncomingScope(_ account: Account) throws -> RemiloIOSGoogleCalendarManagedInbox.Scope? {
         let state = try read()
-        guard state.policy.automaticImport, let binding = Self.heldBinding(in: state, account: account) else { return nil }
+        guard let binding = Self.heldBinding(in: state, account: account) else { return nil }
         return Self.inboxScope(binding, in: state)
     }
 
     private static func inboxScope(_ binding: Binding, in state: State) -> Inbox.Scope {
-        .init(binding: binding, policy: state.policy, heldEventIDs: state.heldIncomingIDs, resumedEventIDs: state.resumedIncomingIDs)
+        .init(binding: binding, policy: state.policy, heldEventIDs: state.heldIncomingIDs, resumedEventIDs: state.resumedIncomingIDs,
+              initialAllDayAlarmMinutes: state.initialAllDayAlarmMinutes)
     }
 
     func heldIncomingObservations(_ account: Account) throws -> [Inbox.Observation] {
@@ -402,7 +476,9 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         for observation in try managedInbox().staged(saved ?? current) {
             if let prior = byID[observation.eventID] {
                 byID[observation.eventID] = .init(eventID: observation.eventID, etag: observation.etag, kind: observation.kind,
-                    importMode: prior.importMode, initialRecovery: prior.initialRecovery, instanceCancelled: observation.instanceCancelled)
+                    importMode: prior.importMode, initialRecovery: prior.initialRecovery, instanceCancelled: observation.instanceCancelled,
+                    initialCohort: prior.initialCohort ?? observation.initialCohort,
+                    allDayAlarmMinutes: prior.allDayAlarmMinutes ?? observation.allDayAlarmMinutes)
             } else {
                 byID[observation.eventID] = observation
             }
@@ -415,13 +491,18 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
     }
 
     func resumeInboxCheckpoint(_ scope: Inbox.Scope, account: Account) throws {
-        let state = try read()
+        var state = try read()
         guard let binding = try? Self.activeBinding(in: state, account: account), Self.inboxScope(binding, in: state) == scope else {
             throw Failure.staleConnection
         }
-        guard let prior = state.resumeCheckpointScope else { return }
-        let reviewed = (state.resumedImports ?? []).map(\.observation) + (state.resumedSeriesProofs ?? []).map(\.observation)
-        try managedInbox().resumeCheckpoint(from: prior, to: scope, reviewed: reviewed)
+        if let prior = state.resumeCheckpointScope {
+            let reviewed = (state.resumedImports ?? []).map(\.observation) + (state.resumedSeriesProofs ?? []).map(\.observation)
+            try managedInbox().resumeCheckpoint(from: prior, to: scope, reviewed: reviewed, resetCursor: state.resetIncomingCursor == true)
+        }
+        if state.resetIncomingCursor == true {
+            state.resetIncomingCursor = nil
+            try write(state)
+        }
     }
 
     func resumedImports(_ account: Account) throws -> [ResumeImport] {
@@ -446,9 +527,8 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
     func resumedLinks(_ account: Account) throws -> [(ResumeLink, Lease)] {
         let state = try read()
         guard let binding = try? Self.activeBinding(in: state, account: account) else { return [] }
-        return (state.resumedLinkProofs ?? []).compactMap { item in
-            if item.priorLease.publication == true { return (item, binding.exportLease) }
-            return state.policy.automaticImport ? (item, binding.linkLease) : nil
+        return (state.resumedLinkProofs ?? []).map { item in
+            (item, item.priorLease.publication == true ? binding.exportLease : binding.linkLease)
         }
     }
 
@@ -461,7 +541,7 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
 
     func resumedSeries(_ account: Account) throws -> [ResumeSeries] {
         let state = try read()
-        guard state.policy.automaticImport, (try? Self.activeBinding(in: state, account: account)) != nil else { return [] }
+        guard (try? Self.activeBinding(in: state, account: account)) != nil else { return [] }
         return state.resumedSeriesProofs ?? []
     }
 
@@ -500,18 +580,18 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
                   known.contains(item.observation.eventID) && item.review.account == account &&
                     item.review.source.key == .init(subject: account.subject, calendarID: binding.record.id, eventID: item.observation.eventID) &&
                     item.review.source.etag == item.observation.etag && item.choices.mode == item.observation.importMode &&
-                    item.choices.allDayAlarmMinutes == state.policy.allDayAlarmMinutes &&
+                    item.choices.allDayAlarmMinutes == (item.observation.allDayAlarmMinutes ?? state.policy.allDayAlarmMinutes) &&
                     item.choices.automaticSync && !item.choices.disableGoogleReminders
               }) else { throw Rejection.stalePreview }
         guard Set(associationIDs).count == associationIDs.count, links.allSatisfy({ item in
             let lease = item.priorLease
             return item.source.belongs(to: account) && item.source.calendarID == lease.calendarID &&
                 item.reviewedDigest.count == 32 && Self.sameDestination(lease, as: binding) &&
-                lease.authEpoch <= binding.authEpoch && (lease.publication == true || state.policy.automaticImport)
+                lease.authEpoch <= binding.authEpoch
         }) else { throw Rejection.stalePreview }
         let incomingIDs = imports.map { $0.observation.eventID } + series.map { $0.observation.eventID }
         guard Set(incomingIDs).count == incomingIDs.count, series.allSatisfy({ item in
-            state.policy.automaticImport && item.source.subject == account.subject && item.source.calendarID == binding.record.id &&
+            item.source.subject == account.subject && item.source.calendarID == binding.record.id &&
                 item.observation.eventID == item.source.eventID && item.observation.kind == .recurringMaster &&
                 item.observation.etag != nil && item.digest.count == 32 && item.priorLease.publication != true &&
                 Self.sameDestination(item.priorLease, as: binding) && item.priorLease.authEpoch <= binding.authEpoch
@@ -528,7 +608,8 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
                   receipt.selections == selections else { throw Failure.operationReused }
             return receipt
         }
-        guard state.operations[operationID] == nil, state.syncRequests?[operationID] == nil else { throw Failure.operationReused }
+        guard state.operations[operationID] == nil, state.syncRequests?[operationID] == nil,
+              state.policyReceipts?[operationID] == nil else { throw Failure.operationReused }
         return nil
     }
 
@@ -549,18 +630,17 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         guard approved.count + approvedImports.count + approvedLinks.count + approvedSeries.count == selections.count else {
             throw Failure.invalidInput
         }
-        var initialImport = review.binding.initialImport
-        if state.policy.automaticImport {
-            let old = Self.inboxScope(review.binding, in: state)
-            let saved = try savedIncomingScope(old, in: state)
-            let inbox = try managedInbox().progress(saved ?? old, pages: 0, continuation: false)
-            let held = try collectHeldIncoming(review.binding, state: state).filter { !approvedIDs.contains($0.eventID) }
-            guard held.count <= 10_000 else { throw Failure.discoveryLimit }
-            state.heldIncomingIDs = held.isEmpty ? nil : Set(held.map(\.eventID))
-            state.heldIncomingObservations = held.isEmpty ? nil : held
-            state.resumeCheckpointScope = saved
-            if inbox.initialComplete { initialImport = .init(mode: state.policy.importMode, recoveringExistingCalendar: false) }
-        }
+        let old = Self.inboxScope(review.binding, in: state)
+        let saved = try savedIncomingScope(old, in: state)
+        let inbox = try managedInbox().progress(saved ?? old, pages: 0, continuation: false)
+        let held = try collectHeldIncoming(review.binding, state: state).filter { !approvedIDs.contains($0.eventID) }
+        guard held.count <= 10_000 else { throw Failure.discoveryLimit }
+        state.heldIncomingIDs = held.isEmpty ? nil : Set(held.map(\.eventID))
+        state.heldIncomingObservations = held.isEmpty ? nil : held
+        state.resumeCheckpointScope = saved
+        let initialImport: InitialImport? = inbox.initialComplete
+            ? .init(mode: state.policy.importMode, recoveringExistingCalendar: false) : review.binding.initialImport
+        if inbox.initialComplete { state.initialAllDayAlarmMinutes = nil }
         state.bindingRevision = try Self.advance(state.bindingRevision)
         state.authEpoch = try Self.advance(state.authEpoch)
         state.binding = .init(operationID: review.binding.operationID, account: account, record: verified,
@@ -587,9 +667,11 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
     }
 
     private static func activeBinding(in state: State, account: Account) throws -> Binding {
+        // The binding revision in a lease identifies the authorization grant.
+        // Policy edits advance the editable revision without replacing the grant.
         guard state.mode == .enabled, let binding = state.binding, binding.belongs(to: account),
               binding.account.accountGeneration == account.accountGeneration,
-              binding.revision == state.bindingRevision, binding.authEpoch == state.authEpoch,
+              binding.revision <= state.bindingRevision, binding.authEpoch == state.authEpoch,
               state.pendingOperationID == nil else { throw Failure.staleConnection }
         return binding
     }
@@ -602,7 +684,8 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
                   saved.mode == mode else { throw Failure.operationReused }
             return saved
         }
-        guard state.operations[operationID] == nil, state.syncRequests?[operationID] == nil else { throw Failure.operationReused }
+        guard state.operations[operationID] == nil, state.syncRequests?[operationID] == nil,
+              state.policyReceipts?[operationID] == nil else { throw Failure.operationReused }
         guard expectedRevision == state.bindingRevision else { throw Rejection.stalePreview }
         let ownsBinding = state.binding?.belongs(to: account) == true
         let pending = state.pendingOperationID.flatMap { state.operations[$0] }
@@ -649,7 +732,7 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         let state = try read()
         let proposed = policy ?? state.policy
         guard proposed.revision == state.policy.revision else { throw Rejection.stalePreview }
-        guard (0...1439).contains(proposed.allDayAlarmMinutes) else { throw Failure.invalidInput }
+        guard (0...1439).contains(proposed.allDayAlarmMinutes), !proposed.disableGoogleReminders else { throw Failure.invalidInput }
         let target: Target
         let name: String
         let zoneID: String
@@ -689,7 +772,8 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
 
     func capture(operationID: UUID, review: Review, currentAccount: Account) throws -> Entry {
         var state = try read()
-        guard state.modeReceipts?[operationID] == nil, state.syncRequests?[operationID] == nil else { throw Failure.operationReused }
+        guard state.modeReceipts?[operationID] == nil, state.syncRequests?[operationID] == nil,
+              state.policyReceipts?[operationID] == nil else { throw Failure.operationReused }
         if let existing = state.operations[operationID] {
             guard Self.sameOwner(existing.account, currentAccount), existing.review == review else { throw Failure.operationReused }
             return existing
@@ -823,6 +907,8 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         state.resumedLinkProofs = nil
         state.resumedSeriesProofs = nil
         state.resumeCheckpointScope = nil
+        state.resetIncomingCursor = nil
+        state.initialAllDayAlarmMinutes = nil
         state.pendingOperationID = nil
         state.operations[id] = entry
         try write(state)

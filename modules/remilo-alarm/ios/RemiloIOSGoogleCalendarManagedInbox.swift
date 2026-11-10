@@ -15,6 +15,7 @@ final class RemiloIOSGoogleCalendarManagedInbox {
         let policy: Journal.Policy
         var heldEventIDs: Set<String>? = nil
         var resumedEventIDs: Set<String>? = nil
+        var initialAllDayAlarmMinutes: Int? = nil
     }
 
     struct Observation: Codable, Equatable, Sendable {
@@ -29,9 +30,11 @@ final class RemiloIOSGoogleCalendarManagedInbox {
         let eventID: String
         let etag: String?
         let kind: Kind
-        let importMode: Mode
+        var importMode: Mode
         let initialRecovery: Bool
         var instanceCancelled: Bool? = nil
+        var initialCohort: Bool? = nil
+        var allDayAlarmMinutes: Int? = nil
     }
 
     struct Request: Sendable {
@@ -78,25 +81,35 @@ final class RemiloIOSGoogleCalendarManagedInbox {
         return Request(scope: scope, version: state.version, since: state.since, next: state.next)
     }
 
-    func record(_ page: Transport.Page<Transport.Event>, request: Request, now: Int64) throws {
+    func record(_ page: Transport.Page<Transport.Event>, request: Request, now: Int64, tracking: Set<String>? = nil) throws {
         var state = try read(request.scope)
         guard state.version == request.version, (page.next == nil) != (page.checkpoint == nil) else { throw Failure.invalidResponse }
         let initial = request.scope.binding.initialImport
         let mode = state.initialComplete ? request.scope.policy.importMode : initial?.mode ?? .none
         let recovery = !state.initialComplete && (initial?.recoveringExistingCalendar ?? true)
+        let minutes = state.initialComplete ? request.scope.policy.allDayAlarmMinutes
+            : request.scope.initialAllDayAlarmMinutes ?? request.scope.policy.allDayAlarmMinutes
         for event in page.items {
             let existing = state.observations[event.id]
             if request.scope.resumedEventIDs?.contains(event.id) == true, case .needsReview? = existing?.kind { continue }
-            if let kind = Self.classify(event, zoneID: request.scope.binding.record.zoneId, now: now) {
+            let kind = Self.classify(event, zoneID: request.scope.binding.record.zoneId, now: now)
+            if let tracking {
+                let master: String
+                if case .changedInstance(let id)? = kind { master = id } else { master = event.id }
+                guard tracking.contains(master) else { continue }
+            }
+            if let kind {
                 let instanceCancelled: Bool?
                 if case .changedInstance = kind { instanceCancelled = event.cancelled }
                 else { instanceCancelled = nil }
                 state.observations[event.id] = Observation(eventID: event.id, etag: event.strongETag, kind: kind,
                     importMode: existing?.importMode ?? mode, initialRecovery: existing?.initialRecovery ?? recovery,
-                    instanceCancelled: instanceCancelled)
+                    instanceCancelled: instanceCancelled, initialCohort: existing?.initialCohort ?? !state.initialComplete,
+                    allDayAlarmMinutes: existing?.allDayAlarmMinutes ?? minutes)
             } else if let existing {
                 state.observations[event.id] = Observation(eventID: event.id, etag: event.strongETag,
-                    kind: .needsReview(reason: "ELAPSED_EVENT"), importMode: existing.importMode, initialRecovery: existing.initialRecovery)
+                    kind: .needsReview(reason: "ELAPSED_EVENT"), importMode: existing.importMode, initialRecovery: existing.initialRecovery,
+                    initialCohort: existing.initialCohort, allDayAlarmMinutes: existing.allDayAlarmMinutes)
             }
         }
         guard state.observations.count <= 10_000 else { throw Failure.discoveryLimit }
@@ -135,20 +148,53 @@ final class RemiloIOSGoogleCalendarManagedInbox {
         return saved.scope
     }
 
-    func resumeCheckpoint(from prior: Scope, to current: Scope, reviewed: [Observation]) throws {
+    func resumeCheckpoint(from prior: Scope, to current: Scope, reviewed: [Observation], resetCursor: Bool = false) throws {
         guard prior != current, var saved = try savedState(), saved.scope == prior else { return }
         guard Journal.sameDestination(prior.binding.linkLease, as: current.binding),
               prior.binding.account.subject == current.binding.account.subject,
               prior.binding.account.clientID == current.binding.account.clientID,
               prior.binding.account.accountGeneration == current.binding.account.accountGeneration,
-              prior.policy == current.policy, prior.binding.authEpoch < current.binding.authEpoch else {
+              prior.policy.revision <= current.policy.revision, prior.binding.authEpoch <= current.binding.authEpoch else {
             throw Failure.staleConnection
         }
         saved.scope = current
+        if prior.policy != current.policy {
+            for (id, observation) in saved.observations {
+                var next = observation
+                if observation.initialCohort != true && !observation.initialRecovery && saved.initialComplete &&
+                    current.heldEventIDs?.contains(id) != true && current.resumedEventIDs?.contains(id) != true {
+                    next.importMode = current.policy.importMode
+                    next.allDayAlarmMinutes = current.policy.allDayAlarmMinutes
+                } else if next.allDayAlarmMinutes == nil {
+                    next.allDayAlarmMinutes = prior.policy.allDayAlarmMinutes
+                }
+                saved.observations[id] = next
+            }
+        }
         for observation in reviewed where current.resumedEventIDs?.contains(observation.eventID) == true {
             saved.observations[observation.eventID] = observation
         }
+        if resetCursor {
+            saved.since = nil
+            saved.next = nil
+        }
         try advance(&saved)
+    }
+
+    func capturedPermit(_ prior: Permit, scope: Scope) throws -> Permit? {
+        guard prior.scope.binding.linkLease == scope.binding.linkLease,
+              prior.scope.binding.account.accountGeneration == scope.binding.account.accountGeneration else { return nil }
+        let id = prior.observation.eventID
+        let saved = try read(scope)
+        guard let observed = saved.observations[id], observed.etag == prior.observation.etag,
+              observed.kind == prior.observation.kind else { return nil }
+        let permit = Permit(scope: scope, observation: observed)
+        return try permits(permit) ? permit : nil
+    }
+
+    func hasCompleteCheckpoint(_ scope: Scope) throws -> Bool {
+        let saved = try read(scope)
+        return saved.initialComplete && saved.next == nil && saved.since != nil
     }
 
     func reviewedPermit(_ reviewed: Observation, scope: Scope) throws -> Permit? {
@@ -161,7 +207,8 @@ final class RemiloIOSGoogleCalendarManagedInbox {
         if case .needsReview? = current?.kind { return nil }
         guard current?.kind == reviewed.kind, current?.etag == reviewed.etag else {
             state.observations[reviewed.eventID] = .init(eventID: reviewed.eventID, etag: current?.etag,
-                kind: .needsReview(reason: "STALE_REMOTE"), importMode: reviewed.importMode, initialRecovery: reviewed.initialRecovery)
+                kind: .needsReview(reason: "STALE_REMOTE"), importMode: reviewed.importMode, initialRecovery: reviewed.initialRecovery,
+                initialCohort: reviewed.initialCohort, allDayAlarmMinutes: reviewed.allDayAlarmMinutes)
             try advance(&state)
             return nil
         }
@@ -194,7 +241,8 @@ final class RemiloIOSGoogleCalendarManagedInbox {
         guard state.observations[event.eventID] == event else { return }
         if let reviewReason {
             state.observations[event.eventID] = Observation(eventID: event.eventID, etag: event.etag,
-                kind: .needsReview(reason: reviewReason), importMode: event.importMode, initialRecovery: event.initialRecovery)
+                kind: .needsReview(reason: reviewReason), importMode: event.importMode, initialRecovery: event.initialRecovery,
+                initialCohort: event.initialCohort, allDayAlarmMinutes: event.allDayAlarmMinutes)
         } else {
             state.observations.removeValue(forKey: event.eventID)
         }

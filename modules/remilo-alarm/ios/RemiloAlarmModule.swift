@@ -271,6 +271,9 @@ public final class RemiloAlarmModule: Module {
     AsyncFunction("previewManagedCalendarSetup") { (choices: [String: Any], promise: Promise) in
       resolveCalendar(promise) { try await RemiloIOSGoogleCalendarBridge.shared.previewManagedSetup(choices) }
     }
+    AsyncFunction("previewManagedCalendarPolicyChange") { (choices: [String: Any], promise: Promise) in
+      resolveCalendar(promise) { try await RemiloIOSGoogleCalendarBridge.shared.previewManagedPolicy(choices) }
+    }
     AsyncFunction("previewManagedCalendarResume") { (promise: Promise) in
       resolveCalendar(promise) { try await RemiloIOSGoogleCalendarBridge.shared.previewManagedResume() }
     }
