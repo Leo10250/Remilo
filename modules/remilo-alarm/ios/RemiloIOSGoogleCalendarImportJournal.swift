@@ -30,6 +30,7 @@ actor RemiloIOSGoogleCalendarImportJournal {
         let current: @MainActor @Sendable (Import.Account) throws -> Bool
         let observe: @Sendable (Import.Review) async throws -> Import.Observation
         var managedCurrent: (@MainActor @Sendable (RemiloIOSGoogleCalendarManagedInbox.Permit, Import.Account) throws -> Bool)? = nil
+        var managedHeld: (@MainActor @Sendable (RemiloIOSGoogleCalendarManagedInbox.Permit, Import.Account) throws -> Bool)? = nil
 
         func scoped(to permit: RemiloIOSGoogleCalendarManagedInbox.Permit?) -> Self {
             guard let permit else { return self }
@@ -663,38 +664,48 @@ actor RemiloIOSGoogleCalendarImportJournal {
     func run(_ operationID: UUID, authority: Authority, scheduler: Scheduler) async throws -> Receipt {
         let state = try read()
         guard let entry = state.entries[operationID] else { throw Failure.notFound }
-        let authority = authority.scoped(to: entry.managed)
+        let scoped = authority.scoped(to: entry.managed)
         if let receipt = entry.receipt { return receipt }
         guard let capture = entry.capture else { throw Failure.notFound }
         let fingerprint = try Request(operationID: operationID, review: capture.review, choices: capture.choices).fingerprint()
         guard fingerprint == entry.fingerprint, capture.operationID == operationID else { throw Failure.operationReused }
         guard running.insert(operationID).inserted else { throw Failure.operationPending }
         defer { running.remove(operationID) }
+        let isHeld: @MainActor @Sendable () throws -> Bool = { [permit = entry.managed, captured = capture.review.account] in
+            guard let permit else { return false }
+            return try authority.managedHeld?(permit, captured) ?? false
+        }
 
         // A committed scheduler receipt is authoritative even when the preview,
         // alarm time, source or connection became stale after the local commit.
         if entry.submitted, let recovered = try await scheduler.receipt(capture.command) {
-            return try await acknowledge(capture, local: recovered, authority: authority, scheduler: scheduler)
+            return try await acknowledge(capture, local: recovered, authority: scoped, scheduler: scheduler)
         }
+        if try await isHeld() { throw Failure.operationPending }
         do {
             guard capture.review.valid(at: now()) else { throw Failure.stalePreview }
-            guard try await authority.current(capture.review.account) else { throw Failure.staleConnection }
-            let observed = try await authority.observe(capture.review)
+            guard try await scoped.current(capture.review.account) else { throw Failure.staleConnection }
+            let observed = try await scoped.observe(capture.review)
             guard capture.review.matches(observed) else { throw Failure.staleRemote }
-            guard try await authority.current(capture.review.account) else { throw Failure.staleConnection }
+            guard try await scoped.current(capture.review.account) else { throw Failure.staleConnection }
             let revalidated = try Import.Capture(operationID: operationID, review: capture.review, choices: capture.choices, now: now())
             guard revalidated.command == capture.command else { throw Failure.operationReused }
-        } catch let failure as Failure {
-            return try reject(capture, code: failure.rawValue)
-        } catch let failure as RemiloIOSGoogleCalendarRecurringReview.Failure {
-            return try reject(capture, code: failure.rawValue)
-        } catch is Import.Event.Reason {
-            return try reject(capture, code: Failure.staleRemote.rawValue)
-        } catch let failure as RemiloIOSGoogleCalendarFailure {
-            switch failure {
-            case .notFound, .notOwner: return try reject(capture, code: Failure.staleRemote.rawValue)
-            case .staleConnection, .accountChanged: return try reject(capture, code: Failure.staleConnection.rawValue)
-            default: throw failure
+        } catch {
+            if try await isHeld() { throw Failure.operationPending }
+            switch error {
+            case let failure as Failure:
+                return try reject(capture, code: failure.rawValue)
+            case let failure as RemiloIOSGoogleCalendarRecurringReview.Failure:
+                return try reject(capture, code: failure.rawValue)
+            case is Import.Event.Reason:
+                return try reject(capture, code: Failure.staleRemote.rawValue)
+            case let failure as RemiloIOSGoogleCalendarFailure:
+                switch failure {
+                case .notFound, .notOwner: return try reject(capture, code: Failure.staleRemote.rawValue)
+                case .staleConnection, .accountChanged: return try reject(capture, code: Failure.staleConnection.rawValue)
+                default: throw failure
+                }
+            default: throw error
             }
         }
         try Task.checkCancellation()
@@ -706,17 +717,18 @@ actor RemiloIOSGoogleCalendarImportJournal {
         do {
             result = try await scheduler.create(capture.command) {
                 _ = try Import.Capture(operationID: operationID, review: capture.review, choices: capture.choices, now: clock())
-                return try authority.current(capture.review.account)
+                return try scoped.current(capture.review.account)
             }
         } catch let failure as Failure {
             result = .rejected(failure.rawValue)
         }
         switch result {
-        case .acknowledged(let local): return try await acknowledge(capture, local: local, authority: authority, scheduler: scheduler)
+        case .acknowledged(let local): return try await acknowledge(capture, local: local, authority: scoped, scheduler: scheduler)
         case .rejected(let code):
             if let recovered = try await scheduler.receipt(capture.command) {
-                return try await acknowledge(capture, local: recovered, authority: authority, scheduler: scheduler)
+                return try await acknowledge(capture, local: recovered, authority: scoped, scheduler: scheduler)
             }
+            if try await isHeld() { throw Failure.operationPending }
             return try reject(capture, code: code)
         }
     }

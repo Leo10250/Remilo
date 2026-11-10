@@ -264,6 +264,7 @@ final class RemiloIOSGoogleCalendarRuntime {
         importingManaged = true
         defer { importingManaged = false }
         let account = try connection.account(expectedRevision: expectedRevision)
+        guard try managedSetup.hasActiveIncomingBinding(expectedRevision: expectedRevision) else { throw Failure.staleConnection }
         let budget = RemiloIOSGoogleCalendarHTTP.Budget()
         var result = ManagedImportPass()
         var attempted = 0
@@ -486,6 +487,7 @@ final class RemiloIOSGoogleCalendarRuntime {
         for item in work.prefix(10) {
             try requireCurrentAccount(account)
             guard budget.hasTimeRemaining else { throw Failure.budget }
+            if try managedSetup?.heldBinding(account)?.linkLease == item.permit.scope.binding.linkLease { continue }
             let reason: String?
             do {
                 try await manualLink.attachManagedImport(item, expectedConnectionRevision: account.connectionRevision, budget: budget)
@@ -499,6 +501,7 @@ final class RemiloIOSGoogleCalendarRuntime {
                 reason = error.rawValue
             }
             try requireCurrentAccount(account)
+            if reason != nil, try managedSetup?.heldBinding(account)?.linkLease == item.permit.scope.binding.linkLease { continue }
             try await importJournal.finishManagedLink(item, reason: reason)
             if reason != nil { result.needsReview += 1 }
         }
@@ -534,7 +537,9 @@ final class RemiloIOSGoogleCalendarRuntime {
                 if let permit { return (try? managedCurrent(permit, review.account)) == true }
                 return true
             })
-        }, managedCurrent: managedCurrent)
+        }, managedCurrent: managedCurrent, managedHeld: { [managedSetup] permit, account in
+            try managedSetup?.heldBinding(account)?.linkLease == permit.scope.binding.linkLease
+        })
         let receipt = try await importJournal.run(operationID, authority: authority, scheduler: scheduler)
         try requireCurrentAccount(viewer)
         return receipt

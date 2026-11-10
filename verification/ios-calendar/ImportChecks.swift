@@ -119,7 +119,10 @@ enum ImportChecks {
     }
 
     @MainActor
-    private final class AuthorityFixture { var available = true }
+    private final class AuthorityFixture {
+        var available = true
+        func hold() { available = false }
+    }
 
     private static func expiryAndRecurrence(_ calendar: Transport.OwnedCalendar, now: Int64) throws {
         let past = try remote(id: "past", etag: #""past""#, date: "2027-03-14")
@@ -237,6 +240,19 @@ enum ImportChecks {
                                                          choices: .init(mode: .none, allDayAlarmMinutes: policy.allDayAlarmMinutes))
         let fixture = LocalFixture(loseReply: true, status: .applied)
         let scheduler = adapter(fixture)
+        let pause = await AuthorityFixture()
+        let holding = Journal.Authority(current: { $0 == account }, observe: { checked in
+            await pause.hold()
+            return .init(source: checked.source, recurrenceEvidence: checked.recurrenceEvidence)
+        }, managedCurrent: { $0 == permit && $1 == account && pause.available },
+           managedHeld: { $0 == permit && $1 == account && !pause.available })
+        do {
+            _ = try await journal.run(operation, authority: holding, scheduler: scheduler)
+            preconditionFailure("Pausing during the provider lookup should hold the captured import")
+        } catch Import.Failure.operationPending {}
+        let held = try await journal.pendingManaged(viewingAs: account)
+        let heldAttempts = await fixture.attempts
+        precondition(held.contains { $0.id == operation } && heldAttempts == 0)
         let authority = Journal.Authority(current: { $0 == account }, observe: { checked in
             .init(source: checked.source, recurrenceEvidence: checked.recurrenceEvidence)
         }, managedCurrent: { $0 == permit && $1 == account })
