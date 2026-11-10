@@ -169,7 +169,9 @@ enum SeriesTextWriterChecks {
         let skippedPass = try await runtime().syncManagedIncoming(expectedRevision: revision)
         let skippedScope = try managed.incomingScope(account)
         let skippedExports = try await imports.seriesTextExports(viewingAs: account, lease: skippedScope.binding.linkLease)
-        precondition(skippedPass.resumedSeries == 0 && skippedExports.isEmpty, "An unselected series keeps its original lease")
+        let skippedSummary = try await runtime().savedSyncSummary()
+        precondition(skippedPass.resumedSeries == 0 && skippedExports.isEmpty && skippedSummary.automatic == 0,
+                     "An unselected series keeps its original lease")
 
         try pause()
         fixture.resumeTitle = "Changed in Google"
@@ -192,7 +194,9 @@ enum SeriesTextWriterChecks {
                      original.isEmpty && exports.first?.receipt == receipt && exports.first?.baseline.etag == fixture.resumeETag &&
                      fixture.localSeries?.title == fixture.resumeTitle && fixture.writes == 0)
         let repeated = try await runtime().syncManagedIncoming(expectedRevision: revision)
-        precondition(repeated.resumedSeries == 0 && repeated.updatedSeries == 0 && fixture.localSeries?.revision == 2)
+        let activeSummary = try await runtime().savedSyncSummary()
+        precondition(repeated.resumedSeries == 0 && repeated.updatedSeries == 0 && fixture.localSeries?.revision == 2 &&
+                     activeSummary.automatic == 1 && activeSummary.reminderReview == 0)
     }
 
     private static func instanceSync(_ fixture: Fixture, directory: URL, connection: Service.Runtime.Connection,

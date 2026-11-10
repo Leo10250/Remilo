@@ -41,6 +41,19 @@ final class RemiloIOSGoogleCalendarBridge {
         return Self.connection(try await runtime.view())
     }
 
+    func syncSummary() async throws -> [String: Any] {
+        let runtime = try Runtime.configuredForegroundRuntime()
+        let summary = try await runtime?.savedSyncSummary() ?? .init()
+        return [
+            "connected": summary.connected, "automaticCount": summary.automatic, "pendingCount": summary.pending,
+            "reviewCount": summary.review,
+            "reviewCounts": ["reminders": summary.reminderReview, "candidates": summary.candidateReview,
+                             "setup": summary.setupReview, "total": summary.review],
+            "attention": ["blocking": summary.blocking, "tone": summary.blocking > 0 ? "danger" : "warning"],
+            "notifications": ["enabled": false, "revision": 1],
+        ]
+    }
+
     func managedState() async throws -> [String: Any] {
         guard let runtime = try Runtime.configuredForegroundRuntime(), let setup = runtime.managedSetup else {
             return Self.managedState(nil, connection: nil, progress: nil, operation: nil)
@@ -282,7 +295,8 @@ final class RemiloIOSGoogleCalendarBridge {
             ? try manual.transferOperations(expectedConnectionRevision: revision) : []
         let pending = Dictionary(uniqueKeysWithValues: operations.filter { $0.phase.pending }.map { ($0.occurrenceID, $0) })
         let requests = try manual.latestAssociationRequests(expectedConnectionRevision: revision)
-        return try records.map { try Self.link($0, connection: view, pending: pending[$0.occurrenceID], request: requests[$0.occurrenceID]) }
+        return try records.map { try Self.link($0, connection: view, manual: manual,
+                                              pending: pending[$0.occurrenceID], request: requests[$0.occurrenceID]) }
     }
 
     func checkLink(_ id: String, expectedConnectionRevision: Double?, expectedLinkRevision: Double?) async throws -> [String: Any] {
@@ -302,7 +316,7 @@ final class RemiloIOSGoogleCalendarBridge {
             $0.occurrenceID == id && $0.phase.pending
         }
         let request = try manual.latestAssociationRequests(expectedConnectionRevision: revision)[id]
-        return try Self.link(record, connection: view, pending: pending, request: request)
+        return try Self.link(record, connection: view, manual: manual, pending: pending, request: request)
     }
 
     func previewLink(_ id: String, expectedRevision: Double?, superseding: String?) async throws -> [String: Any] {
@@ -800,7 +814,7 @@ final class RemiloIOSGoogleCalendarBridge {
          "retainedAlertMs": iosBridgeValue(value.retainedAlertMs)]
     }
 
-    private static func link(_ record: LinkStore.Record, connection view: Connection.View,
+    private static func link(_ record: LinkStore.Record, connection view: Connection.View, manual: LinkRuntime,
                              pending: LinkStore.Operation?, request: UUID?) throws -> [String: Any] {
         let local = try localLinkSnapshot(record.occurrenceID)
         let fields = local?.fields
@@ -823,11 +837,10 @@ final class RemiloIOSGoogleCalendarBridge {
         else { state = "Linked" }
         let availability = check?.availability
         let availabilityReason = check?.availabilityReason
-        let sync = try linkSyncStatus(record, connection: view, pending: pending, local: local, differs: differs,
-                                      accessFailed: accessFailed)
+        let sync = try manual.savedSyncStatus(record, pending: pending, view: view, snapshot: local)
         return [
             "occurrenceId": record.occurrenceID, "revision": record.revision, "calendarName": record.calendarName,
-            "state": state, "syncMode": sync.mode, "syncStatus": sync.status, "pauseReason": sync.reason,
+            "state": state, "syncMode": sync.mode, "syncStatus": sync.state.rawValue, "pauseReason": sync.reason,
             "activationRevision": record.automatic?.activationRevision ?? 0, "baselineVersion": record.baseline == nil ? 0 : record.revision,
             "syncRequestId": iosBridgeValue(request?.uuidString),
             "successfulAtMs": iosBridgeValue(record.automatic?.phase == .active ? record.observedAtMs : nil),
@@ -876,43 +889,6 @@ final class RemiloIOSGoogleCalendarBridge {
             "review": request.outcome == .needsReview ? 1 : 0, "held": request.outcome == .paused ? 1 : 0,
             "children": [String](), "currentScope": status.currentScope, "syncResult": result,
         ]
-    }
-
-    private static func linkSyncStatus(_ record: LinkStore.Record, connection view: Connection.View, pending: LinkStore.Operation?,
-                                       local: PublicationRuntime.LocalSnapshot?, differs: Bool, accessFailed: Bool) throws
-        -> (mode: String, status: String, reason: String) {
-        guard record.state == .linked else { return ("Manual", "Confirmed", "") }
-        guard let consent = record.automatic else {
-            guard record.check?.requiresReview == true else { return ("Manual", "Confirmed", "") }
-            switch record.check?.availability {
-            case .deleted: return ("Manual", "Paused", "RemoteDeleted")
-            case .unavailable:
-                let reason = record.check?.availabilityReason == "NOT_OWNER" ? "NotOwner" : "RemoteUnavailable"
-                return ("Manual", "Paused", reason)
-            default: return ("Manual", "Paused", "ReviewRequired")
-            }
-        }
-        let mode = consent.phase == .active ? "Automatic" : "Pending"
-        guard consent.accountGeneration == view.accountGeneration else { return (mode, "Paused", "AccountChanged") }
-        guard local != nil else { return (mode, "Paused", "LocalTerminal") }
-        guard try RemiloIOSEngine.shared.calendarLifecycleRevision(record.occurrenceID) == consent.lifecycleRevision else {
-            return (mode, "Paused", "StaleAuthorization")
-        }
-        guard hasReadAccess(view), view.canWriteOwnedEvents, !accessFailed else { return (mode, "Paused", "AccessRequired") }
-        let currentOperation = pending.flatMap { operation -> LinkStore.Operation? in
-            guard let authority = operation.transfer?.automatic, operation.linkRevision == record.revision,
-                  operation.account.accountGeneration == consent.accountGeneration,
-                  authority.activationRevision == consent.activationRevision,
-                  authority.lifecycleRevision == consent.lifecycleRevision else { return nil }
-            return operation
-        }
-        if currentOperation?.phase == .sent { return (mode, "Unconfirmed", "UnconfirmedWrite") }
-        if consent.issue == .review { return (mode, "Review", "ChangesNeedReview") }
-        if consent.issue == .ringing { return (mode, "Deferred", "Ringing") }
-        if consent.phase == .pending || currentOperation != nil || differs || record.check?.remoteDiffers == true {
-            return (mode, "UpdatePending", "")
-        }
-        return (mode, "Confirmed", "")
     }
 
     private static func hasReadAccess(_ view: Connection.View) -> Bool {

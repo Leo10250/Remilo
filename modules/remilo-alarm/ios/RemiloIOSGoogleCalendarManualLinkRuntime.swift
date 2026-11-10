@@ -32,6 +32,22 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
         case transfer(Store.Operation)
     }
 
+    struct SyncStatus: Sendable {
+        enum State: String, Sendable {
+            case confirmed = "Confirmed", paused = "Paused", pending = "UpdatePending"
+            case review = "Review", deferred = "Deferred", unconfirmed = "Unconfirmed"
+        }
+
+        let mode: String
+        let state: State
+        var reason = ""
+        var needsReview = false
+
+        var automatic: Bool {
+            mode == "Automatic" && [.confirmed, .pending, .deferred].contains(state)
+        }
+    }
+
     struct AssociationStatus: Sendable {
         let request: Store.AssociationRequest
         let transfer: Store.Operation?
@@ -731,6 +747,67 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
 
     func links(expectedConnectionRevision: Int) throws -> [Store.Record] {
         try store.links(viewingAs: viewer(expectedConnectionRevision))
+    }
+
+    func savedSyncStatuses(_ view: Connection.View) throws -> [String: SyncStatus] {
+        let account = try viewer(view.revision)
+        let pending = try store.transferOperations(viewingAs: account).filter { $0.phase.pending }
+        let byID = Dictionary(grouping: pending, by: \.occurrenceID)
+        return try Dictionary(uniqueKeysWithValues: store.links(viewingAs: account).map { record in
+            let id = record.occurrenceID
+            let status = try savedSyncStatus(record, pending: byID[id]?.first, view: view, snapshot: local.read(id))
+            return (id, status)
+        })
+    }
+
+    func savedSyncStatus(_ record: Store.Record, pending: Store.Operation?, view: Connection.View,
+                         snapshot: Publication.LocalSnapshot?) throws -> SyncStatus {
+        guard record.state == .linked else { return .init(mode: "Manual", state: .confirmed) }
+        let sourceIssue: String?
+        if record.check?.requiresReview == true {
+            switch record.check?.availability {
+            case .deleted: sourceIssue = "RemoteDeleted"
+            case .unavailable: sourceIssue = record.check?.availabilityReason == "NOT_OWNER" ? "NotOwner" : "RemoteUnavailable"
+            default: sourceIssue = "ReviewRequired"
+            }
+        } else { sourceIssue = nil }
+        guard let consent = record.automatic else {
+            guard let sourceIssue else { return .init(mode: "Manual", state: .confirmed) }
+            return .init(mode: "Manual", state: .paused, reason: sourceIssue, needsReview: snapshot != nil)
+        }
+        let mode = consent.phase == .active ? "Automatic" : "Pending"
+        guard consent.accountGeneration == view.accountGeneration else { return .init(mode: mode, state: .paused, reason: "AccountChanged") }
+        guard let snapshot else { return .init(mode: mode, state: .paused, reason: "LocalTerminal") }
+        guard try local.lifecycleRevision(record.occurrenceID) == consent.lifecycleRevision else {
+            return .init(mode: mode, state: .paused, reason: "StaleAuthorization")
+        }
+        let currentOperation = pending.flatMap { operation -> Store.Operation? in
+            guard let authority = operation.transfer?.automatic, operation.linkRevision == record.revision,
+                  operation.account.accountGeneration == consent.accountGeneration,
+                  authority.activationRevision == consent.activationRevision, authority.lifecycleRevision == consent.lifecycleRevision,
+                  authority.managedLease == consent.managedLease else { return nil }
+            return operation
+        }
+        let sent = currentOperation?.phase == .sent
+        if !sent, let lease = consent.managedLease, try !permitsManagedLease(lease, account: viewer(view.revision)) {
+            if let sourceIssue { return .init(mode: mode, state: .paused, reason: sourceIssue, needsReview: true) }
+            if consent.issue == .review { return .init(mode: mode, state: .review, reason: "ChangesNeedReview", needsReview: true) }
+            return .init(mode: mode, state: .paused, reason: "StaleAuthorization")
+        }
+        let accessFailed = ["AUTH", "NEEDS_ACCESS", "ACCOUNT_MISMATCH", "ACCOUNT_CHANGED"].contains(record.check?.errorCode ?? "")
+        guard (view.access == .ownedCalendars || view.access == .managedCreation), view.canWriteOwnedEvents, !accessFailed else {
+            return .init(mode: mode, state: .paused, reason: "AccessRequired", needsReview: true)
+        }
+        if sent { return .init(mode: mode, state: .unconfirmed, reason: "UnconfirmedWrite", needsReview: true) }
+        if let sourceIssue { return .init(mode: mode, state: .paused, reason: sourceIssue, needsReview: true) }
+        if consent.issue == .review { return .init(mode: mode, state: .review, reason: "ChangesNeedReview", needsReview: true) }
+        if consent.issue == .ringing { return .init(mode: mode, state: .deferred, reason: "Ringing") }
+        let fields = snapshot.fields
+        let differs = record.baseline?.title.map { $0 != fields.title } == true ||
+            record.baseline?.notes.map { $0 != fields.notes } == true ||
+            record.baseline?.schedule.map { $0 != fields.schedule } == true
+        let updatePending = consent.phase == .pending || currentOperation != nil || differs || record.check?.remoteDiffers == true
+        return .init(mode: mode, state: updatePending ? .pending : .confirmed)
     }
 
     func operation(_ id: UUID, expectedConnectionRevision: Int) throws -> Store.Receipt? {

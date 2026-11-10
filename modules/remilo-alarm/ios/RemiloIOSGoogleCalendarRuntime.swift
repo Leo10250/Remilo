@@ -74,6 +74,18 @@ final class RemiloIOSGoogleCalendarRuntime {
         var continuation = false
     }
 
+    struct SyncSummary: Sendable {
+        var connected = false
+        var automatic = 0
+        var pending = 0
+        var reminderReview = 0
+        var candidateReview = 0
+        var setupReview = 0
+        var blocking = 0
+
+        var review: Int { reminderReview + candidateReview + setupReview }
+    }
+
     init(connection: Connection, canUseForeground: @escaping @MainActor @Sendable () -> Bool,
          importJournal: ImportJournal, scheduler: ImportJournal.Scheduler,
          publication: RemiloIOSGoogleCalendarPublicationRuntime? = nil,
@@ -101,6 +113,90 @@ final class RemiloIOSGoogleCalendarRuntime {
     func view() async throws -> Connection.View {
         try requireForeground()
         return try connection.view()
+    }
+
+    /// A saved-status projection. No provider check, permission prompt, or
+    /// sync request is performed while opening Settings or refreshing status.
+    func savedSyncSummary() async throws -> SyncSummary {
+        let view = try await self.view()
+        guard view.connected else { return .init() }
+        let account = try connection.savedAccount(expectedRevision: view.revision)
+        let binding = try managedSetup?.view(expectedRevision: view.revision)
+        let progress = try managedSetup?.savedIncomingProgress(expectedRevision: view.revision)
+        let links = try manualLink?.savedSyncStatuses(view) ?? [:]
+        var automatic = Set(links.compactMap { $0.value.automatic ? $0.key : nil })
+        var pending = Set(links.compactMap { [.pending, .deferred].contains($0.value.state) ? $0.key : nil })
+        var review = Set(links.compactMap { $0.value.needsReview ? $0.key : nil })
+        var blocking = Set(links.compactMap { ["UnconfirmedWrite", "AccessRequired"].contains($0.value.reason) ? $0.key : nil })
+
+        var summary = SyncSummary(connected: true)
+        if let setup = managedSetup, let binding,
+           let id = binding.pendingOperationID ?? binding.retiredCreationOperationID,
+           let operation = try setup.operation(id, expectedRevision: view.revision) {
+            let status = try setup.status(operation, connection: view, advancing: isAdvancingManagedSetup(id))
+            if ["NeedsReview", "Unconfirmed", "NeedsAccess"].contains(status.stage) { summary.setupReview = 1 }
+            if ["Unconfirmed", "NeedsAccess"].contains(status.stage) { summary.blocking += 1 }
+        }
+        let observations = progress?.pending ?? []
+        summary.candidateReview = observations.filter { if case .needsReview = $0.kind { return true }; return false }.count
+        if binding?.mode == .enabled { summary.pending = observations.count - summary.candidateReview }
+
+        let outgoingLease = binding?.mode == .enabled && binding?.pendingOperationID == nil ? binding?.binding?.exportLease : nil
+        var seenPublications = Set<String>()
+        let publications = try publication?.operations(expectedConnectionRevision: view.revision) ?? []
+        for status in publications where !status.readOnly {
+            let entry = status.entry
+            let id = entry.identity.local.occurrenceID
+            guard entry.identity.account.accountGeneration == view.accountGeneration else { continue }
+            let latest = seenPublications.insert(id).inserted
+            if entry.phase == .sent {
+                review.insert(id)
+                blocking.insert(id)
+            } else if !latest {
+                continue
+            } else if entry.phase == .waiting, entry.managedLease == nil || entry.managedLease == outgoingLease {
+                pending.insert(id)
+            } else if entry.phase == .conflict || entry.phase == .failed {
+                review.insert(id)
+            } else if case .needsReview? = entry.managedLink {
+                review.insert(id)
+            }
+        }
+        #if os(iOS)
+        if publication != nil {
+            let captured = Set(publications.map { $0.entry.identity.operationID })
+            for candidate in try managedOutgoingCandidates(expectedRevision: view.revision) where !captured.contains(candidate.operationID) {
+                pending.insert(candidate.occurrenceID)
+            }
+        }
+        #endif
+
+        if let saved = binding?.binding, let seriesText {
+            let lease = try managedSetup?.activeSeriesLease(account)
+            let unconfirmed = try seriesTextWriter?.unconfirmedImports(viewingAs: account) ?? []
+            for item in try await importJournal.heldSeries(viewingAs: account, binding: saved) {
+                let series = item.series
+                guard let id = series.receipt.local?.id, let local = try (seriesText.readForExport ?? seriesText.read)(id) else { continue }
+                if unconfirmed.contains(series.receipt.operationID) {
+                    review.insert(id)
+                    blocking.insert(id)
+                } else if item.issue != nil {
+                    review.insert(id)
+                } else if item.priorLease == lease, view.canWriteOwnedEvents {
+                    automatic.insert(id)
+                    if try series.baseline.differs(from: local) || local.scheduleEdit != nil ||
+                        seriesText.instanceExport?.read(id, 1).isEmpty == false { pending.insert(id) }
+                }
+            }
+        }
+        guard try connection.view().revision == view.revision, try managedSetup?.view(expectedRevision: view.revision) == binding else {
+            throw Failure.staleConnection
+        }
+        summary.automatic = automatic.count
+        summary.pending += pending.count
+        summary.reminderReview = review.count
+        summary.blocking += blocking.count
+        return summary
     }
 
     func isAdvancingManagedSetup(_ operation: UUID) -> Bool {
@@ -1058,8 +1154,7 @@ final class RemiloIOSGoogleCalendarRuntime {
         return receipt
     }
 
-    private func syncManagedOutgoing(expectedRevision: Int) async throws {
-        guard let publication else { return }
+    private func managedOutgoingCandidates(expectedRevision: Int) throws -> [RemiloIOSGoogleCalendarPublicationRuntime.ManagedCandidate] {
         var candidates: [RemiloIOSGoogleCalendarPublicationRuntime.ManagedCandidate] = []
         if let binding = try? managedSetup?.outgoingBinding(explicit: true) {
             let scope = Self.exportScope(binding)
@@ -1077,6 +1172,12 @@ final class RemiloIOSGoogleCalendarRuntime {
                                         replacingLease: wasReviewed ? previous?.waitingLease : nil))
             }
         }
+        return candidates
+    }
+
+    private func syncManagedOutgoing(expectedRevision: Int) async throws {
+        guard let publication else { return }
+        let candidates = try managedOutgoingCandidates(expectedRevision: expectedRevision)
         let changed = try await publication.syncManaged(candidates, expectedConnectionRevision: expectedRevision)
         let linked = try await attachManagedPublications(publication, expectedRevision: expectedRevision)
         if !changed.isEmpty || linked {

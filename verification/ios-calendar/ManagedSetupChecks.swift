@@ -169,6 +169,10 @@ enum ManagedSetupChecks {
                 preconditionFailure("Both links are ready to inspect")
             }
             precondition(candidates.allSatisfy { $0.automatic?.managedLease == lease && $0.baseline != nil })
+            let beforeStatusReads = fixture.requests
+            let initialSummary = try await resumedRuntime.savedSyncSummary()
+            precondition(initialSummary.connected && initialSummary.automatic == 2 && fixture.requests == beforeStatusReads,
+                         "Reading the summary uses saved observations and cannot start a Google check")
             fixture.stageResumeCandidates = true
             let stagedForResume = try await reopened.scanIncoming(expectedRevision: revision)
             precondition(Set(Fixture.resumeIDs).isSubset(of: Set(stagedForResume.pending.map(\.eventID))))
@@ -194,6 +198,11 @@ enum ManagedSetupChecks {
             let pause = try setup.changeMode(.paused, operationID: pauseID, expectedRevision: beforePause.bindingRevision,
                                              expectedConnectionRevision: revision)
             let paused = try reopened.view(expectedRevision: revision)
+            let pausedSummary = try await resumedRuntime.savedSyncSummary()
+            let pausedLinks = try resumedLinks.savedSyncStatuses(connection.view())
+            precondition(pausedSummary.automatic == 0 && pausedSummary.pending == 0 && pausedSummary.reminderReview == 0 &&
+                         pausedLinks.count == 2 && pausedLinks.values.allSatisfy { $0.state == .paused && $0.reason == "StaleAuthorization" },
+                         "An ordinary hold is visible and is not an unresolved sync error")
             let pausedCapture = try reopened.captureOutgoingBinding(explicit: true)
             let pausedDefault = try reopened.captureOutgoingBinding(explicit: false)
             let pausedIncoming = try reopened.hasActiveIncomingBinding(expectedRevision: revision)
@@ -294,6 +303,10 @@ enum ManagedSetupChecks {
             let afterReplay = try restartedLinks.automaticCandidates(expectedConnectionRevision: revision, inspectUnchanged: true)
             precondition(replayedLink && settledLinks.isEmpty && afterReplay == reactivated,
                          "A restart between link activation and journal cleanup cannot rotate the link twice")
+            let resumedSummary = try await restartedRuntime.savedSyncSummary()
+            let restoredStatus = try restartedLinks.savedSyncStatuses(connection.view())
+            precondition(resumedSummary.automatic == 1 && restoredStatus[recoveredLink.occurrenceID]?.automatic == true &&
+                         restoredStatus.values.filter { $0.state == .paused }.count == 1)
             let importedAfterResume = try await restartedRuntime.syncManagedIncoming(expectedRevision: revision)
             let afterImport = try reopened.savedIncomingProgress(expectedRevision: revision)
             let remainingApprovals = try reopened.resumedImports(authorized.account)
@@ -388,6 +401,7 @@ enum ManagedSetupChecks {
         private var name: String?
         private var marker: String?
         private(set) var posts = 0
+        private(set) var requests = 0
         private(set) var samples = 0
         private var incoming = false
         var stageResumeCandidates = false
@@ -417,6 +431,7 @@ enum ManagedSetupChecks {
         func startIncoming() { incoming = true }
 
         func send(_ request: URLRequest) throws -> HTTP.Response {
+            requests += 1
             guard let url = request.url else { throw Failure.invalidInput }
             if request.httpMethod == "POST", url.path == "/calendar/v3/calendars" {
                 posts += 1
