@@ -27,12 +27,14 @@ xcrun swiftc -swift-version 5 -parse-as-library -o "$build_dir/checks" \
   modules/remilo-alarm/ios/RemiloIOSGoogleCalendarPublicationJournal.swift \
   modules/remilo-alarm/ios/RemiloIOSGoogleCalendarPublicationRuntime.swift \
   modules/remilo-alarm/ios/RemiloIOSGoogleCalendarWriteTransport.swift \
+  modules/remilo-alarm/ios/RemiloIOSGoogleCalendarSeriesTextWriter.swift \
   modules/remilo-alarm/ios/RemiloIOSGoogleCalendarImport.swift \
   modules/remilo-alarm/ios/RemiloIOSGoogleCalendarImportJournal.swift \
   modules/remilo-alarm/ios/RemiloIOSRecurrence.swift \
   modules/remilo-alarm/ios/RemiloIOSTime.swift \
   modules/remilo-alarm/ios/RemiloIOSCalendarSeriesText.swift \
   verification/ios-calendar/CalendarChecks.swift \
+  verification/ios-calendar/SeriesTextWriterChecks.swift \
   verification/ios-calendar/ConnectionChecks.swift \
   verification/ios-calendar/ManagedDiscoveryChecks.swift \
   verification/ios-calendar/ManagedSetupChecks.swift \

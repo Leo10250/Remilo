@@ -17,10 +17,13 @@ final class RemiloIOSGoogleCalendarRuntime {
     enum Authorization: Equatable { case connectOrChangeAccount, reauthorizeCurrentAccount, writeOwnedEvents }
 
     struct SeriesTextAuthority: Sendable {
+        typealias SendCheckpoint = @MainActor @Sendable () throws -> RemiloIOSGoogleCalendarWriteTransport.Permission
         let read: @MainActor @Sendable (String) throws -> IOSCalendarSeriesTextSnapshot?
         let apply: @MainActor @Sendable (
             String, IOSCalendarSeriesTextSnapshot, String, String, @escaping ImportJournal.Scheduler.Permit
         ) async throws -> Bool
+        let permit: @MainActor @Sendable (IOSCalendarSeriesTextSnapshot, @escaping SendCheckpoint) async throws
+            -> RemiloIOSGoogleCalendarWriteTransport.Permission?
     }
 
     private let connection: Connection
@@ -33,6 +36,7 @@ final class RemiloIOSGoogleCalendarRuntime {
     let managedSetup: RemiloIOSGoogleCalendarManagedSetup?
     private let managedImportSound: @MainActor () throws -> Import.Sound
     private let seriesText: SeriesTextAuthority?
+    private var seriesTextWriter: RemiloIOSGoogleCalendarSeriesTextWriter?
     private var reviews: [Import.Review] = []
     private var importingManaged = false
 
@@ -221,8 +225,10 @@ final class RemiloIOSGoogleCalendarRuntime {
                 result.continuation = true
                 return result
             }
+            let waitingExports = try seriesTextWriter?.unconfirmedImports(viewingAs: account) ?? []
             let recurring = try await importJournal.reconcileManagedSeries(scan, viewingAs: account, limit: 10 - attempted,
-                                                                            allowTextTransfers: seriesText != nil)
+                                                                            allowTextTransfers: seriesText != nil,
+                                                                            waitingExports: waitingExports)
             try requireCurrentAccount(account)
             for match in recurring {
                 let permit = RemiloIOSGoogleCalendarManagedInbox.Permit(scope: scan.scope, observation: match.observation)
@@ -515,6 +521,9 @@ final class RemiloIOSGoogleCalendarRuntime {
     private func runAutomaticPass(_ opportunity: AutomaticOpportunity) async {
         guard let view = try? connection.view(), view.connected else { return }
         try? await syncManagedOutgoing(expectedRevision: view.revision)
+        if (try? await seriesTextWriter?.sync(expectedRevision: view.revision)) == true {
+            NotificationCenter.default.post(name: .remiloIOSChange, object: nil, userInfo: [Self.automaticStatusChangeKey: true])
+        }
         // Resolve outbound identities first so a just-published event is
         // reserved before the incoming scan can discover it.
         if opportunity == .foreground, Self.isAutomaticForeground,
@@ -687,21 +696,31 @@ final class RemiloIOSGoogleCalendarRuntime {
                 NotificationCenter.default.post(name: .remiloIOSChange, object: nil, userInfo: [Self.automaticStatusChangeKey: true])
             }
         )
+        let seriesAuthority = SeriesTextAuthority(read: { try RemiloIOSEngine.shared.calendarSeriesTextSnapshot($0) },
+            apply: { operation, snapshot, title, notes, permit in
+                try await RemiloIOSEngine.shared.applyCalendarSeriesText(operationKey: operation, snapshot: snapshot,
+                                                                       title: title, notes: notes, authorize: permit)
+            }, permit: { snapshot, checkpoint in
+                try await RemiloIOSEngine.shared.withCalendarSeriesTextPermit(for: snapshot, commit: checkpoint)
+            })
         let runtime = RemiloIOSGoogleCalendarRuntime(
             connection: connection, canUseForeground: canUseForeground,
             importJournal: imports, scheduler: .localEngine(.shared), publication: publication, manualLink: manualLink,
             managedSetupJournal: managed,
             managedSetupFreshInstallation: { try RemiloIOSEngine.shared.read().isFreshCalendarInstallation },
             managedImportSound: { try RemiloIOSEngine.shared.read().settings.alertSound == "system" ? .system : .remilo },
-            seriesText: .init(read: { try RemiloIOSEngine.shared.calendarSeriesTextSnapshot($0) },
-                apply: { operation, snapshot, title, notes, permit in
-                    try await RemiloIOSEngine.shared.applyCalendarSeriesText(operationKey: operation, snapshot: snapshot,
-                                                                           title: title, notes: notes, authorize: permit)
-                })
+            seriesText: seriesAuthority
         ) {
             subject, purpose in
             try await Self.authorize(presenter: presenter, subject: subject, purpose: purpose)
         }
+        let support = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask,
+                                                   appropriateFor: nil, create: true)
+        runtime.seriesTextWriter = RemiloIOSGoogleCalendarSeriesTextWriter(
+            directory: support.appendingPathComponent("google-calendar", isDirectory: true),
+            connection: connection, imports: imports, local: seriesAuthority, canRead: canUseForeground,
+            activeLease: { [setup = runtime.managedSetup] in try setup?.activeSeriesLease($0) }
+        )
         live = runtime
         return runtime
     }

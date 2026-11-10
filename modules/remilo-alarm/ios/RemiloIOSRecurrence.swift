@@ -53,6 +53,22 @@ enum RemiloIOSRecurrence {
             self.alarmOffsetMs = alarmOffsetMs
             _ = try Prepared(self)
         }
+
+        /// Calendar shares authored event timing. Due and alarm offsets belong to Remilo.
+        func hasSameEventSchedule(as other: Rule) -> Bool {
+            guard anchor == other.anchor, frequency == other.frequency, interval == other.interval,
+                  count == other.count, until == other.until, zoneID == other.zoneID, endExclusive == other.endExclusive,
+                  allDay == other.allDay, endOffsetMs == other.endOffsetMs else { return false }
+            switch Frequency(rawValue: frequency) {
+            case .daily: return true
+            case .weekly: return Set(weekdays) == Set(other.weekdays)
+            case .monthlyDay: return day == other.day
+            case .monthlyOrdinal: return ordinal == other.ordinal && weekday == other.weekday
+            case .lastWeekday: return weekday == other.weekday
+            case .yearly: return month == other.month && day == other.day
+            case nil: return false
+            }
+        }
     }
 
     struct Slot: Equatable {

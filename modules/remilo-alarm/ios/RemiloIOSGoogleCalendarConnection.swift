@@ -448,6 +448,7 @@ final class RemiloIOSGoogleCalendarConnection {
 
     func prepareImport(expectedRevision: Int, calendarID: String, eventID: String, recurringChoices: Import.Choices?,
                        managed: RemiloIOSGoogleCalendarManagedInbox.Permit? = nil,
+                       managedLease: RemiloIOSGoogleCalendarManualLink.ManagedLease? = nil,
                        budget: RemiloIOSGoogleCalendarHTTP.Budget = .init(),
                        canRead: @escaping @MainActor @Sendable () -> Bool) async throws -> Import.Review {
         let live = try requireAccess(expectedRevision)
@@ -458,6 +459,7 @@ final class RemiloIOSGoogleCalendarConnection {
             try await beforeRead()
             return try await transport.ownedCalendar(access, id: calendarID, budget: budget)
         }
+        try managedLease?.verify(calendar, email: live.access.account.email)
         if let managed {
             guard managed.source == .init(subject: account.subject, calendarID: calendarID, eventID: eventID) else {
                 throw Import.Failure.staleRemote

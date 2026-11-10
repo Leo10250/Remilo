@@ -104,6 +104,12 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         } catch Failure.staleConnection { return false }
     }
 
+    func activeSeriesLease(_ account: Account) throws -> RemiloIOSGoogleCalendarManualLink.ManagedLease? {
+        guard canUseForeground(), try connection.isCurrentAccount(account) else { return nil }
+        do { return try journal.incomingScope(account).binding.linkLease }
+        catch Failure.staleConnection { return nil }
+    }
+
     func permitsIncoming(_ permit: Inbox.Permit, account: Account) throws -> Bool {
         guard canUseForeground(), try connection.isCurrentAccount(account) else { return false }
         let scope: Inbox.Scope

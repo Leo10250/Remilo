@@ -275,9 +275,11 @@ enum ImportChecks {
         let work = try await reopened.reconcileManagedSeries(scan([textObservation]), viewingAs: account, limit: 10, allowTextTransfers: true)
         guard let text = work.first?.textWork else { preconditionFailure("A changed master has a comparison baseline") }
         let id = recovered.local!.id
-        let before = IOSCalendarSeriesTextSnapshot(segmentID: id, revision: 1, title: review.source.fields.title, notes: review.source.fields.notes)
-        let conflict = IOSCalendarSeriesTextSnapshot(segmentID: id, revision: 2, title: "Local title", notes: before.notes)
-        let after = IOSCalendarSeriesTextSnapshot(segmentID: id, revision: 2, title: updatedReview.source.fields.title, notes: before.notes)
+        let before = IOSCalendarSeriesTextSnapshot(familyID: id, segmentID: id, revision: 1,
+                                                   title: review.source.fields.title, notes: review.source.fields.notes)
+        let conflict = IOSCalendarSeriesTextSnapshot(familyID: id, segmentID: id, revision: 2, title: "Local title", notes: before.notes)
+        let after = IOSCalendarSeriesTextSnapshot(familyID: id, segmentID: id, revision: 2,
+                                                  title: updatedReview.source.fields.title, notes: before.notes)
         let accepted = try text.accepts(local: before, review: updatedReview)
         let competing = try text.accepts(local: conflict, review: updatedReview)
         let recoveredCommit = try text.accepts(local: after, review: updatedReview)

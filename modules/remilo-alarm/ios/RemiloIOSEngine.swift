@@ -158,15 +158,27 @@ final class RemiloIOSEngine {
         return record.calendarLifecycleRevision ?? 0
     }
 
-    func calendarSeriesTextSnapshot(_ segmentID: String) throws -> IOSCalendarSeriesTextSnapshot? {
-        Self.calendarSeriesTextSnapshot(segmentID, in: try read())
+    func calendarSeriesTextSnapshot(_ familyID: String) throws -> IOSCalendarSeriesTextSnapshot? {
+        Self.calendarSeriesTextSnapshot(familyID, in: try read())
     }
 
-    private static func calendarSeriesTextSnapshot(_ segmentID: String, in state: IOSDatabase) -> IOSCalendarSeriesTextSnapshot? {
-        guard let segment = state.series[segmentID], segment.state == "Active", segment.id == segment.familyID,
-              !state.series.values.contains(where: { $0.familyID == segment.familyID && $0.id != segment.id && $0.state != "Archived" }),
-              state.receipts.contains(where: { $0.key.hasPrefix(calendarCreatePrefix) && $0.value.seriesSegmentID == segmentID }) else { return nil }
-        return .init(segmentID: segmentID, revision: segment.revision, title: segment.template.title, notes: segment.template.notes)
+    private static func calendarSeriesTextSnapshot(_ familyID: String, in state: IOSDatabase) -> IOSCalendarSeriesTextSnapshot? {
+        guard let root = state.series[familyID], root.familyID == familyID,
+              state.receipts.contains(where: { $0.key.hasPrefix(calendarCreatePrefix) && $0.value.seriesSegmentID == familyID }) else { return nil }
+        let current = state.series.values.filter { $0.familyID == familyID && $0.state != "Archived" }
+        guard current.count == 1, let segment = current.first, segment.state == "Active",
+              segment.rule.hasSameEventSchedule(as: root.rule) else { return nil }
+        return .init(familyID: familyID, segmentID: segment.id, revision: segment.revision,
+                     title: segment.template.title, notes: segment.template.notes)
+    }
+
+    func withCalendarSeriesTextPermit<Value: Sendable>(for snapshot: IOSCalendarSeriesTextSnapshot,
+                                                       commit: @MainActor @Sendable () throws -> Value) async throws -> Value? {
+        await acquire()
+        defer { release() }
+        try Task.checkCancellation()
+        guard try calendarSeriesTextSnapshot(snapshot.familyID) == snapshot else { return nil }
+        return try commit()
     }
 
     func applyCalendarSeriesText(operationKey: String, snapshot: IOSCalendarSeriesTextSnapshot, title: String, notes: String,
@@ -174,11 +186,11 @@ final class RemiloIOSEngine {
         await acquire()
         defer { release() }
         let operationID = Self.calendarInboundPrefix + "series:" + operationKey
-        let input = IOSInput(values: ["operationId": operationID, "segmentId": snapshot.segmentID, "title": title, "notes": notes])
+        let input = IOSInput(values: ["operationId": operationID, "familyId": snapshot.familyID, "title": title, "notes": notes])
         let fingerprint = try fingerprint(input)
         var state = try read()
         try Task.checkCancellation()
-        let current = Self.calendarSeriesTextSnapshot(snapshot.segmentID, in: state)
+        let current = Self.calendarSeriesTextSnapshot(snapshot.familyID, in: state)
         if let receipt = state.receipts[operationID] {
             guard receipt.fingerprint == fingerprint else { throw IOSInputFailure("OPERATION_REUSED") }
             guard current?.title == title, current?.notes == notes else { return false }

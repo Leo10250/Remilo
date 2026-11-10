@@ -992,6 +992,32 @@ struct EngineChecks {
         ])
         let paused = try restarted.calendarSeriesTextSnapshot(segment)
         precondition(paused == nil)
+        _ = try await restarted.apply([
+            "kind": "ResumeSeries", "operationId": "fixture-resume-series-text", "segmentId": segment,
+            "expectedRevision": committed.revision + 1,
+        ])
+        let beforeEdit = try restarted.calendarSeriesTextSnapshot(segment)!
+        let replacement = try await restarted.apply([
+            "kind": "EditSeries", "operationId": "fixture-edit-series-text", "segmentId": segment,
+            "expectedRevision": beforeEdit.revision, "title": "Local series edit", "alarmAtMs": start + 120_000,
+            "recurrence": ["frequency": "daily", "count": 5, "zoneMode": "pinned"],
+        ])
+        let edited = try restarted.calendarSeriesTextSnapshot(segment)!
+        precondition(edited.familyID == segment && edited.segmentID != segment && replacement["segmentId"] as? String == edited.segmentID &&
+                     edited.title == "Local series edit")
+        let stalePermit: Bool? = try await restarted.withCalendarSeriesTextPermit(for: beforeEdit) {
+            preconditionFailure("A replaced local segment cannot authorize a write")
+        }
+        let currentPermit = try await restarted.withCalendarSeriesTextPermit(for: edited) { true }
+        precondition(stalePermit == nil && currentPermit == true)
+        let split = try RemiloIOSRecurrence.canonicalNominal(RemiloIOSSeries.civil(start + 86_400_000, zone: zone))
+        _ = try await restarted.apply([
+            "kind": "EditFollowing", "operationId": "fixture-split-series-text", "segmentId": edited.segmentID,
+            "expectedRevision": edited.revision, "nominalSlot": split, "title": "Following segment",
+            "recurrence": ["frequency": "daily", "count": 4, "zoneMode": "pinned"],
+        ])
+        let splitFamily = try restarted.calendarSeriesTextSnapshot(segment)
+        precondition(splitFamily == nil, "A change to the event structure needs a series schedule reconciliation")
     }
 
     private static func calendarSeriesAllowsAFutureMoveAfterItsLastOriginal() async throws {

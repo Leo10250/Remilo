@@ -35,6 +35,7 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
         fileprivate let payload: PatchPayload
         private let evidence: RemiloIOSGoogleCalendarManualLink.Evidence?
         private let schedule: Event.Schedule?
+        private let seriesText: Event.Fields?
         fileprivate let calendarZone: String
         fileprivate let managedLease: RemiloIOSGoogleCalendarManualLink.ManagedLease?
 
@@ -64,10 +65,21 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
                           managedLease: transfer.automatic?.managedLease)
         }
 
+        init(seriesText operationID: UUID, account: Publication.Account, snapshot: IOSCalendarSeriesTextSnapshot,
+             source: RemiloIOSGoogleCalendarImport.Source, lease: RemiloIOSGoogleCalendarManualLink.ManagedLease) throws {
+            guard source.key.subject == account.subject, source.key.calendarID == lease.calendarID,
+                  source.calendarZone == lease.zoneID else { throw Failure.invalidInput }
+            let local = Publication.Local(occurrenceID: snapshot.segmentID, revision: snapshot.revision, generation: 0)
+            let desired = Event.Fields(title: snapshot.title, notes: snapshot.notes, schedule: source.fields.schedule)
+            try self.init(operationID: operationID, account: account, local: local, calendarID: source.key.calendarID,
+                          eventID: source.key.eventID, etag: source.etag, before: source.fields, calendarZone: source.calendarZone,
+                          desired: desired, suppressGoogleReminders: false, evidence: nil, managedLease: lease, recurringTextOnly: true)
+        }
+
         private init(operationID: UUID, account: Publication.Account, local: Publication.Local, calendarID: String,
                      eventID: String, etag: String, before: Event.Fields, calendarZone: String, desired: Event.Fields,
                      suppressGoogleReminders: Bool, evidence: RemiloIOSGoogleCalendarManualLink.Evidence?,
-                     managedLease: RemiloIOSGoogleCalendarManualLink.ManagedLease? = nil) throws {
+                     managedLease: RemiloIOSGoogleCalendarManualLink.ManagedLease? = nil, recurringTextOnly: Bool = false) throws {
             guard Transport.Event.validatedStrongETag(etag) != nil,
                   account.connectionRevision > 0, account.accountGeneration > 0, local.revision > 0, local.generation >= 0,
                   !local.occurrenceID.isEmpty, !calendarID.isEmpty, !eventID.isEmpty,
@@ -77,7 +89,13 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
                 guard evidence.source.belongs(to: account), evidence.source.calendarID == calendarID,
                       evidence.source.eventID == eventID else { throw Failure.invalidInput }
             }
-            guard before.schedule.recurrence == nil, desired.schedule.recurrence == nil else { throw Failure.invalidInput }
+            if recurringTextOnly {
+                guard before.schedule.recurrence != nil, before.schedule == desired.schedule, !suppressGoogleReminders else {
+                    throw Failure.invalidInput
+                }
+            } else {
+                guard before.schedule.recurrence == nil, desired.schedule.recurrence == nil else { throw Failure.invalidInput }
+            }
             let title = before.title == desired.title ? nil : desired.title
             let notes = before.notes == desired.notes ? nil : desired.notes
             let schedule = before.schedule == desired.schedule ? nil : desired.schedule
@@ -91,6 +109,7 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
             self.etag = etag
             self.evidence = evidence
             self.schedule = schedule
+            self.seriesText = recurringTextOnly ? desired : nil
             self.calendarZone = calendarZone
             self.managedLease = managedLease
             let switchesRepresentation = before.schedule.allDay != desired.schedule.allDay
@@ -103,8 +122,9 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
         func matches(_ observed: Transport.Event) -> Bool {
             guard identifies(observed),
                   let object = RemiloIOSGoogleCalendarWriteTransport.object(observed.json),
-                  let fields = try? Event.fields(object, calendarZone: calendarZone).fields,
-                  fields.schedule.recurrence == nil else { return false }
+                  let fields = try? Event.fields(object, calendarZone: calendarZone).fields else { return false }
+            if let seriesText { return fields == seriesText }
+            guard fields.schedule.recurrence == nil else { return false }
             if let summary = payload.summary, object["summary"] as? String != summary { return false }
             if let description = payload.description, fields.notes != description { return false }
             if let schedule, fields.schedule != schedule { return false }
@@ -119,6 +139,7 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
             guard identifies(observed), observed.strongETag == etag,
                   let object = RemiloIOSGoogleCalendarWriteTransport.object(observed.json),
                   let fields = try? Event.fields(object, calendarZone: calendarZone).fields else { return false }
+            if let seriesText { return fields.schedule == seriesText.schedule }
             return fields.schedule.recurrence == nil
         }
 

@@ -85,12 +85,16 @@ actor RemiloIOSGoogleCalendarImportJournal {
         private let schedule: Data
 
         init(_ source: Import.Source) throws {
+            try self.init(etag: source.etag, fields: source.fields)
+        }
+
+        init(etag: String, fields: Import.Event.Fields) throws {
             let encoder = JSONEncoder()
             encoder.outputFormatting = .sortedKeys
-            etag = source.etag
-            title = Self.digest(source.fields.title)
-            notes = Self.digest(source.fields.notes)
-            schedule = Data(SHA256.hash(data: try encoder.encode(source.fields.schedule)))
+            self.etag = etag
+            title = Self.digest(fields.title)
+            notes = Self.digest(fields.notes)
+            schedule = Data(SHA256.hash(data: try encoder.encode(fields.schedule)))
         }
 
         func accepts(local: IOSCalendarSeriesTextSnapshot, remote: Import.Source) throws -> Bool {
@@ -103,6 +107,17 @@ actor RemiloIOSGoogleCalendarImportJournal {
 
         fileprivate static func digest(_ value: String) -> Data {
             Data(SHA256.hash(data: Data(value.utf8)))
+        }
+
+        func differs(from local: IOSCalendarSeriesTextSnapshot) -> Bool {
+            title != Self.digest(local.title) || notes != Self.digest(local.notes)
+        }
+
+        func acceptsExport(local: IOSCalendarSeriesTextSnapshot, remote: Import.Source) throws -> Bool {
+            let current = try Self(remote)
+            return schedule == current.schedule &&
+                (title == current.title || local.title == remote.fields.title) &&
+                (notes == current.notes || local.notes == remote.fields.notes)
         }
     }
 
@@ -131,6 +146,20 @@ actor RemiloIOSGoogleCalendarImportJournal {
                 }
             }
             return source.etag == receipt.reviewedETag && local.title == source.fields.title && local.notes == source.fields.notes
+        }
+    }
+
+    struct SeriesTextExport: Sendable {
+        let receipt: Receipt
+        let baseline: SeriesTextBaseline
+        let exceptions: [RecurringInstanceVersion]
+
+        func accepts(local: IOSCalendarSeriesTextSnapshot, review: Import.Review) throws -> Bool {
+            guard local.familyID == receipt.local?.id, review.source.key == receipt.source,
+                  let proof = review.recurrenceEvidence, try baseline.acceptsExport(local: local, remote: review.source) else { return false }
+            return proof.exceptions.allSatisfy { candidate in
+                exceptions.contains { $0.identity == candidate.identity && ($0.identity.cancelled || $0.etag == candidate.etag) }
+            }
         }
     }
 
@@ -290,7 +319,8 @@ actor RemiloIOSGoogleCalendarImportJournal {
     /// Save changes against an existing series before clearing observations
     /// from the inbox. Replaying the same provider version is harmless.
     func reconcileManagedSeries(_ scan: Inbox.Progress, viewingAs account: Import.Account,
-                                limit: Int, allowTextTransfers: Bool = false) throws -> [RecurringObservationResult] {
+                                limit: Int, allowTextTransfers: Bool = false,
+                                waitingExports: Set<UUID> = []) throws -> [RecurringObservationResult] {
         guard limit > 0, scan.initialComplete, !scan.continuation, scan.scope.binding.belongs(to: account),
               scan.scope.binding.account.accountGeneration == account.accountGeneration,
               scan.scope.policy.automaticImport else { return [] }
@@ -309,6 +339,7 @@ actor RemiloIOSGoogleCalendarImportJournal {
             if case .changedInstance(let id) = observation.kind { masterID = id }
             else { masterID = observation.eventID }
             guard let id = masters[masterID], var entry = state.entries[id], let receipt = entry.receipt else { continue }
+            if waitingExports.contains(id), observation.kind == .recurringMaster { continue }
             let reviewedVersion = entry.seriesTextBaseline?.etag ?? receipt.reviewedETag
             let needsTextCheck = entry.seriesTextBaseline == nil ? observation.etag == reviewedVersion : observation.etag != reviewedVersion
             if allowTextTransfers, observation.kind == .recurringMaster, observation.etag != nil, entry.recurringIssue == nil,
@@ -371,6 +402,30 @@ actor RemiloIOSGoogleCalendarImportJournal {
         } else {
             throw Failure.invalidInput
         }
+        state.entries[id] = entry
+        try write(state)
+    }
+
+    func seriesTextExports(viewingAs account: Import.Account,
+                           lease: RemiloIOSGoogleCalendarManualLink.ManagedLease) throws -> [SeriesTextExport] {
+        try read().entries.values.compactMap { entry in
+            guard let receipt = entry.receipt, receipt.local?.kind == .series, receipt.relationship == .automaticRequested,
+                  receipt.account.subject == account.subject, receipt.account.clientID == account.clientID,
+                  receipt.account.accountGeneration == account.accountGeneration, entry.managed?.scope.binding.linkLease == lease,
+                  entry.recurringIssue == nil, let baseline = entry.seriesTextBaseline,
+                  let exceptions = entry.recurringInstances else { return nil }
+            return .init(receipt: receipt, baseline: baseline, exceptions: exceptions)
+        }.sorted { $0.receipt.operationID.uuidString < $1.receipt.operationID.uuidString }
+    }
+
+    func finishSeriesTextExport(_ id: UUID, lease: RemiloIOSGoogleCalendarManualLink.ManagedLease, expectedBaseline: String,
+                                confirmed: SeriesTextBaseline?, reason: String?) throws {
+        var state = try read()
+        guard var entry = state.entries[id], let receipt = entry.receipt, entry.managed?.scope.binding.linkLease == lease,
+              entry.seriesTextBaseline?.etag == expectedBaseline, entry.recurringIssue == nil else { return }
+        if let confirmed { entry.seriesTextBaseline = confirmed }
+        else if let reason { entry.recurringIssue = .init(eventID: receipt.source.eventID, etag: expectedBaseline, code: reason) }
+        else { throw Failure.invalidInput }
         state.entries[id] = entry
         try write(state)
     }
