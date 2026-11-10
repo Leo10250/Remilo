@@ -351,7 +351,16 @@ extension RemiloIOSEngine {
         let verified = confirmation.fields
         let current = IOSCalendarInboundChange.Schedule(record)
         let authoredSchedule = IOSCalendarInboundChange.Schedule(desired)
-        let schedule = current == authoredSchedule ? IOSCalendarInboundChange.Schedule(verified) : current
+        let verifiedSchedule = IOSCalendarInboundChange.Schedule(verified)
+        // An incoming change may conflict with an edit made while the write
+        // was in flight. Do not treat that remote value as a common baseline.
+        func conflicts<T: Equatable>(_ local: T, _ authored: T, _ remote: T) -> Bool {
+            local != authored && remote != authored && local != remote
+        }
+        guard !conflicts(record.title, desired.title, verified.title),
+              !conflicts(record.notes, desired.notes, verified.notes),
+              !conflicts(current, authoredSchedule, verifiedSchedule) else { return .needsReview }
+        let schedule = current == authoredSchedule ? verifiedSchedule : current
         let title = record.title == desired.title ? verified.title : record.title
         let notes = record.notes == desired.notes ? verified.notes : record.notes
         if title != record.title || notes != record.notes || schedule != current {

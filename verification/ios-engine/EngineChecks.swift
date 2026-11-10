@@ -1219,7 +1219,13 @@ struct EngineChecks {
         let stale = try await afterRestart.withCalendarSeriesInstancePermit(for: first) { true }
         let allowed = try await afterRestart.withCalendarSeriesInstancePermit(for: second) { true }
         precondition(stale == nil && allowed == true)
-        let merged = IOSCalendarSeriesInstanceEdit.Fields(title: first.desired.title, notes: "Google note",
+        let conflicting = IOSCalendarSeriesInstanceEdit.Fields(title: first.desired.title, notes: "Google changed the same notes",
+            eventStartMs: first.desired.eventStartMs, eventEndMs: first.desired.eventEndMs, allDay: false, zoneID: "UTC")
+        let lateConflict = try await afterRestart.acknowledgeCalendarSeriesInstance(
+            .init(operationID: UUID(), edit: first, eventID: update.eventID, fields: conflicting), authorize: { true })
+        let afterConflict = try afterRestart.calendarSeriesInstanceEdits(family, limit: 2)
+        precondition(lateConflict == .needsReview && afterConflict == latest)
+        let merged = IOSCalendarSeriesInstanceEdit.Fields(title: first.desired.title, notes: first.desired.notes,
             eventStartMs: first.desired.eventStartMs + 60_000, eventEndMs: first.desired.eventEndMs + 60_000,
             allDay: false, zoneID: "UTC")
         let confirmation = IOSCalendarSeriesInstanceConfirmation(operationID: UUID(), edit: first, eventID: update.eventID, fields: merged)
