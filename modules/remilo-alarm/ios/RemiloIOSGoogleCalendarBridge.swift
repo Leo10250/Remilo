@@ -11,6 +11,7 @@ final class RemiloIOSGoogleCalendarBridge {
     typealias LinkRuntime = RemiloIOSGoogleCalendarManualLinkRuntime
     typealias Link = LinkRuntime.Link
     typealias LinkStore = LinkRuntime.Store
+    typealias ManagedSetup = RemiloIOSGoogleCalendarManagedSetup
 
     private enum PageCursor {
         case calendars(Connection.Cursor)
@@ -38,6 +39,83 @@ final class RemiloIOSGoogleCalendarBridge {
     func connection() async throws -> [String: Any] {
         guard let runtime = try Runtime.configuredForegroundRuntime() else { return Self.connection(nil) }
         return Self.connection(try await runtime.view())
+    }
+
+    func managedState() async throws -> [String: Any] {
+        guard let runtime = try Runtime.configuredForegroundRuntime(), let setup = runtime.managedSetup else {
+            return Self.managedState(nil, connection: nil, progress: nil, operation: nil)
+        }
+        let view = try await runtime.view()
+        let state = try setup.view(expectedRevision: view.revision)
+        let progress = try setup.savedIncomingProgress(expectedRevision: view.revision)
+        var operation: ManagedSetup.Status?
+        if let id = state.pendingOperationID, let entry = try setup.operation(id, expectedRevision: view.revision) {
+            operation = try setup.status(entry, connection: view, advancing: runtime.isAdvancingManagedSetup(id))
+        }
+        return Self.managedState(state, connection: view, progress: progress, operation: operation)
+    }
+
+    func previewManagedSetup(_ choices: [String: Any]) async throws -> [String: Any] {
+        let runtime = try runtime()
+        guard let setup = runtime.managedSetup else { throw Failure.invalidConfiguration }
+        let view = try await runtime.view()
+        let state = try setup.view(expectedRevision: view.revision)
+        let input = IOSInput(values: choices)
+        if let adoption = choices["adoptOccurrenceIds"] {
+            guard let ids = adoption as? [String], ids.isEmpty else { throw Failure.invalidInput }
+        }
+        let policy = try Self.managedPolicy(choices["policy"], defaults: state.policy)
+        let selected = try Self.optionalText(input, "selectedCalendarId", maximum: 4_096)
+        let result = try await setup.preview(expectedRevision: view.revision,
+            selectedID: selected.flatMap { $0.isEmpty ? nil : $0 }, policy: policy,
+            zoneID: input.text("calendarZone", fallback: TimeZone.current.identifier, maximum: 100),
+            replacement: input.flag("replacement", fallback: false))
+        let discovery = result.discovery
+        switch discovery.selection.outcome {
+        case .incomplete: throw ManagedSetup.Journal.Rejection.discoveryIncomplete
+        case .savedUnavailable: throw discovery.selection.savedFailure ?? Failure.remoteUnavailable
+        case .choose, .candidate, .create: break
+        }
+        let review = result.review
+        let sample = result.sample.map { sample -> [String: Any] in
+            ["inspectedCount": sample.inspectedCount, "complete": sample.complete,
+             "items": sample.items.map { item -> [String: Any] in
+                 let kind: String
+                 switch item.kind {
+                 case .ongoingOrUpcoming: kind = "Upcoming"
+                 case .repeating: kind = "Repeating"
+                 case .review: kind = "Review"
+                 }
+                 return ["title": Self.providerLabel(item.title), "description": "", "kind": kind]
+             }]
+        }
+        return [
+            "previewId": (review?.id ?? discovery.scanID).uuidString.lowercased(), "kind": "Setup",
+            "expectedRevision": review?.bindingRevision ?? state.bindingRevision, "expectedConnectionRevision": view.revision,
+            "expiresAtMs": review?.expiresAtMs ?? 0, "policy": Self.managedPolicy(policy),
+            "initialMode": (review?.initialImport?.mode ?? policy.importMode).rawValue, "sample": iosBridgeValue(sample),
+            "calendarCandidates": discovery.selection.candidates.filter { $0.failure == nil }.map {
+                ["id": $0.record.id, "name": Self.providerLabel($0.record.name), "zoneId": $0.record.zoneId,
+                 "recognition": $0.recognition.rawValue]
+            },
+            "selectedCalendarId": review?.target.selectedCalendarID ?? "",
+            "calendarZone": review?.calendarZoneID ?? "",
+            "createCalendar": discovery.selection.outcome == .create, "items": [[String: Any]](),
+            "warnings": [String](), "complete": review != nil,
+        ]
+    }
+
+    func authorizeManagedSetup(_ id: String, expectedRevision: Double?) async throws -> [String: Any] {
+        guard let operation = UUID(uuidString: id) else { throw Failure.invalidInput }
+        let revision = try Self.revision(expectedRevision)
+        let runtime = try runtime()
+        guard let setup = runtime.managedSetup else { throw Failure.invalidConfiguration }
+        let authorized = try await setup.authorizeFromUserAction(operation, expectedRevision: revision)
+        let view = try await runtime.view()
+        guard view.revision == authorized.account.connectionRevision else { throw Failure.staleConnection }
+        discard(before: view.revision)
+        try runtime.requestManagedSetupAdvance(operation, expectedRevision: view.revision)
+        return Self.connection(view)
     }
 
     func authorize(expectedRevision: Double?, intent: String) async throws -> [String: Any] {
@@ -264,10 +342,22 @@ final class RemiloIOSGoogleCalendarBridge {
     func apply(_ command: [String: Any]) async throws -> [String: Any] {
         let input = IOSInput(values: command)
         let kind = try input.text("kind", maximum: 60)
-        let revision = try Self.revision(input)
         let operation = try Self.uuid(input, "operationId")
         let runtime = try runtime()
         defer { NotificationCenter.default.post(name: .remiloIOSChange, object: nil, userInfo: [Runtime.automaticStatusChangeKey: true]) }
+        if kind == "ConfirmManagedCalendarSetup" || kind == "RetryManagedCalendarOperation" {
+            let view = try await runtime.view()
+            guard let setup = runtime.managedSetup else { throw Failure.invalidConfiguration }
+            if kind == "ConfirmManagedCalendarSetup" {
+                guard let ids = command["selectedItemIds"] as? [String], ids.isEmpty,
+                      command["selectedCalendarId"] is String else { throw Failure.invalidInput }
+                _ = try setup.capture(operation, reviewID: Self.uuid(input, "previewId"), expectedRevision: view.revision,
+                    selectedCalendarID: input.text("selectedCalendarId", maximum: 4_096))
+            }
+            try runtime.requestManagedSetupAdvance(operation, expectedRevision: view.revision)
+            return ["operationId": operation.uuidString.lowercased(), "captured": true]
+        }
+        let revision = try Self.revision(input)
         switch kind {
         case "DisconnectCalendar":
             let result = try await runtime.disconnectFromUserAction(operationID: operation.uuidString, expectedRevision: revision)
@@ -369,6 +459,17 @@ final class RemiloIOSGoogleCalendarBridge {
         let runtime = try runtime()
         let view = try await runtime.view()
         guard view.revision == revision else { throw Failure.staleConnection }
+        if view.connected, let setup = runtime.managedSetup,
+           let entry = try setup.operation(id, expectedRevision: revision) {
+            let status = try setup.status(entry, connection: view, advancing: runtime.isAdvancingManagedSetup(id))
+            return [
+                "operationId": id.uuidString.lowercased(), "kind": "Setup", "stage": status.stage,
+                "reason": status.reason, "action": status.action, "confirmed": entry.phase == .confirmed ? 1 : 0,
+                "pending": entry.phase == .captured || entry.phase == .sent ? (entry.retired ? 0 : 1) : 0,
+                "review": status.stage == "NeedsReview" || status.stage == "Unconfirmed" ? 1 : 0,
+                "held": 0, "children": [String](), "currentScope": status.currentScope,
+            ]
+        }
         guard view.connected else { return nil }
         if let association = try runtime.manualLink?.associationStatus(id, expectedConnectionRevision: revision) {
             return Self.associationStatus(association, connection: view)
@@ -521,6 +622,61 @@ final class RemiloIOSGoogleCalendarBridge {
          "calendarName": view?.publicationDestination?.name ?? "", "message": "",
          "canWriteOwnedEvents": view?.canWriteOwnedEvents ?? false,
          "access": view?.access.rawValue ?? "unavailable", "revocation": view?.revocation.rawValue ?? "notRequested"]
+    }
+
+    private static func managedPolicy(_ value: Any?, defaults: ManagedSetup.Journal.Policy) throws -> ManagedSetup.Journal.Policy {
+        guard let value else { return defaults }
+        guard let raw = value as? [String: Any] else { throw Failure.invalidInput }
+        let input = IOSInput(values: raw)
+        var policy = defaults
+        if raw["revision"] != nil, try input.integer("revision", range: 1...9_007_199_254_740_991) != defaults.revision {
+            throw ManagedSetup.Journal.Rejection.stalePreview
+        }
+        policy.automaticImport = try input.flag("automaticImport", fallback: defaults.automaticImport)
+        policy.exportNewReminders = try input.flag("exportNewReminders", fallback: defaults.exportNewReminders)
+        policy.disableGoogleReminders = try input.flag("disableGoogleReminders", fallback: defaults.disableGoogleReminders)
+        policy.allDayAlarmMinutes = try Int(input.integer("allDayAlarmMinutes", fallback: Int64(defaults.allDayAlarmMinutes), range: 0...1439))
+        let mode = try input.text("importMode", fallback: defaults.importMode.rawValue, maximum: 16)
+        guard let importMode = Import.Mode(rawValue: mode) else { throw Failure.invalidInput }
+        policy.importMode = importMode
+        return policy
+    }
+
+    private static func managedPolicy(_ policy: ManagedSetup.Journal.Policy) -> [String: Any] {
+        ["revision": policy.revision, "automaticImport": policy.automaticImport, "exportNewReminders": policy.exportNewReminders,
+         "importMode": policy.importMode.rawValue, "allDayAlarmMinutes": policy.allDayAlarmMinutes,
+         "disableGoogleReminders": policy.disableGoogleReminders]
+    }
+
+    private static func managedState(_ state: ManagedSetup.Journal.View?, connection: Connection.View?,
+                                     progress: ManagedSetup.Inbox.Progress?, operation: ManagedSetup.Status?) -> [String: Any] {
+        let binding = state?.binding
+        let policy = state?.policy ?? .init()
+        let scanComplete = binding != nil && (!policy.automaticImport || progress?.initialComplete == true)
+        let phase: String
+        if operation?.stage == "NeedsAccess" { phase = "AccessRequired" }
+        else if operation?.stage == "Unconfirmed" { phase = "CreationUnconfirmed" }
+        else if state?.pendingOperationID != nil { phase = "PreparingCalendar" }
+        else if binding == nil { phase = "NotConfigured" }
+        else if let connection, !hasReadAccess(connection) { phase = "AccessRequired" }
+        else { phase = scanComplete ? "Ready" : "InitialImport" }
+        let review = progress?.pending.filter { if case .needsReview = $0.kind { return true }; return false }.count ?? 0
+        let pending = (progress?.pending.count ?? 0) - review
+        let problem = operation.flatMap { status -> [String: String]? in
+            status.action == "None" ? nil : ["reason": status.reason, "action": status.action]
+        }
+        return [
+            "revision": state?.bindingRevision ?? 1, "authEpoch": state?.authEpoch ?? 0,
+            "mode": binding != nil ? "Enabled" : "Disabled", "phase": phase,
+            "subject": binding?.account.subject ?? "", "calendarId": binding?.record.id ?? "",
+            "calendarName": Self.providerLabel(binding?.record.name ?? ""), "calendarZone": binding?.record.zoneId ?? "",
+            "policy": managedPolicy(policy), "initialMode": (binding?.initialImport?.mode ?? policy.importMode).rawValue,
+            "bootstrapGeneration": binding?.revision ?? 0, "initialRecoveryComplete": scanComplete,
+            "candidateCount": pending, "pendingChangeCount": pending, "pendingExportCount": 0, "heldExportCount": 0,
+            "reviewCount": review, "lastObservedAtMs": NSNull(), "message": "",
+            "operationId": iosBridgeValue((state?.pendingOperationID ?? binding?.operationID)?.uuidString.lowercased()),
+            "problem": iosBridgeValue(problem),
+        ]
     }
 
     private static func publication(_ status: PublicationRuntime.Status, connection view: Connection.View) -> [String: Any] {
@@ -825,6 +981,7 @@ final class RemiloIOSGoogleCalendarBridge {
         case let failure as Link.LocalFailure: return bridgeErrorCode(failure.code)
         case let failure as LinkStore.Rejection: return bridgeErrorCode(failure.rawValue)
         case let failure as Import.Failure: return bridgeErrorCode(failure.rawValue)
+        case let failure as ManagedSetup.Journal.Rejection: return failure.rawValue
         case let failure as RemiloIOSGoogleCalendarRecurringReview.Failure: return bridgeErrorCode(failure.rawValue)
         case let failure as Connection.Event.Reason: return bridgeErrorCode(failure.rawValue)
         case let failure as IOSInputFailure: return failure.code

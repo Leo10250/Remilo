@@ -36,9 +36,19 @@ enum ManagedSetupChecks {
         }
         precondition(review.initialImport == .init(mode: .alarm, recoveringExistingCalendar: false))
         let id = UUID()
-        let capture = try setup.capture(id, reviewID: review.id, expectedRevision: connected.revision)
-        let replay = try setup.capture(id, reviewID: review.id, expectedRevision: connected.revision)
+        do {
+            _ = try setup.capture(id, reviewID: review.id, expectedRevision: connected.revision, selectedCalendarID: Fixture.calendarID)
+            preconditionFailure("The captured command must agree with the selected calendar in the preview")
+        } catch Setup.Journal.Rejection.stalePreview {}
+        let capture = try setup.capture(id, reviewID: review.id, expectedRevision: connected.revision, selectedCalendarID: "")
+        let replay = try setup.capture(id, reviewID: review.id, expectedRevision: connected.revision, selectedCalendarID: "")
         precondition(capture == replay && proposal.sample == nil && fixture.posts == 0 && fixture.consents.isEmpty)
+        let needsConsent = try setup.status(capture, connection: connection.view(), advancing: false)
+        precondition(needsConsent.stage == "NeedsAccess" && needsConsent.action == "Authorize" && needsConsent.currentScope)
+        do {
+            _ = try setup.capture(id, reviewID: review.id, expectedRevision: connected.revision, selectedCalendarID: Fixture.calendarID)
+            preconditionFailure("A retry cannot replace the captured calendar selection")
+        } catch Failure.operationReused {}
         do {
             _ = try await setup.advance(id, expectedRevision: connected.revision)
             preconditionFailure("A native retry must never request consent or send without a grant")
@@ -47,6 +57,8 @@ enum ManagedSetupChecks {
         let authorized = try await setup.authorizeFromUserAction(id, expectedRevision: connected.revision)
         let revision = authorized.account.connectionRevision
         precondition(fixture.posts == 0 && fixture.consents == [.createManagedCalendar])
+        let creating = try setup.status(authorized, connection: connection.view(), advancing: true)
+        precondition(creating.stage == "CreatingCalendar" && creating.action == "None")
 
         if appearingCandidate {
             fixture.reveal(name: "Remilo", marker: nil)
@@ -55,6 +67,9 @@ enum ManagedSetupChecks {
                 preconditionFailure("A newly appeared calendar requires another review")
             } catch Setup.Journal.Rejection.selectionRequired {}
             precondition(fixture.posts == 0, "Recheck discovery after consent before claiming a send")
+            let pending = try setup.operation(id, expectedRevision: revision)!
+            let needsSelection = try setup.status(pending, connection: connection.view(), advancing: false)
+            precondition(needsSelection.stage == "NeedsReview" && needsSelection.action == "ReviewSetup")
             let policy = Setup.Journal.Policy(exportNewReminders: false, allDayAlarmMinutes: 495)
             let replacement = try await setup.preview(expectedRevision: revision, policy: policy, zoneID: "UTC", replacement: true)
             guard let review = replacement.review, review.target == .select(calendarID: Fixture.calendarID) else {
@@ -70,7 +85,7 @@ enum ManagedSetupChecks {
             precondition(sample.items.map(\.kind) == [.ongoingOrUpcoming, .review(.meeting)] && fixture.samples == 1 && fixture.posts == 0,
                          "A bounded sample skips ended events and instances without granting import authority")
             let selected = UUID()
-            _ = try setup.capture(selected, reviewID: review.id, expectedRevision: revision)
+            _ = try setup.capture(selected, reviewID: review.id, expectedRevision: revision, selectedCalendarID: Fixture.calendarID)
             let result = try await setup.advance(selected, expectedRevision: revision)
             guard case .finished(let entry) = result, entry.phase == .confirmed else { preconditionFailure("Adopt the exact reviewed calendar") }
             let saved = try setup.view(expectedRevision: revision)
@@ -87,6 +102,8 @@ enum ManagedSetupChecks {
             let partial = try await setup.scanIncoming(expectedRevision: revision)
             precondition(partial.pages == 10 && partial.continuation && !partial.initialComplete &&
                          partial.pending.first?.importMode == .some(.none) && partial.pending.first?.initialRecovery == true)
+            let storedProgress = try setup.savedIncomingProgress(expectedRevision: revision)
+            precondition(storedProgress?.initialComplete == false && storedProgress?.pending == partial.pending)
             let reopened = Setup(connection: connection, journal: .init(directory: directory), canUseForeground: { true }, now: now) { _, _ in
                 preconditionFailure("An authorized read pass never opens consent")
             }
@@ -174,6 +191,8 @@ enum ManagedSetupChecks {
         guard case .pending(let entry) = first, entry.phase == .sent, entry.returnedCalendarID == nil else {
             preconditionFailure("An uncertain creation remains sent and unconfirmed")
         }
+        let uncertain = try setup.status(entry, connection: connection.view(), advancing: false)
+        precondition(uncertain.stage == "Unconfirmed" && uncertain.action == "InspectCreation")
         precondition(fixture.posts == 1)
         fixture.reveal(name: "Renamed after creation", marker: Setup.Journal.Discovery.marker(id))
         let reopened = Setup(connection: connection, journal: .init(directory: directory), canUseForeground: { true }) { _, _ in
@@ -191,6 +210,8 @@ enum ManagedSetupChecks {
         }
         let state = try reopened.view(expectedRevision: revision)
         precondition(state.binding?.record.name == "Renamed after creation" && state.pendingOperationID == nil && fixture.posts == 1)
+        let complete = try reopened.status(confirmed, connection: connection.view(), advancing: false)
+        precondition(complete.stage == "Confirmed" && complete.action == "None" && complete.currentScope)
     }
 
     @MainActor

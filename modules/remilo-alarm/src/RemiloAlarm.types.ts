@@ -914,7 +914,7 @@ export type ManagedCalendarPreview = {
   sample?: {
     inspectedCount: number;
     complete: boolean;
-    items: { title: string; description: string }[];
+    items: { title: string; description: string; kind?: 'Upcoming' | 'Repeating' | 'Review' }[];
   } | null;
   expiresAtMs: number;
   policy: ManagedCalendarPolicy;

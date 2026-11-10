@@ -19,6 +19,7 @@ import {
 import { managedCalendarItemReason } from '../domain/calendar-managed';
 import { calendarError } from '../domain/calendar';
 import { modeLabel } from '../domain/presentation';
+import { calendarAuthorizationError, rememberCalendarConnection } from './calendar-local-import';
 import {
   ActionFeedback,
   Button,
@@ -540,6 +541,32 @@ export function useCalendarAuthorization(onAuthorized?: () => void) {
   const start = async (operationId: string | null = null) => {
     if (launching || (request && (!query.data || query.data.stage === 'AwaitingAuthorization')))
       return;
+    if (iosReminders) {
+      setVerified(false);
+      setLaunching(true);
+      setMessage(t('m_22c3fbbc38db'));
+      try {
+        const native = engine();
+        const current = await native.getCalendarConnection();
+        const connection =
+          operationId && native.authorizeManagedCalendarFromUserAction
+            ? await native.authorizeManagedCalendarFromUserAction(operationId, current.revision)
+            : await native.authorizeCalendarFromUserAction!(
+                current.revision,
+                current.connected ? 'reauthorizeCurrentAccount' : 'connectOrChangeAccount',
+              );
+        await rememberCalendarConnection(client, connection);
+        setVerified(connection.connected);
+        setMessage(connection.connected ? t('m_f8278bd3d08e') : t('m_2cb105c80f63'));
+        if (connection.connected) callback.current?.();
+      } catch (error) {
+        setMessage(calendarAuthorizationError(error));
+      } finally {
+        setLaunching(false);
+        void client.invalidateQueries({ queryKey: ['calendar'] });
+      }
+      return;
+    }
     const id = engine().createOperationId();
     setRequest(id);
     setVerified(false);

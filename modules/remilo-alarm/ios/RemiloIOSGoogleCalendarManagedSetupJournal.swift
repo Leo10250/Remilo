@@ -31,6 +31,11 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
     enum Target: Codable, Equatable, Sendable {
         case select(calendarID: String)
         case create(zoneID: String)
+
+        var selectedCalendarID: String {
+            if case .select(let id) = self { return id }
+            return ""
+        }
     }
 
     struct InitialImport: Codable, Equatable, Sendable {
@@ -48,9 +53,11 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         let calendarZoneID: String
         let replacesOperationID: UUID?
         let initialImport: InitialImport?
-        fileprivate let bindingRevision: Int
+        let bindingRevision: Int
         fileprivate let authEpoch: Int
         fileprivate let checkedAtMs: Int64
+
+        var expiresAtMs: Int64 { checkedAtMs + 600_000 }
     }
 
     enum Phase: String, Codable, Sendable { case captured, sent, confirmed, rejected }
@@ -279,6 +286,15 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         state.operations[id] = entry
         try write(state)
         return entry
+    }
+
+    func recordSetupSelectionRequired(_ id: UUID, currentAccount: Account) throws {
+        var state = try read()
+        var entry = try active(id, currentAccount: currentAccount, in: state)
+        guard entry.phase == .captured else { throw Failure.staleConnection }
+        entry.reason = Rejection.selectionRequired.rawValue
+        state.operations[id] = entry
+        try write(state)
     }
 
     /// Called at the last synchronous point before dispatch, with current live authority.

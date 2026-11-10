@@ -47,7 +47,7 @@ import {
 } from '../ui/calendar-sync';
 import { useAppearanceConfirmation } from '../ui/confirmation';
 import { useAppearanceHold } from '../ui/theme';
-import { engine, nativeAvailable } from '../ui/native';
+import { engine, iosReminders, nativeAvailable } from '../ui/native';
 import { TimeZoneField } from '../ui/time-zone';
 import { RootNotice } from '../ui/navigation';
 
@@ -251,7 +251,14 @@ export default function ManagedCalendar() {
       router.push({ pathname: '/calendar-reviews', params: origin });
       return;
     }
-    if (status.action === 'InspectCreation') {
+    if (iosReminders && status.action === 'ReviewSetup') {
+      router.replace({
+        pathname: '/calendar-managed',
+        params: { ...origin, mode: 'setup', replacement: 'true' },
+      });
+      return;
+    }
+    if (status.action === 'InspectCreation' || status.action === 'Retry') {
       if (busy.current) return;
       busy.current = true;
       setCapturing(true);
@@ -338,6 +345,7 @@ export default function ManagedCalendar() {
         <>
           <CalendarOperationProgress
             operationId={operationId}
+            expectedConnectionRevision={connection.data?.revision}
             onAction={(status) => void recover(status)}
           />
           {!!auth.message && (
@@ -597,7 +605,13 @@ export default function ManagedCalendar() {
                       <View key={index} style={{ gap: 4 }}>
                         <Copy>{item.title}</Copy>
                         <Copy muted size={14}>
-                          {item.description}
+                          {item.kind === 'Upcoming'
+                            ? t('m_dbd355bb5f8d')
+                            : item.kind === 'Repeating'
+                              ? t('m_14ce687837a7')
+                              : item.kind === 'Review'
+                                ? t('m_b93622c36d1e')
+                                : item.description}
                         </Copy>
                       </View>
                     ))}

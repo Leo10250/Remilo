@@ -142,6 +142,10 @@ declare class RemiloAlarmModule extends NativeModule<RemiloAlarmModuleEvents> {
     expectedRevision: number,
     intent: 'connectOrChangeAccount' | 'reauthorizeCurrentAccount' | 'authorizeOwnedCalendarWrites',
   ): Promise<CalendarConnection>;
+  authorizeManagedCalendarFromUserAction?(
+    operationId: string,
+    expectedRevision: number,
+  ): Promise<CalendarConnection>;
   beginCalendarAuthorization(
     requestId: string,
     operationId: string | null,

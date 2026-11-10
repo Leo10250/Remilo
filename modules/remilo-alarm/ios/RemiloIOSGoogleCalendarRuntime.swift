@@ -58,6 +58,7 @@ final class RemiloIOSGoogleCalendarRuntime {
     private var seriesTextWriter: RemiloIOSGoogleCalendarSeriesTextWriter?
     private var reviews: [Import.Review] = []
     private var importingManaged = false
+    private var advancingManagedSetups: Set<UUID> = []
 
     struct ManagedImportPass: Sendable {
         var pages = 0
@@ -95,6 +96,37 @@ final class RemiloIOSGoogleCalendarRuntime {
     func view() async throws -> Connection.View {
         try requireForeground()
         return try connection.view()
+    }
+
+    func isAdvancingManagedSetup(_ operation: UUID) -> Bool {
+        advancingManagedSetups.contains(operation)
+    }
+
+    func requestManagedSetupAdvance(_ operation: UUID, expectedRevision: Int) throws {
+        try requireForeground()
+        guard let managedSetup else { throw Failure.invalidConfiguration }
+        guard let entry = try managedSetup.operation(operation, expectedRevision: expectedRevision) else { throw Failure.notFound }
+        guard !entry.retired, entry.phase == .captured || entry.phase == .sent else { return }
+        guard try managedSetup.view(expectedRevision: expectedRevision).pendingOperationID == operation,
+              entry.account.connectionRevision == expectedRevision else { throw Failure.staleConnection }
+        guard advancingManagedSetups.insert(operation).inserted else { return }
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            defer {
+                advancingManagedSetups.remove(operation)
+                #if os(iOS)
+                NotificationCenter.default.post(name: .remiloIOSChange, object: nil, userInfo: [Self.automaticStatusChangeKey: true])
+                #endif
+            }
+            let progress = try? await managedSetup.advance(operation, expectedRevision: expectedRevision)
+            #if os(iOS)
+            if case .finished(let saved)? = progress, saved.phase == .confirmed, Self.live === self {
+                requestAutomaticPass(.foreground)
+            }
+            #else
+            _ = progress
+            #endif
+        }
     }
 
     func authorizeFromUserAction(expectedRevision: Int, intent: Authorization) async throws -> Connection.View {

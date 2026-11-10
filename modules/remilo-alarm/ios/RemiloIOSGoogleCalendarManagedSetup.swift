@@ -21,6 +21,20 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         case finished(Journal.Entry)
     }
 
+    struct Status: Equatable, Sendable {
+        let stage: String
+        let reason: String
+        let action: String
+        let currentScope: Bool
+
+        init(_ stage: String, reason: String = "", action: String = "None", currentScope: Bool = true) {
+            self.stage = stage
+            self.reason = reason
+            self.action = action
+            self.currentScope = currentScope
+        }
+    }
+
     private let connection: Connection
     private let journal: Journal
     private let canUseForeground: @MainActor @Sendable () -> Bool
@@ -142,6 +156,47 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         return try journal.operation(id, viewingAs: connection.savedAccount(expectedRevision: expectedRevision))
     }
 
+    func status(_ entry: Journal.Entry, connection view: Connection.View, advancing: Bool) throws -> Status {
+        let state = try self.view(expectedRevision: view.revision)
+        let currentScope = state.pendingOperationID == entry.operationID || state.binding?.operationID == entry.operationID
+        if entry.retired { return .init("Cancelled", currentScope: false) }
+        switch entry.phase {
+        case .confirmed: return .init("Confirmed", currentScope: currentScope)
+        case .rejected: return .init("NeedsReview", reason: entry.reason ?? "", action: "ReviewSetup", currentScope: currentScope)
+        case .captured, .sent: break
+        }
+        guard currentScope, entry.account.accountGeneration == view.accountGeneration else {
+            return .init("NeedsReview", reason: Failure.staleConnection.rawValue, action: "ReviewSetup", currentScope: false)
+        }
+        guard entry.account.connectionRevision == view.revision else {
+            return .init("NeedsReview", reason: Failure.staleConnection.rawValue, action: "ReviewSetup")
+        }
+        if entry.reason == Journal.Rejection.selectionRequired.rawValue {
+            return .init("NeedsReview", reason: Journal.Rejection.selectionRequired.rawValue, action: "ReviewSetup")
+        }
+        let canRead = view.access == .ownedCalendars || view.access == .managedCreation
+        let canCreate = entry.phase != .captured || entry.creationRequest == nil || view.access == .managedCreation
+        if !canRead || !canCreate || (needsWrite(entry) && !view.canWriteOwnedEvents) {
+            return .init("NeedsAccess", reason: Failure.needsAccess.rawValue, action: "Authorize")
+        }
+        if advancing {
+            return .init(entry.phase == .sent ? "CheckingCalendar" : entry.creationRequest == nil ? "PreparingCalendar" : "CreatingCalendar")
+        }
+        if entry.phase == .sent {
+            return .init("Unconfirmed", reason: Journal.Rejection.creationUnconfirmed.rawValue, action: "InspectCreation")
+        }
+        return .init("NeedsReview", action: "Retry")
+    }
+
+    func savedIncomingProgress(expectedRevision: Int) throws -> Inbox.Progress? {
+        try requireForeground()
+        do {
+            let account = try connection.savedAccount(expectedRevision: expectedRevision)
+            return try inbox.progress(journal.incomingScope(account), pages: 0, continuation: false)
+        } catch Failure.needsAccess { return nil }
+        catch Failure.staleConnection { return nil }
+    }
+
     /// A same-account read grant can inspect a sent receipt after its lease or
     /// binding changes. This entry point never authorizes or activates setup.
     func inspectCreation(_ id: UUID, expectedRevision: Int) async throws -> Connection.ManagedCreationCheck {
@@ -175,14 +230,17 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         return Preview(discovery: discovery, review: review, sample: sample)
     }
 
-    func capture(_ id: UUID, reviewID: UUID, expectedRevision: Int) throws -> Journal.Entry {
+    func capture(_ id: UUID, reviewID: UUID, expectedRevision: Int, selectedCalendarID: String? = nil) throws -> Journal.Entry {
         try requireForeground()
         let account = try connection.savedAccount(expectedRevision: expectedRevision)
         if let saved = try journal.operation(id, viewingAs: account) {
-            guard saved.review.id == reviewID else { throw Failure.operationReused }
+            guard saved.review.id == reviewID, selectedCalendarID.map({ $0 == saved.review.target.selectedCalendarID }) ?? true else {
+                throw Failure.operationReused
+            }
             return saved
         }
-        guard let review = reviews.first(where: { $0.id == reviewID }) else { throw Journal.Rejection.stalePreview }
+        guard let review = reviews.first(where: { $0.id == reviewID }),
+              selectedCalendarID.map({ $0 == review.target.selectedCalendarID }) ?? true else { throw Journal.Rejection.stalePreview }
         return try journal.capture(operationID: id, review: review, currentAccount: currentAccount(expectedRevision))
     }
 
@@ -214,6 +272,7 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         guard running.insert(id).inserted else { throw Journal.Rejection.operationPending }
         defer { running.remove(id) }
         var entry = try pending(id, account: account)
+        if entry.reason == Journal.Rejection.selectionRequired.rawValue { throw Journal.Rejection.selectionRequired }
         if entry.phase == .captured, needsWrite(entry) { try connection.requireManualLinkWrite(account: account) }
 
         let record: Journal.Record
@@ -229,7 +288,10 @@ final class RemiloIOSGoogleCalendarManagedSetup {
                     replacingUnavailable: entry.review.replacesOperationID != nil, preparingCreation: id, canRead: canUseForeground
                 )
                 if discovery.selection.outcome == .incomplete { return .pending(try pending(id, account: account)) }
-                guard discovery.selection.outcome == .create else { throw Journal.Rejection.selectionRequired }
+                guard discovery.selection.outcome == .create else {
+                    try journal.recordSetupSelectionRequired(id, currentAccount: account)
+                    throw Journal.Rejection.selectionRequired
+                }
                 let outcome = try await connection.sendManagedCreation(request, discovery: discovery, canSend: canUseForeground,
                     permit: { [journal] sent in try journal.beginSend(sent, currentAccount: account) },
                     rememberReturnedID: { [journal] calendarID, sent in
