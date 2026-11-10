@@ -13,6 +13,7 @@ final class RemiloIOSGoogleCalendarManagedInbox {
     struct Scope: Codable, Equatable, Sendable {
         let binding: Journal.Binding
         let policy: Journal.Policy
+        var heldEventIDs: Set<String>? = nil
     }
 
     struct Observation: Codable, Equatable, Sendable {
@@ -118,7 +119,9 @@ final class RemiloIOSGoogleCalendarManagedInbox {
     func progress(_ scope: Scope, pages: Int, continuation: Bool) throws -> Progress {
         let state = try read(scope)
         return Progress(scope: scope, pages: pages, initialComplete: state.initialComplete,
-                        continuation: continuation, pending: state.observations.values.sorted { $0.eventID < $1.eventID })
+                        continuation: continuation, pending: state.observations.values
+                            .filter { scope.heldEventIDs?.contains($0.eventID) != true }
+                            .sorted { $0.eventID < $1.eventID })
     }
 
     func permits(_ permit: Permit) throws -> Bool {
@@ -132,7 +135,8 @@ final class RemiloIOSGoogleCalendarManagedInbox {
 
     private func contains(_ permit: Permit) throws -> Bool {
         let state = try read(permit.scope)
-        return state.initialComplete && state.next == nil && state.since != nil && permit.observation.etag != nil &&
+        return permit.scope.heldEventIDs?.contains(permit.observation.eventID) != true &&
+            state.initialComplete && state.next == nil && state.since != nil && permit.observation.etag != nil &&
             state.observations[permit.observation.eventID] == permit.observation
     }
 

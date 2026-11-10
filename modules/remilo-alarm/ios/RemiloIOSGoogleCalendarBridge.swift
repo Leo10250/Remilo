@@ -119,6 +119,25 @@ final class RemiloIOSGoogleCalendarBridge {
         return Self.connection(view)
     }
 
+    func previewManagedResume() async throws -> [String: Any] {
+        let runtime = try runtime()
+        let view = try await runtime.view()
+        let result = try await runtime.previewManagedResume(expectedRevision: view.revision)
+        let review = result.review
+        return [
+            "previewId": review.id.uuidString.lowercased(), "kind": "Resume",
+            "expectedRevision": review.bindingRevision, "expectedConnectionRevision": view.revision,
+            "expiresAtMs": review.expiresAtMs, "policy": Self.managedPolicy(review.policy),
+            "initialMode": (review.binding.initialImport?.mode ?? review.policy.importMode).rawValue,
+            "calendarCandidates": [[String: Any]](), "selectedCalendarId": review.binding.record.id,
+            "calendarZone": review.binding.record.zoneId, "createCalendar": false, "warnings": [String](), "complete": true,
+            "items": result.rows.map { row -> [String: Any] in
+                ["itemId": row.itemID, "occurrenceId": row.occurrenceID, "kind": "Publish",
+                 "title": row.title, "ready": row.export != nil, "reason": row.reason ?? ""]
+            },
+        ]
+    }
+
     func authorize(expectedRevision: Double?, intent: String) async throws -> [String: Any] {
         let authorization: Runtime.Authorization
         switch intent {
@@ -355,6 +374,14 @@ final class RemiloIOSGoogleCalendarBridge {
             return ["operationId": operation.uuidString.lowercased(), "captured": true,
                     "revision": receipt.revision, "mode": receipt.mode.rawValue]
         }
+        if kind == "ResumeManagedCalendar" {
+            guard let ids = command["selectedItemIds"] as? [String] else { throw Failure.invalidInput }
+            let view = try await runtime.view()
+            let receipt = try await runtime.confirmManagedResume(operation, reviewID: Self.uuid(input, "previewId"),
+                selectedItemIDs: ids, expectedRevision: view.revision)
+            return ["operationId": operation.uuidString.lowercased(), "captured": true,
+                    "revision": receipt.revision, "mode": receipt.mode.rawValue]
+        }
         if kind == "ConfirmManagedCalendarSetup" || kind == "RetryManagedCalendarOperation" {
             let view = try await runtime.view()
             guard let setup = runtime.managedSetup else { throw Failure.invalidConfiguration }
@@ -484,8 +511,14 @@ final class RemiloIOSGoogleCalendarBridge {
         if view.connected, let setup = runtime.managedSetup,
            let receipt = try setup.modeOperation(id, expectedRevision: revision) {
             let current = try setup.view(expectedRevision: revision).bindingRevision == receipt.revision
+            let kind: String
+            switch receipt.mode {
+            case .enabled: kind = "Resume"
+            case .paused: kind = "PauseManagedCalendar"
+            case .disabled: kind = "DisableManagedCalendar"
+            }
             return ["operationId": id.uuidString.lowercased(),
-                    "kind": receipt.mode == .paused ? "PauseManagedCalendar" : "DisableManagedCalendar",
+                    "kind": kind,
                     "stage": "Confirmed", "reason": "", "action": "None", "confirmed": 1,
                     "pending": 0, "review": 0, "held": 0, "children": [String](), "currentScope": current]
         }

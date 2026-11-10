@@ -60,15 +60,23 @@ final class RemiloIOSGoogleCalendarPublicationJournal {
     }
 
     func capture(_ request: Publication.Request, reviewFingerprint: String, calendarName: String,
-                 managedLease: ManagedLease? = nil) throws -> Entry {
+                 managedLease: ManagedLease? = nil, replacingLease: ManagedLease? = nil) throws -> Entry {
         let identity = try request.validated().readbackIdentity()
         guard Data(base64Encoded: reviewFingerprint)?.count == 32,
               managedLease.map({ $0.publication == true && $0.calendarID == identity.calendarID }) ?? true else { throw Failure.invalidInput }
         guard calendarName.utf8.count <= 4096 else { throw Failure.responseLimit }
         var state = try read()
         if let existing = state.operations[request.operationID] {
-            guard existing.managedLease == managedLease else { throw Failure.operationReused }
-            if existing.identity == identity, existing.reviewFingerprint == reviewFingerprint { return existing }
+            let sameLease = existing.managedLease == managedLease
+            if !sameLease {
+                guard let replacingLease, let managedLease, existing.managedLease == replacingLease,
+                      existing.phase == .waiting, !existing.retired, replacingLease.publication == true,
+                      replacingLease.setupID == managedLease.setupID, replacingLease.calendarID == managedLease.calendarID,
+                      replacingLease.zoneID == managedLease.zoneID, replacingLease.authEpoch < managedLease.authEpoch else {
+                    throw Failure.operationReused
+                }
+            }
+            if sameLease, existing.identity == identity, existing.reviewFingerprint == reviewFingerprint { return existing }
             // Managed intents can refresh their snapshot before dispatch. The
             // event identity and binding stay fixed across edits and retries.
             guard managedLease != nil, existing.phase == .waiting,

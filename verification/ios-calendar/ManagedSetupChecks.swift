@@ -213,12 +213,46 @@ enum ManagedSetupChecks {
                                             expectedConnectionRevision: revision)
                 preconditionFailure("A stale screen cannot replace the current mode")
             } catch Setup.Journal.Rejection.stalePreview {}
-            let disabled = try reopened.changeMode(.disabled, operationID: UUID(), expectedRevision: paused.bindingRevision,
+            let heldExports = ["selected", "unselected"].map { id in
+                Setup.Journal.ResumeExport(operationID: UUID(), local: .init(occurrenceID: id, revision: 3, generation: 1),
+                    originLease: saved.binding!.exportLease, waitingLease: nil)
+            }
+            let review = try await reopened.previewResume(expectedRevision: revision) { _, _ in
+                heldExports.map { .init(itemID: $0.itemID, occurrenceID: $0.local.occurrenceID, title: $0.local.occurrenceID,
+                                        export: $0, reason: nil) }
+            }
+            let resumeID = UUID()
+            do {
+                _ = try await reopened.confirmResume(resumeID, reviewID: review.review.id,
+                    selectedItemIDs: [heldExports[0].itemID], expectedRevision: revision) { _, _, _ in
+                        throw Setup.Journal.Rejection.stalePreview
+                    }
+                preconditionFailure("Changed local work cannot activate the binding")
+            } catch Setup.Journal.Rejection.stalePreview {}
+            let afterStale = try reopened.view(expectedRevision: revision)
+            precondition(afterStale == paused)
+            let resumedMode = try await reopened.confirmResume(resumeID, reviewID: review.review.id,
+                selectedItemIDs: [heldExports[0].itemID], expectedRevision: revision) { selected, binding, account in
+                    precondition(selected == [heldExports[0]] && binding == saved.binding && account == authorized.account)
+                }
+            let resumedView = try reopened.view(expectedRevision: revision)
+            let approvals = try reopened.resumedExports(authorized.account)
+            let oldLinkAfterResume = try journal.permitsLink(lease, account: authorized.account)
+            let inbox = try journal.incomingScope(authorized.account)
+            precondition(resumedView.mode == .enabled && resumedView.authEpoch == paused.authEpoch + 1 &&
+                         resumedView.binding?.operationID == paused.binding?.operationID && approvals == [heldExports[0]] &&
+                         !oldLinkAfterResume && (inbox.heldEventIDs ?? []) == Set(pausedProgress?.pending.map(\.eventID) ?? []))
+            let replayResume = try await setup.confirmResume(resumeID, reviewID: review.review.id,
+                selectedItemIDs: [heldExports[0].itemID], expectedRevision: revision) { _, _, _ in
+                    preconditionFailure("Resume replay must use the durable receipt")
+                }
+            precondition(replayResume == resumedMode)
+            let disabled = try reopened.changeMode(.disabled, operationID: UUID(), expectedRevision: resumedView.bindingRevision,
                                                    expectedConnectionRevision: revision)
             let disabledView = try setup.view(expectedRevision: revision)
             let heldAfterDisable = try setup.heldBinding(authorized.account)
-            precondition(disabledView.mode == .disabled && disabledView.binding == saved.binding &&
-                         disabled.revision == pause.revision + 1 && heldAfterDisable == nil)
+            precondition(disabledView.mode == .disabled && disabledView.binding == resumedView.binding &&
+                         disabled.revision == resumedMode.revision + 1 && heldAfterDisable == nil)
             return
         }
 

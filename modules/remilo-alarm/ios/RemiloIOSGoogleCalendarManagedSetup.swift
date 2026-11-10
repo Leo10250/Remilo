@@ -43,6 +43,7 @@ final class RemiloIOSGoogleCalendarManagedSetup {
     private let inbox: Inbox
     private let now: @Sendable () -> Date
     private var reviews: [Journal.Review] = []
+    private var resumeReviews: [Journal.ResumeReview] = []
     private var running: Set<UUID> = []
     private var scanningIncoming = false
 
@@ -120,6 +121,61 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         try requireForeground()
         guard try connection.savedAccount(expectedRevision: account.connectionRevision) == account else { return nil }
         return try journal.heldBinding(account)
+    }
+
+    func resumedExports(_ account: Account) throws -> [Journal.ResumeExport] {
+        try requireForeground()
+        return try journal.resumedExports(account)
+    }
+
+    func holdsExport(_ lease: Journal.Lease, account: Account) throws -> Bool {
+        try requireForeground()
+        return try journal.holdsExport(lease, account: account)
+    }
+
+    func previewResume(expectedRevision: Int, exports: (Journal.Binding, Account) throws -> [RemiloIOSGoogleCalendarPublicationRuntime.ResumeRow])
+        async throws -> (review: Journal.ResumeReview, rows: [RemiloIOSGoogleCalendarPublicationRuntime.ResumeRow]) {
+        let account = try currentAccount(expectedRevision)
+        let state = try journal.view(viewingAs: account)
+        guard state.pendingOperationID == nil, let binding = try journal.heldBinding(account) else { throw Journal.Rejection.stalePreview }
+        _ = try await verifyResumeDestination(binding, account: account)
+        guard try journal.view(viewingAs: account) == state else { throw Journal.Rejection.stalePreview }
+        let rows = try exports(binding, account)
+        let review = try journal.reviewResume(account: account, binding: binding, exports: rows.compactMap(\.export))
+        resumeReviews.removeAll { $0.account != account }
+        if resumeReviews.count == 8 { resumeReviews.removeFirst() }
+        resumeReviews.append(review)
+        return (review, rows)
+    }
+
+    func confirmResume(_ operationID: UUID, reviewID: UUID, selectedItemIDs: [String], expectedRevision: Int,
+                       validate: ([Journal.ResumeExport], Journal.Binding, Account) throws -> Void) async throws -> Journal.ModeReceipt {
+        try requireForeground()
+        let account = try connection.savedAccount(expectedRevision: expectedRevision)
+        guard selectedItemIDs.count <= 500, Set(selectedItemIDs).count == selectedItemIDs.count else { throw Failure.invalidInput }
+        let selections = selectedItemIDs.sorted()
+        if let replay = try journal.resumeReplay(operationID, reviewID: reviewID, selections: selections, account: account) {
+            return replay
+        }
+        guard let review = resumeReviews.first(where: { $0.id == reviewID }), review.account == account else {
+            throw Journal.Rejection.stalePreview
+        }
+        let selected = review.exports.filter { selections.contains($0.itemID) }
+        guard selected.count == selections.count else { throw Failure.invalidInput }
+        if !selected.isEmpty || review.policy.exportNewReminders || (review.policy.automaticImport && review.policy.disableGoogleReminders) {
+            try connection.requireManualLinkWrite(account: account)
+        }
+        let verified = try await verifyResumeDestination(review.binding, account: account)
+        try validate(selected, review.binding, account)
+        return try journal.resume(review, operationID: operationID, selections: selections, account: account, verified: verified)
+    }
+
+    private func verifyResumeDestination(_ binding: Journal.Binding, account: Account) async throws -> Journal.Record {
+        let verified = try await connection.verifyManagedAdoption(calendarID: binding.record.id, account: account, canRead: canUseForeground)
+        guard try currentAccount(account.connectionRevision) == account, verified.zoneId == binding.record.zoneId else {
+            throw Journal.Rejection.stalePreview
+        }
+        return verified
     }
 
     func changeMode(_ mode: Journal.Mode, operationID: UUID, expectedRevision: Int,
@@ -221,10 +277,8 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         try requireForeground()
         do {
             let account = try connection.savedAccount(expectedRevision: expectedRevision)
-            if let held = try journal.heldBinding(account) {
-                let policy = try journal.view(viewingAs: account).policy
-                guard policy.automaticImport else { return nil }
-                return try inbox.progress(.init(binding: held, policy: policy), pages: 0, continuation: false)
+            if let held = try journal.heldIncomingScope(account) {
+                return try inbox.progress(held, pages: 0, continuation: false)
             }
             return try inbox.progress(journal.incomingScope(account), pages: 0, continuation: false)
         } catch Failure.needsAccess { return nil }

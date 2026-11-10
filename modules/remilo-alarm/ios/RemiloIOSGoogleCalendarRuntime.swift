@@ -264,13 +264,14 @@ final class RemiloIOSGoogleCalendarRuntime {
         importingManaged = true
         defer { importingManaged = false }
         let account = try connection.account(expectedRevision: expectedRevision)
-        guard try managedSetup.hasActiveIncomingBinding(expectedRevision: expectedRevision) else { throw Failure.staleConnection }
+        guard let incomingLease = try managedSetup.activeSeriesLease(account) else { throw Failure.staleConnection }
         let budget = RemiloIOSGoogleCalendarHTTP.Budget()
         var result = ManagedImportPass()
         var attempted = 0
         do {
             try await attachPendingManagedLinks(account: account, budget: budget, result: &result)
-            for pending in try await importJournal.pendingManaged(viewingAs: account) {
+            for pending in try await importJournal.pendingManaged(viewingAs: account)
+                where pending.permit.scope.binding.linkLease == incomingLease {
                 guard attempted < 10, budget.hasTimeRemaining else {
                     result.continuation = true
                     return result
@@ -487,7 +488,7 @@ final class RemiloIOSGoogleCalendarRuntime {
         for item in work.prefix(10) {
             try requireCurrentAccount(account)
             guard budget.hasTimeRemaining else { throw Failure.budget }
-            if try managedSetup?.heldBinding(account)?.linkLease == item.permit.scope.binding.linkLease { continue }
+            guard try managedSetup?.activeSeriesLease(account) == item.permit.scope.binding.linkLease else { continue }
             let reason: String?
             do {
                 try await manualLink.attachManagedImport(item, expectedConnectionRevision: account.connectionRevision, budget: budget)
@@ -749,8 +750,52 @@ final class RemiloIOSGoogleCalendarRuntime {
     }
 
     private static func exportScope(_ binding: RemiloIOSGoogleCalendarManagedSetupJournal.Binding) -> IOSCalendarExportIntent.Scope {
-        return .init(setupID: binding.operationID, bindingRevision: binding.revision,
-                     authEpoch: binding.authEpoch, accountGeneration: binding.account.accountGeneration)
+        exportScope(binding.exportLease, accountGeneration: binding.account.accountGeneration)
+    }
+
+    private static func exportScope(_ lease: RemiloIOSGoogleCalendarManualLink.ManagedLease,
+                                    accountGeneration: Int) -> IOSCalendarExportIntent.Scope {
+        .init(setupID: lease.setupID, bindingRevision: lease.bindingRevision, authEpoch: lease.authEpoch,
+              accountGeneration: accountGeneration)
+    }
+
+    private static func heldExport(_ record: IOSReminder, binding: RemiloIOSGoogleCalendarManagedSetupJournal.Binding)
+        -> RemiloIOSGoogleCalendarPublicationRuntime.ManagedCandidate? {
+        guard record.active, record.isCalendarOneTime, let intent = record.calendarExportIntent else { return nil }
+        let scope = intent.scope
+        guard scope.setupID == binding.operationID, scope.bindingRevision <= binding.revision,
+              scope.authEpoch <= binding.authEpoch, scope.accountGeneration == binding.account.accountGeneration else { return nil }
+        let original = RemiloIOSGoogleCalendarManualLink.ManagedLease(setupID: scope.setupID, bindingRevision: scope.bindingRevision,
+            authEpoch: scope.authEpoch, calendarID: binding.record.id, zoneID: binding.record.zoneId, publication: true)
+        return .init(occurrenceID: record.id, operationID: intent.operationID, lease: original, calendarName: binding.record.name)
+    }
+
+    func previewManagedResume(expectedRevision: Int) async throws
+        -> (review: RemiloIOSGoogleCalendarManagedSetupJournal.ResumeReview, rows: [RemiloIOSGoogleCalendarPublicationRuntime.ResumeRow]) {
+        guard let managedSetup, let publication else { throw Failure.invalidConfiguration }
+        return try await managedSetup.previewResume(expectedRevision: expectedRevision) { binding, account in
+            let candidates = try RemiloIOSEngine.shared.read().reminders.values.compactMap { Self.heldExport($0, binding: binding) }
+            guard candidates.count <= 500 else { throw Failure.discoveryLimit }
+            return try publication.reviewHeldExports(candidates, viewingAs: account).sorted { $0.itemID < $1.itemID }
+        }
+    }
+
+    func confirmManagedResume(_ operationID: UUID, reviewID: UUID, selectedItemIDs: [String], expectedRevision: Int) async throws
+        -> RemiloIOSGoogleCalendarManagedSetupJournal.ModeReceipt {
+        guard let managedSetup, let publication else { throw Failure.invalidConfiguration }
+        let receipt = try await managedSetup.confirmResume(operationID, reviewID: reviewID, selectedItemIDs: selectedItemIDs,
+                                                          expectedRevision: expectedRevision) { exports, binding, account in
+            let records = try RemiloIOSEngine.shared.read().reminders
+            for export in exports {
+                guard let record = records[export.local.occurrenceID], let candidate = Self.heldExport(record, binding: binding),
+                      candidate.operationID == export.operationID, candidate.lease == export.originLease else {
+                    throw RemiloIOSGoogleCalendarManagedSetupJournal.Rejection.stalePreview
+                }
+            }
+            try publication.validateHeldExports(exports, viewingAs: account)
+        }
+        requestAutomaticPass(.foreground)
+        return receipt
     }
 
     private func syncManagedOutgoing(expectedRevision: Int) async throws {
@@ -758,10 +803,18 @@ final class RemiloIOSGoogleCalendarRuntime {
         var candidates: [RemiloIOSGoogleCalendarPublicationRuntime.ManagedCandidate] = []
         if let binding = try? managedSetup?.outgoingBinding(explicit: true) {
             let scope = Self.exportScope(binding)
+            let account = try connection.savedAccount(expectedRevision: expectedRevision)
+            let resumed = try managedSetup?.resumedExports(account) ?? []
+            let approved = Dictionary(uniqueKeysWithValues: resumed.map { ($0.operationID, $0) })
             for reminder in try RemiloIOSEngine.shared.read().reminders.values where reminder.active {
-                guard let intent = reminder.calendarExportIntent, intent.scope == scope else { continue }
+                guard let intent = reminder.calendarExportIntent else { continue }
+                let previous = approved[intent.operationID]
+                let wasReviewed = previous?.local.occurrenceID == reminder.id &&
+                    previous.map { Self.exportScope($0.originLease, accountGeneration: account.accountGeneration) } == intent.scope
+                guard intent.scope == scope || wasReviewed else { continue }
                 candidates.append(.init(occurrenceID: reminder.id, operationID: intent.operationID,
-                                        lease: binding.exportLease, calendarName: binding.record.name))
+                                        lease: binding.exportLease, calendarName: binding.record.name,
+                                        replacingLease: wasReviewed ? previous?.waitingLease : nil))
             }
         }
         let changed = try await publication.syncManaged(candidates, expectedConnectionRevision: expectedRevision)
@@ -779,7 +832,7 @@ final class RemiloIOSGoogleCalendarRuntime {
         var settled = false
         for entry in try publication.pendingManagedLinks(expectedConnectionRevision: expectedRevision).prefix(4) {
             guard !Task.isCancelled, budget.hasTimeRemaining else { break }
-            if let held = try managedSetup?.heldBinding(account), entry.managedLease == held.exportLease { continue }
+            if let lease = entry.managedLease, try managedSetup?.holdsExport(lease, account: account) == true { continue }
             let reason: String?
             if try publication.permitsManagedLink(entry, viewingAs: account) {
                 do {
@@ -814,13 +867,17 @@ final class RemiloIOSGoogleCalendarRuntime {
         let imports = try ImportJournal.local()
         let managed = try RemiloIOSGoogleCalendarManagedSetupJournal.local()
         var publicationAuthority = RemiloIOSGoogleCalendarPublicationRuntime.LocalAuthority.localEngine(.shared)
-        publicationAuthority.holdsManagedExport = { lease, account in try managed.heldBinding(account)?.exportLease == lease }
+        publicationAuthority.holdsManagedExport = { lease, account in try managed.holdsExport(lease, account: account) }
         publicationAuthority.permitsManagedExport = { id, operationID, lease, account in
             guard let reminder = try RemiloIOSEngine.shared.read().reminders[id], reminder.active,
                   let intent = reminder.calendarExportIntent, intent.operationID == operationID else { return false }
             do {
-                guard let binding = try managed.outgoingBinding(account, explicit: true) else { return false }
-                return binding.exportLease == lease && Self.exportScope(binding) == intent.scope
+                guard let binding = try managed.outgoingBinding(account, explicit: true), binding.exportLease == lease else { return false }
+                if Self.exportScope(binding) == intent.scope { return true }
+                return try managed.resumedExports(account).contains {
+                    $0.operationID == operationID && $0.local.occurrenceID == id &&
+                        Self.exportScope($0.originLease, accountGeneration: account.accountGeneration) == intent.scope
+                }
             } catch Failure.staleConnection { return false }
         }
         let publication = try RemiloIOSGoogleCalendarPublicationRuntime(

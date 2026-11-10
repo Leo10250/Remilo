@@ -8,6 +8,7 @@ final class RemiloIOSGoogleCalendarPublicationRuntime {
     typealias Connection = RemiloIOSGoogleCalendarConnection
     typealias Failure = RemiloIOSGoogleCalendarFailure
     typealias ManagedLease = Journal.ManagedLease
+    typealias ResumeExport = RemiloIOSGoogleCalendarManagedSetupJournal.ResumeExport
 
     enum Rejection: String, Error {
         case stalePreview = "STALE_PREVIEW"
@@ -33,6 +34,15 @@ final class RemiloIOSGoogleCalendarPublicationRuntime {
         let operationID: UUID
         let lease: ManagedLease
         let calendarName: String
+        var replacingLease: ManagedLease? = nil
+    }
+
+    struct ResumeRow: Sendable {
+        let itemID: String
+        let occurrenceID: String
+        let title: String
+        let export: ResumeExport?
+        let reason: String?
     }
 
     struct Preview: Sendable {
@@ -166,6 +176,48 @@ final class RemiloIOSGoogleCalendarPublicationRuntime {
         try journal.finishManagedLink(entry, reason: reason)
     }
 
+    func reviewHeldExports(_ candidates: [ManagedCandidate], viewingAs account: Publication.Account) throws -> [ResumeRow] {
+        let byID = Dictionary(uniqueKeysWithValues: try journal.operations(viewingAs: account).map { ($0.identity.operationID, $0) })
+        return try candidates.compactMap { candidate in
+            guard let snapshot = try local.read(candidate.occurrenceID) else { return nil }
+            let entry = byID[candidate.operationID]
+            guard entry?.phase != .published else { return nil }
+            let itemID = "export:" + candidate.occurrenceID
+            func blocked(_ reason: String) -> ResumeRow {
+                .init(itemID: itemID, occurrenceID: candidate.occurrenceID, title: snapshot.fields.title, export: nil, reason: reason)
+            }
+            if let entry {
+                guard entry.phase == .waiting, !entry.retired, let lease = entry.managedLease,
+                      entry.identity.local.occurrenceID == candidate.occurrenceID,
+                      entry.identity.account.accountGeneration == account.accountGeneration,
+                      lease.setupID == candidate.lease.setupID, lease.calendarID == candidate.lease.calendarID,
+                      lease.zoneID == candidate.lease.zoneID else { return blocked("OperationPending") }
+            } else {
+                do { try journal.requireUnreserved(candidate.occurrenceID) }
+                catch is Journal.Rejection { return blocked("OperationPending") }
+            }
+            do {
+                _ = try makeRequest(candidate.operationID, account: account, calendarID: candidate.lease.calendarID, snapshot: snapshot)
+            } catch is Failure { return blocked("Unsupported") }
+            let export = ResumeExport(operationID: candidate.operationID, local: snapshot.version,
+                                      originLease: candidate.lease, waitingLease: entry?.managedLease)
+            return .init(itemID: itemID, occurrenceID: candidate.occurrenceID, title: snapshot.fields.title, export: export, reason: nil)
+        }
+    }
+
+    func validateHeldExports(_ exports: [ResumeExport], viewingAs account: Publication.Account) throws {
+        for export in exports {
+            guard try local.read(export.local.occurrenceID)?.version == export.local else { throw Rejection.stalePreview }
+            if let entry = try journal.operation(export.operationID, viewingAs: account) {
+                guard entry.phase == .waiting, !entry.retired, entry.managedLease == export.waitingLease,
+                      entry.identity.local.occurrenceID == export.local.occurrenceID else { throw Rejection.stalePreview }
+            } else {
+                guard export.waitingLease == nil else { throw Rejection.stalePreview }
+                try journal.requireUnreserved(export.local.occurrenceID)
+            }
+        }
+    }
+
     /// The native engine supplies active intents. Already-sent operations also
     /// get a read-back opportunity after the originating intent is retired.
     func syncManaged(_ candidates: [ManagedCandidate], expectedConnectionRevision: Int) async throws -> [Journal.Entry] {
@@ -179,7 +231,10 @@ final class RemiloIOSGoogleCalendarPublicationRuntime {
             return try !local.holdsManagedExport(lease, viewer)
         }
         let pending = Set(eligible.map(\.identity.operationID))
-            .union(candidates.filter { saved[$0.operationID] == nil }.map(\.operationID))
+            .union(candidates.filter { candidate in
+                guard let prior = saved[candidate.operationID] else { return true }
+                return prior.phase == .waiting && candidate.replacingLease != nil && prior.managedLease == candidate.replacingLease
+            }.map(\.operationID))
         let ids = pending.sorted { $0.uuidString < $1.uuidString }
         guard !ids.isEmpty else { return [] }
         let start = managedCursor.flatMap { cursor in ids.firstIndex { $0.uuidString > cursor } } ?? 0
@@ -216,7 +271,7 @@ final class RemiloIOSGoogleCalendarPublicationRuntime {
               try local.permitsManagedExport(candidate.occurrenceID, candidate.operationID, candidate.lease, viewer) else { return nil }
         let request = try makeRequest(candidate.operationID, account: viewer, calendarID: candidate.lease.calendarID, snapshot: snapshot)
         return try journal.capture(request, reviewFingerprint: request.fingerprint().base64EncodedString(),
-                                   calendarName: candidate.calendarName, managedLease: candidate.lease)
+                                   calendarName: candidate.calendarName, managedLease: candidate.lease, replacingLease: candidate.replacingLease)
     }
 
     private func run(_ entry: Journal.Entry, viewer: Publication.Account,

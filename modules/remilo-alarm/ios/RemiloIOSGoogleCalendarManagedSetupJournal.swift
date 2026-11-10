@@ -10,6 +10,7 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
     typealias Failure = RemiloIOSGoogleCalendarFailure
     typealias Record = RemiloIOSCalendarOwnedRecord
     typealias Writer = RemiloIOSGoogleCalendarWriteTransport
+    typealias Lease = RemiloIOSGoogleCalendarManualLink.ManagedLease
 
     enum Rejection: String, Error {
         case stalePreview = "STALE_PREVIEW"
@@ -123,6 +124,28 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         let expectedRevision: Int
         let revision: Int
         let mode: Mode
+        var reviewID: UUID? = nil
+        var selections: [String]? = nil
+    }
+
+    struct ResumeExport: Codable, Equatable, Sendable {
+        let operationID: UUID
+        let local: RemiloIOSGoogleCalendarPublication.Local
+        let originLease: Lease
+        let waitingLease: Lease?
+
+        var itemID: String { "export:" + local.occurrenceID }
+    }
+
+    struct ResumeReview: Sendable {
+        let id: UUID
+        let account: Account
+        let binding: Binding
+        let bindingRevision: Int
+        let authEpoch: Int
+        let policy: Policy
+        let exports: [ResumeExport]
+        let expiresAtMs: Int64
     }
 
     /// Built from an exact CalendarList lookup. For a lost creation response,
@@ -152,6 +175,8 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         var savedMode: Mode?
         var modeReceipts: [UUID: ModeReceipt]?
         var stoppedCreationID: UUID?
+        var resumedExports: [ResumeExport]?
+        var heldIncomingIDs: Set<String>?
 
         var mode: Mode { savedMode ?? (binding == nil ? .disabled : .enabled) }
     }
@@ -205,7 +230,7 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         let state = try read()
         let binding = try Self.activeBinding(in: state, account: account)
         guard state.policy.automaticImport else { throw Failure.staleConnection }
-        return .init(binding: binding, policy: state.policy)
+        return .init(binding: binding, policy: state.policy, heldEventIDs: state.heldIncomingIDs)
     }
 
     func outgoingBinding(_ account: Account, explicit: Bool) throws -> Binding? {
@@ -225,6 +250,89 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
 
     func heldBinding(_ account: Account) throws -> Binding? {
         Self.heldBinding(in: try read(), account: account)
+    }
+
+    func heldIncomingScope(_ account: Account) throws -> RemiloIOSGoogleCalendarManagedInbox.Scope? {
+        let state = try read()
+        guard state.policy.automaticImport, let binding = Self.heldBinding(in: state, account: account) else { return nil }
+        return .init(binding: binding, policy: state.policy, heldEventIDs: state.heldIncomingIDs)
+    }
+
+    static func sameDestination(_ lease: Lease, as binding: Binding) -> Bool {
+        lease.setupID == binding.operationID && lease.calendarID == binding.record.id && lease.zoneID == binding.record.zoneId
+    }
+
+    func holdsExport(_ lease: Lease, account: Account) throws -> Bool {
+        let state = try read()
+        guard state.mode != .disabled, let binding = state.binding, binding.belongs(to: account),
+              binding.account.accountGeneration == account.accountGeneration, Self.sameDestination(lease, as: binding) else { return false }
+        return state.mode == .paused || lease != binding.exportLease
+    }
+
+    func resumedExports(_ account: Account) throws -> [ResumeExport] {
+        let state = try read()
+        guard (try? Self.activeBinding(in: state, account: account)) != nil else { return [] }
+        return state.resumedExports ?? []
+    }
+
+    func reviewResume(account: Account, binding: Binding, exports: [ResumeExport]) throws -> ResumeReview {
+        let state = try read()
+        guard state.pendingOperationID == nil, Self.heldBinding(in: state, account: account) == binding,
+              exports.count <= 500, Set(exports.map(\.itemID)).count == exports.count,
+              Set(exports.map(\.operationID)).count == exports.count,
+              exports.allSatisfy({ Self.sameDestination($0.originLease, as: binding) &&
+                  ($0.waitingLease.map { Self.sameDestination($0, as: binding) } ?? true) }) else { throw Rejection.stalePreview }
+        return .init(id: UUID(), account: account, binding: binding, bindingRevision: state.bindingRevision,
+                     authEpoch: state.authEpoch, policy: state.policy, exports: exports, expiresAtMs: now() + 600_000)
+    }
+
+    func resumeReplay(_ operationID: UUID, reviewID: UUID, selections: [String], account: Account) throws -> ModeReceipt? {
+        let state = try read()
+        if let receipt = state.modeReceipts?[operationID] {
+            guard Self.sameOwner(receipt.account, account), receipt.mode == .enabled, receipt.reviewID == reviewID,
+                  receipt.selections == selections else { throw Failure.operationReused }
+            return receipt
+        }
+        guard state.operations[operationID] == nil else { throw Failure.operationReused }
+        return nil
+    }
+
+    func resume(_ review: ResumeReview, operationID: UUID, selections: [String], account: Account,
+                verified: Record) throws -> ModeReceipt {
+        if let receipt = try resumeReplay(operationID, reviewID: review.id, selections: selections, account: account) { return receipt }
+        var state = try read()
+        guard account == review.account, state.pendingOperationID == nil,
+              Self.heldBinding(in: state, account: account) == review.binding,
+              state.bindingRevision == review.bindingRevision, state.authEpoch == review.authEpoch,
+              state.policy == review.policy, now() <= review.expiresAtMs,
+              verified.id == review.binding.record.id, verified.zoneId == review.binding.record.zoneId else { throw Rejection.stalePreview }
+        let approved = review.exports.filter { selections.contains($0.itemID) }
+        guard approved.count == selections.count else { throw Failure.invalidInput }
+        var initialImport = review.binding.initialImport
+        if state.policy.automaticImport {
+            // The Resume review has only granted exports. Preserve held
+            // incoming IDs across the full scan under the new binding.
+            let old = RemiloIOSGoogleCalendarManagedInbox.Scope(binding: review.binding, policy: state.policy,
+                                                               heldEventIDs: state.heldIncomingIDs)
+            let inbox = try managedInbox().progress(old, pages: 0, continuation: false)
+            let held = (state.heldIncomingIDs ?? []).union(inbox.pending.map(\.eventID))
+            guard held.count <= 10_000 else { throw Failure.discoveryLimit }
+            state.heldIncomingIDs = held.isEmpty ? nil : held
+            if inbox.initialComplete { initialImport = .init(mode: state.policy.importMode, recoveringExistingCalendar: false) }
+        }
+        state.bindingRevision = try Self.advance(state.bindingRevision)
+        state.authEpoch = try Self.advance(state.authEpoch)
+        state.binding = .init(operationID: review.binding.operationID, account: account, record: verified,
+            revision: state.bindingRevision, authEpoch: state.authEpoch, initialImport: initialImport)
+        state.savedMode = .enabled
+        state.resumedExports = approved
+        let receipt = ModeReceipt(account: account, expectedRevision: review.bindingRevision, revision: state.bindingRevision,
+                                  mode: .enabled, reviewID: review.id, selections: selections)
+        var receipts = state.modeReceipts ?? [:]
+        receipts[operationID] = receipt
+        state.modeReceipts = receipts
+        try write(state)
+        return receipt
     }
 
     private static func heldBinding(in state: State, account: Account) -> Binding? {
@@ -459,6 +567,8 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         state.policy = entry.review.policy
         state.policy.revision = try Self.advance(state.policy.revision)
         state.savedMode = .enabled
+        state.resumedExports = nil
+        state.heldIncomingIDs = nil
         state.pendingOperationID = nil
         state.operations[id] = entry
         try write(state)

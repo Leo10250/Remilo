@@ -389,6 +389,8 @@ enum PublicationChecks {
         let clock: @Sendable () -> Int64 = { Int64(now().timeIntervalSince1970 * 1_000) }
         let lease = Runtime.ManagedLease(setupID: UUID(), bindingRevision: 3, authEpoch: 2, calendarID: calendar, zoneID: zone,
                                         publication: true)
+        let resumedLease = Runtime.ManagedLease(setupID: lease.setupID, bindingRevision: 5, authEpoch: 4, calendarID: calendar,
+                                               zoneID: zone, publication: true)
         let candidate = Runtime.ManagedCandidate(occurrenceID: request.local.occurrenceID, operationID: request.operationID,
                                                  lease: lease, calendarName: "Remilo")
         let firstVersion = Publication.Local(occurrenceID: request.local.occurrenceID, revision: 1, generation: request.local.generation)
@@ -404,10 +406,11 @@ enum PublicationChecks {
             if case .granted = result { _ = await fixture.permit() }
             return result
         }, permitsManagedExport: { id, operation, actual, account in
-            local.managedAllowed && local.snapshot != nil && id == candidate.occurrenceID &&
-                operation == candidate.operationID && actual == lease && account.accountGeneration == granted.accountGeneration
+            let active = local.managedResumed ? resumedLease : lease
+            return local.managedAllowed && local.snapshot != nil && id == candidate.occurrenceID &&
+                operation == candidate.operationID && actual == active && account.accountGeneration == granted.accountGeneration
         }, holdsManagedExport: { actual, account in
-            local.managedHeld && actual == lease && account.accountGeneration == granted.accountGeneration
+            (local.managedHeld || local.managedResumed) && actual == lease && account.accountGeneration == granted.accountGeneration
         })
         func runtime() -> Runtime {
             Runtime(connection: connection, journal: .init(directory: path, now: clock), local: authority,
@@ -434,11 +437,28 @@ enum PublicationChecks {
         precondition(!local.managedAllowed && staleWrites == 0, "Check live authority after the provider lookup")
 
         local.managedAllowed = true
+        let account = try connection.savedAccount(expectedRevision: granted.revision)
+        let reviewed = try runtime().reviewHeldExports([candidate], viewingAs: account).compactMap(\.export)
         local.snapshot = .init(version: request.local, fields: request.fields)
-        let sent = try await runtime().syncManaged([candidate], expectedConnectionRevision: granted.revision)
+        precondition(reviewed.count == 1)
+        do {
+            try runtime().validateHeldExports(reviewed, viewingAs: account)
+            preconditionFailure("Require a fresh preview after the reminder changed")
+        } catch Runtime.Rejection.stalePreview {}
+        var selected = candidate
+        if retireBeforeReadback {
+            let ready = try runtime().reviewHeldExports([candidate], viewingAs: account).compactMap(\.export)
+            try runtime().validateHeldExports(ready, viewingAs: account)
+            precondition(ready.first?.waitingLease == lease)
+            local.managedResumed = true
+            selected = .init(occurrenceID: candidate.occurrenceID, operationID: candidate.operationID,
+                             lease: resumedLease, calendarName: candidate.calendarName, replacingLease: lease)
+        }
+        let sent = try await runtime().syncManaged([selected], expectedConnectionRevision: granted.revision)
         precondition(sent.count == 1 && sent[0].phase == .sent && sent[0].identity.local == request.local,
                      "An unsent edit replaces the snapshot under the same intent")
-        let waiting = try await runtime().syncManaged([candidate], expectedConnectionRevision: granted.revision)
+        precondition(sent[0].managedLease == selected.lease && sent[0].identity.eventID == request.eventID)
+        let waiting = try await runtime().syncManaged([selected], expectedConnectionRevision: granted.revision)
         precondition(waiting.allSatisfy { $0.phase == .sent && $0.identity == sent[0].identity },
                      "A missing read-back preserves the sent checkpoint")
         if retireBeforeReadback {
@@ -587,6 +607,7 @@ enum PublicationChecks {
         var invalidateAtPermit = false
         var managedAllowed = true
         var managedHeld = false
+        var managedResumed = false
         var lifecycleRevision = 0
         var manualReceipts: [UUID: RemiloIOSGoogleCalendarManualLinkRuntime.LocalResult] = [:]
 
