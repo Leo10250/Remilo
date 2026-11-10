@@ -49,7 +49,8 @@ final class RemiloIOSGoogleCalendarBridge {
         let state = try setup.view(expectedRevision: view.revision)
         let progress = try setup.savedIncomingProgress(expectedRevision: view.revision)
         var operation: ManagedSetup.Status?
-        if let id = state.pendingOperationID, let entry = try setup.operation(id, expectedRevision: view.revision) {
+        if let id = state.pendingOperationID ?? state.retiredCreationOperationID,
+           let entry = try setup.operation(id, expectedRevision: view.revision) {
             operation = try setup.status(entry, connection: view, advancing: runtime.isAdvancingManagedSetup(id))
         }
         return Self.managedState(state, connection: view, progress: progress, operation: operation)
@@ -345,6 +346,15 @@ final class RemiloIOSGoogleCalendarBridge {
         let operation = try Self.uuid(input, "operationId")
         let runtime = try runtime()
         defer { NotificationCenter.default.post(name: .remiloIOSChange, object: nil, userInfo: [Runtime.automaticStatusChangeKey: true]) }
+        if kind == "PauseManagedCalendar" || kind == "DisableManagedCalendar" {
+            let view = try await runtime.view()
+            guard let setup = runtime.managedSetup else { throw Failure.invalidConfiguration }
+            let receipt = try setup.changeMode(kind == "PauseManagedCalendar" ? .paused : .disabled, operationID: operation,
+                expectedRevision: Int(input.integer("expectedRevision", range: 1...9_007_199_254_740_991)),
+                expectedConnectionRevision: view.revision)
+            return ["operationId": operation.uuidString.lowercased(), "captured": true,
+                    "revision": receipt.revision, "mode": receipt.mode.rawValue]
+        }
         if kind == "ConfirmManagedCalendarSetup" || kind == "RetryManagedCalendarOperation" {
             let view = try await runtime.view()
             guard let setup = runtime.managedSetup else { throw Failure.invalidConfiguration }
@@ -354,7 +364,8 @@ final class RemiloIOSGoogleCalendarBridge {
                 _ = try setup.capture(operation, reviewID: Self.uuid(input, "previewId"), expectedRevision: view.revision,
                     selectedCalendarID: input.text("selectedCalendarId", maximum: 4_096))
             }
-            try runtime.requestManagedSetupAdvance(operation, expectedRevision: view.revision)
+            try runtime.requestManagedSetupAdvance(operation, expectedRevision: view.revision,
+                                                   inspectRetired: kind == "RetryManagedCalendarOperation")
             return ["operationId": operation.uuidString.lowercased(), "captured": true]
         }
         let revision = try Self.revision(input)
@@ -469,6 +480,14 @@ final class RemiloIOSGoogleCalendarBridge {
                 "review": status.stage == "NeedsReview" || status.stage == "Unconfirmed" ? 1 : 0,
                 "held": 0, "children": [String](), "currentScope": status.currentScope,
             ]
+        }
+        if view.connected, let setup = runtime.managedSetup,
+           let receipt = try setup.modeOperation(id, expectedRevision: revision) {
+            let current = try setup.view(expectedRevision: revision).bindingRevision == receipt.revision
+            return ["operationId": id.uuidString.lowercased(),
+                    "kind": receipt.mode == .paused ? "PauseManagedCalendar" : "DisableManagedCalendar",
+                    "stage": "Confirmed", "reason": "", "action": "None", "confirmed": 1,
+                    "pending": 0, "review": 0, "held": 0, "children": [String](), "currentScope": current]
         }
         guard view.connected else { return nil }
         if let association = try runtime.manualLink?.associationStatus(id, expectedConnectionRevision: revision) {
@@ -652,12 +671,13 @@ final class RemiloIOSGoogleCalendarBridge {
                                      progress: ManagedSetup.Inbox.Progress?, operation: ManagedSetup.Status?) -> [String: Any] {
         let binding = state?.binding
         let policy = state?.policy ?? .init()
+        let mode = state?.mode ?? .disabled
         let scanComplete = binding != nil && (!policy.automaticImport || progress?.initialComplete == true)
         let phase: String
         if operation?.stage == "NeedsAccess" { phase = "AccessRequired" }
         else if operation?.stage == "Unconfirmed" { phase = "CreationUnconfirmed" }
         else if state?.pendingOperationID != nil { phase = "PreparingCalendar" }
-        else if binding == nil { phase = "NotConfigured" }
+        else if binding == nil || mode == .disabled { phase = "NotConfigured" }
         else if let connection, !hasReadAccess(connection) { phase = "AccessRequired" }
         else { phase = scanComplete ? "Ready" : "InitialImport" }
         let review = progress?.pending.filter { if case .needsReview = $0.kind { return true }; return false }.count ?? 0
@@ -667,14 +687,14 @@ final class RemiloIOSGoogleCalendarBridge {
         }
         return [
             "revision": state?.bindingRevision ?? 1, "authEpoch": state?.authEpoch ?? 0,
-            "mode": binding != nil ? "Enabled" : "Disabled", "phase": phase,
+            "mode": mode.rawValue, "phase": phase,
             "subject": binding?.account.subject ?? "", "calendarId": binding?.record.id ?? "",
             "calendarName": Self.providerLabel(binding?.record.name ?? ""), "calendarZone": binding?.record.zoneId ?? "",
             "policy": managedPolicy(policy), "initialMode": (binding?.initialImport?.mode ?? policy.importMode).rawValue,
             "bootstrapGeneration": binding?.revision ?? 0, "initialRecoveryComplete": scanComplete,
             "candidateCount": pending, "pendingChangeCount": pending, "pendingExportCount": 0, "heldExportCount": 0,
             "reviewCount": review, "lastObservedAtMs": NSNull(), "message": "",
-            "operationId": iosBridgeValue((state?.pendingOperationID ?? binding?.operationID)?.uuidString.lowercased()),
+            "operationId": iosBridgeValue((state?.pendingOperationID ?? state?.retiredCreationOperationID ?? binding?.operationID)?.uuidString.lowercased()),
             "problem": iosBridgeValue(problem),
         ]
     }

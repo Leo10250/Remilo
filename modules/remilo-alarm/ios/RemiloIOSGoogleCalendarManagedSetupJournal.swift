@@ -110,6 +110,19 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         let policy: Policy
         let binding: Binding?
         let pendingOperationID: UUID?
+        let retiredCreationOperationID: UUID?
+        let mode: Mode
+    }
+
+    enum Mode: String, Codable, Equatable, Sendable {
+        case enabled = "Enabled", paused = "Paused", disabled = "Disabled"
+    }
+
+    struct ModeReceipt: Codable, Equatable, Sendable {
+        let account: Account
+        let expectedRevision: Int
+        let revision: Int
+        let mode: Mode
     }
 
     /// Built from an exact CalendarList lookup. For a lost creation response,
@@ -136,6 +149,11 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         var binding: Binding?
         var pendingOperationID: UUID?
         var operations: [UUID: Entry] = [:]
+        var savedMode: Mode?
+        var modeReceipts: [UUID: ModeReceipt]?
+        var stoppedCreationID: UUID?
+
+        var mode: Mode { savedMode ?? (binding == nil ? .disabled : .enabled) }
     }
 
     private let directory: URL
@@ -163,13 +181,24 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
             guard let account, let entry = state.operations[id], Self.sameOwner(entry.account, account) else { return nil }
             return id
         }
+        let retiredCreation: UUID? = state.stoppedCreationID.flatMap { id in
+            guard let account, let entry = state.operations[id], Self.sameOwner(entry.account, account),
+                  entry.retired, entry.phase == .sent, entry.returnedCalendarID == nil else { return nil }
+            return id
+        }
         return View(bindingRevision: state.bindingRevision, authEpoch: state.authEpoch, policy: state.policy,
-                    binding: binding, pendingOperationID: pending)
+                    binding: binding, pendingOperationID: pending, retiredCreationOperationID: retiredCreation,
+                    mode: binding != nil || pending != nil ? state.mode : .disabled)
     }
 
     func operation(_ id: UUID, viewingAs account: Account) throws -> Entry? {
         guard let entry = try read().operations[id], Self.sameOwner(entry.account, account) else { return nil }
         return entry
+    }
+
+    func modeOperation(_ id: UUID, viewingAs account: Account) throws -> ModeReceipt? {
+        guard let receipt = try read().modeReceipts?[id], Self.sameOwner(receipt.account, account) else { return nil }
+        return receipt
     }
 
     func incomingScope(_ account: Account) throws -> RemiloIOSGoogleCalendarManagedInbox.Scope {
@@ -185,11 +214,66 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         return try Self.activeBinding(in: state, account: account)
     }
 
+    /// A paused binding can still identify held intent. Only activeBinding can
+    /// grant authority to send it or associate a read-back with a reminder.
+    func captureOutgoingBinding(_ account: Account, explicit: Bool) throws -> Binding? {
+        let state = try read()
+        guard (explicit || state.policy.exportNewReminders), state.pendingOperationID == nil else { return nil }
+        if state.mode == .paused { return Self.heldBinding(in: state, account: account) }
+        return try Self.activeBinding(in: state, account: account)
+    }
+
+    func heldBinding(_ account: Account) throws -> Binding? {
+        Self.heldBinding(in: try read(), account: account)
+    }
+
+    private static func heldBinding(in state: State, account: Account) -> Binding? {
+        guard state.mode == .paused, let binding = state.binding, binding.belongs(to: account),
+              binding.account.accountGeneration == account.accountGeneration else { return nil }
+        return binding
+    }
+
     private static func activeBinding(in state: State, account: Account) throws -> Binding {
-        guard let binding = state.binding, binding.belongs(to: account), binding.account.accountGeneration == account.accountGeneration,
+        guard state.mode == .enabled, let binding = state.binding, binding.belongs(to: account),
+              binding.account.accountGeneration == account.accountGeneration,
               binding.revision == state.bindingRevision, binding.authEpoch == state.authEpoch,
               state.pendingOperationID == nil else { throw Failure.staleConnection }
         return binding
+    }
+
+    func changeMode(_ mode: Mode, operationID: UUID, expectedRevision: Int, account: Account) throws -> ModeReceipt {
+        guard mode == .paused || mode == .disabled else { throw Failure.invalidInput }
+        var state = try read()
+        if let saved = state.modeReceipts?[operationID] {
+            guard Self.sameOwner(saved.account, account), saved.expectedRevision == expectedRevision,
+                  saved.mode == mode else { throw Failure.operationReused }
+            return saved
+        }
+        guard state.operations[operationID] == nil else { throw Failure.operationReused }
+        guard expectedRevision == state.bindingRevision else { throw Rejection.stalePreview }
+        let ownsBinding = state.binding?.belongs(to: account) == true
+        let pending = state.pendingOperationID.flatMap { state.operations[$0] }
+        let ownsPending = pending.map { Self.sameOwner($0.account, account) } == true
+        // The journal has one active scope. Do not mutate another account's
+        // pending setup when applying a command from a previously bound account.
+        guard pending == nil || ownsPending else { throw Failure.staleConnection }
+        guard ownsBinding || ownsPending else { throw Failure.notFound }
+        if mode == .paused, !ownsBinding || state.mode == .disabled { throw Failure.invalidInput }
+        if var pending {
+            pending.retired = true
+            state.operations[pending.operationID] = pending
+            state.pendingOperationID = nil
+            if pending.phase == .sent, pending.returnedCalendarID == nil { state.stoppedCreationID = pending.operationID }
+        }
+        state.bindingRevision = try Self.advance(state.bindingRevision)
+        state.authEpoch = try Self.advance(state.authEpoch)
+        state.savedMode = mode
+        let receipt = ModeReceipt(account: account, expectedRevision: expectedRevision, revision: state.bindingRevision, mode: mode)
+        var receipts = state.modeReceipts ?? [:]
+        receipts[operationID] = receipt
+        state.modeReceipts = receipts
+        try write(state)
+        return receipt
     }
 
     func managedInbox() -> RemiloIOSGoogleCalendarManagedInbox { .init(directory: directory) }
@@ -249,6 +333,7 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
 
     func capture(operationID: UUID, review: Review, currentAccount: Account) throws -> Entry {
         var state = try read()
+        guard state.modeReceipts?[operationID] == nil else { throw Failure.operationReused }
         if let existing = state.operations[operationID] {
             guard Self.sameOwner(existing.account, currentAccount), existing.review == review else { throw Failure.operationReused }
             return existing
@@ -373,6 +458,7 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
                                 revision: entry.bindingRevision, authEpoch: entry.authEpoch, initialImport: entry.review.initialImport)
         state.policy = entry.review.policy
         state.policy.revision = try Self.advance(state.policy.revision)
+        state.savedMode = .enabled
         state.pendingOperationID = nil
         state.operations[id] = entry
         try write(state)

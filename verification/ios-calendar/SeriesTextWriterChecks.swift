@@ -142,7 +142,9 @@ enum SeriesTextWriterChecks {
                         fixture.confirmedInstance = confirmation.fields
                         fixture.instanceEdit = nil
                         return .applied
-                    })), canRead: { true }, activeLease: { $0.accountGeneration == account.accountGeneration ? lease : nil })
+                    })), canRead: { true },
+                activeLease: { !fixture.seriesHeld && $0.accountGeneration == account.accountGeneration ? lease : nil },
+                heldLease: { fixture.seriesHeld && $0.accountGeneration == account.accountGeneration ? lease : nil })
         }
         let writer = service()
         _ = try await writer.sync(expectedRevision: account.connectionRevision)
@@ -158,6 +160,14 @@ enum SeriesTextWriterChecks {
         precondition(waiting.isEmpty)
         fixture.revealChildWrite = true
         let renewed = try await connection.connectFromUserAction(expectedRevision: account.connectionRevision, consent: .reauthorizeCurrentAccount) { _, _ in readOnly }
+        fixture.seriesHeld = true
+        fixture.allowInstanceAcknowledgement = true
+        let paused = service()
+        _ = try await paused.sync(expectedRevision: renewed.revision)
+        let held = try paused.unconfirmedImports(viewingAs: account)
+        precondition(held == [importID] && fixture.childWrites == 1 && fixture.confirmedInstance == nil)
+        fixture.seriesHeld = false
+        fixture.allowInstanceAcknowledgement = false
         _ = try await service().sync(expectedRevision: renewed.revision)
         let beforeNative = try await imports.seriesTextExports(viewingAs: account, lease: lease)
         precondition(beforeNative.first?.exceptions.isEmpty == true && fixture.childWrites == 1)
@@ -273,6 +283,7 @@ enum SeriesTextWriterChecks {
         var instanceEdit: IOSCalendarSeriesInstanceEdit?
         var confirmedInstance: IOSCalendarSeriesInstanceEdit.Fields?
         var allowInstanceAcknowledgement = false
+        var seriesHeld = false
         var googleChildNotes: String?
         var googleChildTitle: String?
         private(set) var childWrites = 0

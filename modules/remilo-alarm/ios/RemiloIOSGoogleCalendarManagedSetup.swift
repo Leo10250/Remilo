@@ -110,6 +110,25 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         return try journal.outgoingBinding(account, explicit: explicit)
     }
 
+    func captureOutgoingBinding(explicit: Bool) throws -> Journal.Binding? {
+        try requireForeground()
+        let account = try connection.savedAccount(expectedRevision: connection.view().revision)
+        return try journal.captureOutgoingBinding(account, explicit: explicit)
+    }
+
+    func heldBinding(_ account: Account) throws -> Journal.Binding? {
+        try requireForeground()
+        guard try connection.savedAccount(expectedRevision: account.connectionRevision) == account else { return nil }
+        return try journal.heldBinding(account)
+    }
+
+    func changeMode(_ mode: Journal.Mode, operationID: UUID, expectedRevision: Int,
+                    expectedConnectionRevision: Int) throws -> Journal.ModeReceipt {
+        try requireForeground()
+        let account = try connection.savedAccount(expectedRevision: expectedConnectionRevision)
+        return try journal.changeMode(mode, operationID: operationID, expectedRevision: expectedRevision, account: account)
+    }
+
     func hasActiveIncomingBinding(expectedRevision: Int) throws -> Bool {
         let account = try currentAccount(expectedRevision)
         do {
@@ -156,10 +175,21 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         return try journal.operation(id, viewingAs: connection.savedAccount(expectedRevision: expectedRevision))
     }
 
+    func modeOperation(_ id: UUID, expectedRevision: Int) throws -> Journal.ModeReceipt? {
+        try requireForeground()
+        return try journal.modeOperation(id, viewingAs: connection.savedAccount(expectedRevision: expectedRevision))
+    }
+
     func status(_ entry: Journal.Entry, connection view: Connection.View, advancing: Bool) throws -> Status {
         let state = try self.view(expectedRevision: view.revision)
         let currentScope = state.pendingOperationID == entry.operationID || state.binding?.operationID == entry.operationID
-        if entry.retired { return .init("Cancelled", currentScope: false) }
+        let canRead = view.access == .ownedCalendars || view.access == .managedCreation
+        if entry.retired {
+            guard entry.phase == .sent, entry.returnedCalendarID == nil else { return .init("Cancelled", currentScope: false) }
+            if !canRead { return .init("NeedsAccess", reason: Failure.needsAccess.rawValue, action: "Connect", currentScope: false) }
+            if advancing { return .init("CheckingCalendar", currentScope: false) }
+            return .init("Unconfirmed", reason: Journal.Rejection.creationUnconfirmed.rawValue, action: "InspectCreation", currentScope: false)
+        }
         switch entry.phase {
         case .confirmed: return .init("Confirmed", currentScope: currentScope)
         case .rejected: return .init("NeedsReview", reason: entry.reason ?? "", action: "ReviewSetup", currentScope: currentScope)
@@ -174,7 +204,6 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         if entry.reason == Journal.Rejection.selectionRequired.rawValue {
             return .init("NeedsReview", reason: Journal.Rejection.selectionRequired.rawValue, action: "ReviewSetup")
         }
-        let canRead = view.access == .ownedCalendars || view.access == .managedCreation
         let canCreate = entry.phase != .captured || entry.creationRequest == nil || view.access == .managedCreation
         if !canRead || !canCreate || (needsWrite(entry) && !view.canWriteOwnedEvents) {
             return .init("NeedsAccess", reason: Failure.needsAccess.rawValue, action: "Authorize")
@@ -192,6 +221,11 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         try requireForeground()
         do {
             let account = try connection.savedAccount(expectedRevision: expectedRevision)
+            if let held = try journal.heldBinding(account) {
+                let policy = try journal.view(viewingAs: account).policy
+                guard policy.automaticImport else { return nil }
+                return try inbox.progress(.init(binding: held, policy: policy), pages: 0, continuation: false)
+            }
             return try inbox.progress(journal.incomingScope(account), pages: 0, continuation: false)
         } catch Failure.needsAccess { return nil }
         catch Failure.staleConnection { return nil }
@@ -203,6 +237,17 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         let account = try currentAccount(expectedRevision)
         guard let entry = try journal.operation(id, viewingAs: account) else { throw Failure.notFound }
         return try await observeCreation(entry, account: account)
+    }
+
+    func recoverRetiredCreation(_ id: UUID, expectedRevision: Int) async throws {
+        let account = try currentAccount(expectedRevision)
+        guard let entry = try journal.operation(id, viewingAs: account), entry.retired, entry.phase == .sent,
+              entry.returnedCalendarID == nil, let request = entry.sentRequest else { throw Failure.invalidInput }
+        let result = try await observeCreation(entry, account: account)
+        guard try currentAccount(expectedRevision) == account else { throw Failure.staleConnection }
+        if case .verified(let record) = result {
+            try journal.rememberReturnedID(record.id, for: request)
+        }
     }
 
     func preview(expectedRevision: Int, selectedID: String? = nil, policy: Journal.Policy? = nil,

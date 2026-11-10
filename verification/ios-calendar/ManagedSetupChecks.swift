@@ -13,11 +13,13 @@ enum ManagedSetupChecks {
                     creation: RemiloIOSGoogleCalendarAccess, now: @escaping @Sendable () -> Date) async throws {
         try await check(configuration: configuration, readOnly: readOnly, creation: creation, now: now, appearingCandidate: true)
         try await check(configuration: configuration, readOnly: readOnly, creation: creation, now: now, appearingCandidate: false)
+        try await check(configuration: configuration, readOnly: readOnly, creation: creation, now: now,
+                        appearingCandidate: false, disableBeforeRecovery: true)
     }
 
     private static func check(configuration: RemiloIOSGoogleCalendarConfiguration, readOnly: RemiloIOSGoogleCalendarAccess,
                               creation: RemiloIOSGoogleCalendarAccess, now: @escaping @Sendable () -> Date,
-                              appearingCandidate: Bool) async throws {
+                              appearingCandidate: Bool, disableBeforeRecovery: Bool = false) async throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent("remilo-managed-flow-\(UUID())")
         defer { try? FileManager.default.removeItem(at: directory) }
         let fixture = Fixture(email: readOnly.account.email, creation: creation)
@@ -184,6 +186,39 @@ enum ManagedSetupChecks {
                     expectedLinkRevision: recoveredLink.revision, expectedActivationRevision: activation)
                 preconditionFailure("A direct retry must also reject a retired managed link")
             } catch LinkRuntime.Link.Failure.ineligible {}
+            let beforePause = try setup.view(expectedRevision: revision)
+            let pauseID = UUID()
+            let pause = try setup.changeMode(.paused, operationID: pauseID, expectedRevision: beforePause.bindingRevision,
+                                             expectedConnectionRevision: revision)
+            let paused = try reopened.view(expectedRevision: revision)
+            let pausedCapture = try reopened.captureOutgoingBinding(explicit: true)
+            let pausedDefault = try reopened.captureOutgoingBinding(explicit: false)
+            let pausedIncoming = try reopened.hasActiveIncomingBinding(expectedRevision: revision)
+            let oldLinkAllowed = try journal.permitsLink(lease, account: authorized.account)
+            let pausedProgress = try reopened.savedIncomingProgress(expectedRevision: revision)
+            precondition(paused.mode == .paused && paused.authEpoch == beforePause.authEpoch + 1 &&
+                         paused.bindingRevision == pause.revision && paused.pendingOperationID == nil)
+            precondition(pausedCapture == saved.binding && pausedDefault == nil && !pausedIncoming && !oldLinkAllowed &&
+                         pausedProgress?.initialComplete == true)
+            let replayPause = try reopened.changeMode(.paused, operationID: pauseID, expectedRevision: beforePause.bindingRevision,
+                                                     expectedConnectionRevision: revision)
+            precondition(replayPause == pause)
+            do {
+                _ = try reopened.changeMode(.disabled, operationID: pauseID, expectedRevision: beforePause.bindingRevision,
+                                            expectedConnectionRevision: revision)
+                preconditionFailure("Changing the operation input cannot replay a successful pause")
+            } catch Failure.operationReused {}
+            do {
+                _ = try reopened.changeMode(.disabled, operationID: UUID(), expectedRevision: beforePause.bindingRevision,
+                                            expectedConnectionRevision: revision)
+                preconditionFailure("A stale screen cannot replace the current mode")
+            } catch Setup.Journal.Rejection.stalePreview {}
+            let disabled = try reopened.changeMode(.disabled, operationID: UUID(), expectedRevision: paused.bindingRevision,
+                                                   expectedConnectionRevision: revision)
+            let disabledView = try setup.view(expectedRevision: revision)
+            let heldAfterDisable = try setup.heldBinding(authorized.account)
+            precondition(disabledView.mode == .disabled && disabledView.binding == saved.binding &&
+                         disabled.revision == pause.revision + 1 && heldAfterDisable == nil)
             return
         }
 
@@ -204,6 +239,22 @@ enum ManagedSetupChecks {
         }
         let beforeActivation = try reopened.view(expectedRevision: revision)
         precondition(beforeActivation.binding == nil && beforeActivation.pendingOperationID == id && fixture.posts == 1)
+        if disableBeforeRecovery {
+            _ = try reopened.changeMode(.disabled, operationID: UUID(), expectedRevision: beforeActivation.bindingRevision,
+                                        expectedConnectionRevision: revision)
+            let stopped = try setup.view(expectedRevision: revision)
+            precondition(stopped.mode == .disabled && stopped.pendingOperationID == nil && stopped.retiredCreationOperationID == id)
+            do {
+                _ = try await reopened.advance(id, expectedRevision: revision)
+                preconditionFailure("A stopped creation cannot activate after readback")
+            } catch Failure.staleConnection {}
+            try await reopened.recoverRetiredCreation(id, expectedRevision: revision)
+            let recorded = try reopened.operation(id, expectedRevision: revision)
+            let afterRecovery = try setup.view(expectedRevision: revision)
+            precondition(recorded?.retired == true && recorded?.returnedCalendarID == Fixture.calendarID &&
+                         afterRecovery.retiredCreationOperationID == nil && afterRecovery.binding == nil && fixture.posts == 1)
+            return
+        }
         let second = try await reopened.advance(id, expectedRevision: revision)
         guard case .finished(let confirmed) = second, confirmed.phase == .confirmed else {
             preconditionFailure("Recover the original operation through its unique marker")

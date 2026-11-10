@@ -25,6 +25,7 @@ final class RemiloIOSGoogleCalendarPublicationRuntime {
         let read: @MainActor @Sendable (String) throws -> LocalSnapshot?
         let permit: @MainActor @Sendable (LocalSnapshot, @escaping Checkpoint) async throws -> Writer.Permission
         var permitsManagedExport: @MainActor @Sendable (String, UUID, ManagedLease, Publication.Account) throws -> Bool = { _, _, _, _ in false }
+        var holdsManagedExport: @MainActor @Sendable (ManagedLease, Publication.Account) throws -> Bool = { _, _ in false }
     }
 
     struct ManagedCandidate: Sendable {
@@ -172,7 +173,12 @@ final class RemiloIOSGoogleCalendarPublicationRuntime {
         let saved = Dictionary(uniqueKeysWithValues: try journal.operations(viewingAs: viewer)
             .filter { $0.managedLease != nil }.map { ($0.identity.operationID, $0) })
         let candidateByID = Dictionary(candidates.map { ($0.operationID, $0) }, uniquingKeysWith: { first, _ in first })
-        let pending = Set(saved.values.filter { $0.phase == .sent || $0.phase == .waiting }.map(\.identity.operationID))
+        let eligible = try saved.values.filter { entry in
+            if entry.phase == .sent { return true }
+            guard entry.phase == .waiting, let lease = entry.managedLease else { return false }
+            return try !local.holdsManagedExport(lease, viewer)
+        }
+        let pending = Set(eligible.map(\.identity.operationID))
             .union(candidates.filter { saved[$0.operationID] == nil }.map(\.operationID))
         let ids = pending.sorted { $0.uuidString < $1.uuidString }
         guard !ids.isEmpty else { return [] }
@@ -227,6 +233,7 @@ final class RemiloIOSGoogleCalendarPublicationRuntime {
                 try await writer.checkPublication(identity, access: access, budget: budget)
             }
         } else {
+            if let lease = entry.managedLease, try local.holdsManagedExport(lease, viewer) { return entry }
             guard identity.account == viewer, let snapshot = try local.read(identity.local.occurrenceID),
                   snapshot.version == identity.local else {
                 return try journal.retire(identity.operationID, viewingAs: viewer)

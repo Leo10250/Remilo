@@ -406,6 +406,8 @@ enum PublicationChecks {
         }, permitsManagedExport: { id, operation, actual, account in
             local.managedAllowed && local.snapshot != nil && id == candidate.occurrenceID &&
                 operation == candidate.operationID && actual == lease && account.accountGeneration == granted.accountGeneration
+        }, holdsManagedExport: { actual, account in
+            local.managedHeld && actual == lease && account.accountGeneration == granted.accountGeneration
         })
         func runtime() -> Runtime {
             Runtime(connection: connection, journal: .init(directory: path, now: clock), local: authority,
@@ -414,6 +416,16 @@ enum PublicationChecks {
         _ = try await runtime().syncManaged([candidate], expectedConnectionRevision: granted.revision)
         let wrongOwnerWrites = await fixture.writes
         precondition(wrongOwnerWrites == 0)
+        local.managedAllowed = false
+        local.managedHeld = true
+        let paused = runtime()
+        _ = try await paused.syncManaged([], expectedConnectionRevision: granted.revision)
+        let held = try paused.operations(expectedConnectionRevision: granted.revision)
+        let pausedWrites = await fixture.writes
+        precondition(held.first?.entry.phase == .waiting && pausedWrites == 0,
+                     "An unsent publication remains waiting while its managed lease is held")
+        local.managedAllowed = true
+        local.managedHeld = false
 
         await fixture.setCalendarOwner(access.account.email)
         local.invalidateAtPermit = true
@@ -574,6 +586,7 @@ enum PublicationChecks {
         var snapshot: RemiloIOSGoogleCalendarPublicationRuntime.LocalSnapshot?
         var invalidateAtPermit = false
         var managedAllowed = true
+        var managedHeld = false
         var lifecycleRevision = 0
         var manualReceipts: [UUID: RemiloIOSGoogleCalendarManualLinkRuntime.LocalResult] = [:]
 

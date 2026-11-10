@@ -102,13 +102,17 @@ final class RemiloIOSGoogleCalendarRuntime {
         advancingManagedSetups.contains(operation)
     }
 
-    func requestManagedSetupAdvance(_ operation: UUID, expectedRevision: Int) throws {
+    func requestManagedSetupAdvance(_ operation: UUID, expectedRevision: Int, inspectRetired: Bool = false) throws {
         try requireForeground()
         guard let managedSetup else { throw Failure.invalidConfiguration }
         guard let entry = try managedSetup.operation(operation, expectedRevision: expectedRevision) else { throw Failure.notFound }
-        guard !entry.retired, entry.phase == .captured || entry.phase == .sent else { return }
-        guard try managedSetup.view(expectedRevision: expectedRevision).pendingOperationID == operation,
-              entry.account.connectionRevision == expectedRevision else { throw Failure.staleConnection }
+        if entry.retired {
+            guard inspectRetired, entry.phase == .sent, entry.returnedCalendarID == nil else { return }
+        } else {
+            guard entry.phase == .captured || entry.phase == .sent else { return }
+            guard try managedSetup.view(expectedRevision: expectedRevision).pendingOperationID == operation,
+                  entry.account.connectionRevision == expectedRevision else { throw Failure.staleConnection }
+        }
         guard advancingManagedSetups.insert(operation).inserted else { return }
         Task { @MainActor [weak self] in
             guard let self else { return }
@@ -117,6 +121,10 @@ final class RemiloIOSGoogleCalendarRuntime {
                 #if os(iOS)
                 NotificationCenter.default.post(name: .remiloIOSChange, object: nil, userInfo: [Self.automaticStatusChangeKey: true])
                 #endif
+            }
+            if entry.retired {
+                try? await managedSetup.recoverRetiredCreation(operation, expectedRevision: expectedRevision)
+                return
             }
             let progress = try? await managedSetup.advance(operation, expectedRevision: expectedRevision)
             #if os(iOS)
@@ -731,7 +739,7 @@ final class RemiloIOSGoogleCalendarRuntime {
     /// token and cannot make a network request from the local engine.
     static func captureManagedExport(explicit: Bool) -> IOSCalendarExportIntent.Scope? {
         let runtime = live ?? (try? configuredForegroundRuntime())
-        guard let binding = try? runtime?.managedSetup?.outgoingBinding(explicit: explicit) else { return nil }
+        guard let binding = try? runtime?.managedSetup?.captureOutgoingBinding(explicit: explicit) else { return nil }
         return exportScope(binding)
     }
 
@@ -766,6 +774,7 @@ final class RemiloIOSGoogleCalendarRuntime {
         var settled = false
         for entry in try publication.pendingManagedLinks(expectedConnectionRevision: expectedRevision).prefix(4) {
             guard !Task.isCancelled, budget.hasTimeRemaining else { break }
+            if let held = try managedSetup?.heldBinding(account), entry.managedLease == held.exportLease { continue }
             let reason: String?
             if try publication.permitsManagedLink(entry, viewingAs: account) {
                 do {
@@ -800,6 +809,7 @@ final class RemiloIOSGoogleCalendarRuntime {
         let imports = try ImportJournal.local()
         let managed = try RemiloIOSGoogleCalendarManagedSetupJournal.local()
         var publicationAuthority = RemiloIOSGoogleCalendarPublicationRuntime.LocalAuthority.localEngine(.shared)
+        publicationAuthority.holdsManagedExport = { lease, account in try managed.heldBinding(account)?.exportLease == lease }
         publicationAuthority.permitsManagedExport = { id, operationID, lease, account in
             guard let reminder = try RemiloIOSEngine.shared.read().reminders[id], reminder.active,
                   let intent = reminder.calendarExportIntent, intent.operationID == operationID else { return false }
@@ -862,7 +872,8 @@ final class RemiloIOSGoogleCalendarRuntime {
         runtime.seriesTextWriter = RemiloIOSGoogleCalendarSeriesTextWriter(
             directory: support.appendingPathComponent("google-calendar", isDirectory: true),
             connection: connection, imports: imports, local: seriesAuthority, canRead: canUseForeground,
-            activeLease: { [setup = runtime.managedSetup] in try setup?.activeSeriesLease($0) }
+            activeLease: { [setup = runtime.managedSetup] in try setup?.activeSeriesLease($0) },
+            heldLease: { [setup = runtime.managedSetup] in try setup?.heldBinding($0)?.linkLease }
         )
         live = runtime
         return runtime

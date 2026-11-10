@@ -13,6 +13,11 @@ final class RemiloIOSGoogleCalendarSeriesTextWriter {
     typealias Account = Import.Account
 
     private struct Send: Codable, Equatable, Sendable {
+        struct Outcome: Codable, Equatable, Sendable {
+            let confirmed: Journal.SeriesTextBaseline?
+            let reason: String?
+        }
+
         let id: UUID
         let importID: UUID
         let account: Account
@@ -21,6 +26,7 @@ final class RemiloIOSGoogleCalendarSeriesTextWriter {
         let source: Import.Source
         let local: IOSCalendarSeriesTextSnapshot
         var desiredSchedule: Import.Event.Schedule? = nil
+        var outcome: Outcome? = nil
 
         func patch() throws -> Writer.Patch {
             try .init(series: id, account: account, snapshot: local, source: source, lease: lease,
@@ -65,6 +71,7 @@ final class RemiloIOSGoogleCalendarSeriesTextWriter {
     private let local: Runtime.SeriesTextAuthority
     private let canRead: @MainActor @Sendable () -> Bool
     private let activeLease: @MainActor @Sendable (Account) throws -> Lease?
+    private let heldLease: @MainActor @Sendable (Account) throws -> Lease?
     private var running = false
     private var readbackCursor: String?
     private var instanceReadbackCursor: String?
@@ -73,13 +80,15 @@ final class RemiloIOSGoogleCalendarSeriesTextWriter {
 
     init(directory: URL, connection: Runtime.Connection, imports: Journal, local: Runtime.SeriesTextAuthority,
          canRead: @escaping @MainActor @Sendable () -> Bool,
-         activeLease: @escaping @MainActor @Sendable (Account) throws -> Lease?) {
+         activeLease: @escaping @MainActor @Sendable (Account) throws -> Lease?,
+         heldLease: @escaping @MainActor @Sendable (Account) throws -> Lease? = { _ in nil }) {
         self.directory = directory
         self.connection = connection
         self.imports = imports
         self.local = local
         self.canRead = canRead
         self.activeLease = activeLease
+        self.heldLease = heldLease
     }
 
     func unconfirmedImports(viewingAs account: Account) throws -> Set<UUID> {
@@ -301,8 +310,8 @@ final class RemiloIOSGoogleCalendarSeriesTextWriter {
             guard case .granted? = checkpoint else { return false }
         }
         if work.account.accountGeneration == viewer.accountGeneration {
-            guard canRead(), let lease = try activeLease(viewer) else { return false }
-            if lease == work.binding.lease {
+            guard canRead(), try heldLease(viewer) != work.binding.lease else { return false }
+            if try activeLease(viewer) == work.binding.lease {
                 guard try await acknowledgeInstance(work, outcome: outcome, viewer: viewer, authority: authority) else { return false }
             }
         }
@@ -370,6 +379,9 @@ final class RemiloIOSGoogleCalendarSeriesTextWriter {
 
     private func advance(_ work: Send, viewer: Account, phase: Writer.Phase,
                          budget: RemiloIOSGoogleCalendarHTTP.Budget) async throws -> Bool {
+        if let outcome = work.outcome {
+            return try await finish(work, viewer: viewer, confirmed: outcome.confirmed, reason: outcome.reason)
+        }
         let patch = try work.patch()
         let outcome = try await connection.withPublicationAccess(
             captured: work.account, expectedRevision: viewer.connectionRevision, canRead: canRead
@@ -387,9 +399,10 @@ final class RemiloIOSGoogleCalendarSeriesTextWriter {
         switch outcome {
         case .confirmed(let event):
             guard let etag = event.strongETag else { return false }
-            if work.desiredSchedule != nil, work.account.accountGeneration == viewer.accountGeneration,
-               try activeLease(viewer) == work.lease {
-                if let problem = try await scheduleReadbackIssue(work, viewer: viewer, etag: etag, budget: budget) {
+            if work.desiredSchedule != nil, work.account.accountGeneration == viewer.accountGeneration {
+                if try heldLease(viewer) == work.lease { return false }
+                if try activeLease(viewer) == work.lease,
+                   let problem = try await scheduleReadbackIssue(work, viewer: viewer, etag: etag, budget: budget) {
                     return try await finish(work, viewer: viewer, confirmed: nil, reason: problem)
                 }
             }
@@ -431,6 +444,8 @@ final class RemiloIOSGoogleCalendarSeriesTextWriter {
     }
 
     private func finish(_ work: Send, viewer: Account, confirmed: Journal.SeriesTextBaseline?, reason: String?) async throws -> Bool {
+        let outcome = Send.Outcome(confirmed: confirmed, reason: reason)
+        if try retainWhileHeld(work, viewer: viewer, outcome: outcome) { return false }
         if work.account.accountGeneration == viewer.accountGeneration, try activeLease(viewer) == work.lease {
             var settled = confirmed
             var issue = reason
@@ -448,9 +463,21 @@ final class RemiloIOSGoogleCalendarSeriesTextWriter {
                                                          confirmed: settled, reason: issue)
             }
         }
+        if try retainWhileHeld(work, viewer: viewer, outcome: outcome) { return false }
         var state = try read()
-        if state.sent[work.importID] == work {
+        if state.sent[work.importID]?.id == work.id {
             state.sent.removeValue(forKey: work.importID)
+            try write(state)
+        }
+        return true
+    }
+
+    private func retainWhileHeld(_ work: Send, viewer: Account, outcome: Send.Outcome) throws -> Bool {
+        guard work.account.accountGeneration == viewer.accountGeneration, try heldLease(viewer) == work.lease else { return false }
+        var state = try read()
+        if var saved = state.sent[work.importID], saved.id == work.id, saved.outcome != outcome {
+            saved.outcome = outcome
+            state.sent[work.importID] = saved
             try write(state)
         }
         return true
