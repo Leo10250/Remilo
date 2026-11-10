@@ -7,10 +7,12 @@ enum SeriesTextWriterChecks {
     private typealias HTTP = RemiloIOSGoogleCalendarHTTP
 
     static func run(configuration: RemiloIOSGoogleCalendarConfiguration, access: RemiloIOSGoogleCalendarAccess,
-                    readOnly: RemiloIOSGoogleCalendarAccess, now: @escaping @Sendable () -> Date) async throws {
+                    readOnly: RemiloIOSGoogleCalendarAccess, now: @escaping @Sendable () -> Date,
+                    editsSchedule: Bool = false) async throws {
+        if editsSchedule { try recurrenceEncoding() }
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent("remilo-series-write-\(UUID())")
         defer { try? FileManager.default.removeItem(at: directory) }
-        let fixture = Fixture(directory: directory, email: access.account.email)
+        let fixture = Fixture(directory: directory, email: access.account.email, editsSchedule: editsSchedule)
         let connection = Service.Runtime.Connection(configuration: configuration, store: .init(directory: directory),
             http: .init(send: { request, _, _ in try await fixture.send(request) }), now: now)
         let clock: @Sendable () -> Int64 = { Int64(now().timeIntervalSince1970 * 1_000) }
@@ -38,8 +40,14 @@ enum SeriesTextWriterChecks {
                 return .acknowledged(local)
             }))
         precondition(imported.relationship == .automaticRequested)
+        let scheduleEdit: IOSCalendarSeriesTextSnapshot.ScheduleEdit?
+        if editsSchedule {
+            let rule = try RemiloIOSRecurrence.Rule(anchor: "2027-03-15T11:00", frequency: "weekly", weekdays: [1],
+                                                    count: 1, zoneID: "UTC", endOffsetMs: 2_700_000)
+            scheduleEdit = .init(baseline: try review.recurringRule()!, current: rule, hasFutureExceptions: false)
+        } else { scheduleEdit = nil }
         let snapshot = IOSCalendarSeriesTextSnapshot(familyID: local.id, segmentID: "replacement", revision: 1,
-                                                     title: "Remilo edit", notes: review.source.fields.notes)
+            title: editsSchedule ? review.source.fields.title : "Remilo edit", notes: review.source.fields.notes, scheduleEdit: scheduleEdit)
         func service() -> Service {
             .init(directory: directory, connection: connection, imports: imports,
                   local: .init(read: { $0 == snapshot.familyID ? snapshot : nil }, apply: { _, _, _, _, _ in
@@ -47,6 +55,11 @@ enum SeriesTextWriterChecks {
                   }, permit: { current, checkpoint in
                       guard fixture.allowCheckpoint && current == snapshot else { return nil }
                       return try checkpoint()
+                  }, acknowledgeSchedule: { current, allows in
+                      guard try allows(), current == snapshot else { return false }
+                      precondition(fixture.revealedAuditCount > 0, "Google instances must agree before the local baseline advances")
+                      fixture.acknowledgedSchedule = true
+                      return true
                   }), canRead: { true }, activeLease: { $0.accountGeneration == account.accountGeneration ? lease : nil })
         }
         let first = service()
@@ -70,6 +83,28 @@ enum SeriesTextWriterChecks {
         let saved = try await imports.seriesTextExports(viewingAs: account, lease: lease)
         precondition(confirmed && fixture.writes == 1 && remaining.isEmpty)
         precondition(saved.count == 1 && saved[0].baseline.etag == Fixture.updatedETag && !saved[0].baseline.differs(from: snapshot))
+        precondition(fixture.acknowledgedSchedule == editsSchedule)
+    }
+
+    private static func recurrenceEncoding() throws {
+        let utc = RemiloIOSGoogleCalendarEvent.utc
+        let weekly = try RemiloIOSRecurrence.Rule(anchor: "2027-03-16T10:00", frequency: "weekly", interval: 2,
+                                                  weekdays: [1], count: 2, zoneID: "UTC")
+        let normalized = try RemiloIOSGoogleCalendarRule.schedule(weekly)
+        let first = try RemiloIOSGoogleCalendarEvent.timestamp("2027-03-29T10:00:00Z")
+        precondition(normalized.eventStartMs == first &&
+                     normalized.recurrence == ["RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=MO;WKST=MO;COUNT=2"])
+        let allDay = try RemiloIOSRecurrence.Rule(anchor: "2027-03-15T00:00", frequency: "daily", zoneID: "UTC",
+            endExclusive: "2027-03-17T00:00", allDay: true, endOffsetMs: 86_400_000)
+        let bounded = try RemiloIOSGoogleCalendarRule.schedule(allDay)
+        precondition(bounded.recurrence == ["RRULE:FREQ=DAILY;INTERVAL=1;WKST=MO;UNTIL=20270316"])
+        let fractional = try RemiloIOSRecurrence.Rule(anchor: "2027-03-15T10:00:00.123", frequency: "daily",
+            zoneID: "UTC", endExclusive: "2027-03-16T10:00:00.124")
+        let exact = try RemiloIOSGoogleCalendarRule.schedule(fractional)
+        let decoded = try RemiloIOSGoogleCalendarRule.decode(exact.recurrence!, anchor: fractional.anchor,
+            startMs: exact.eventStartMs, zoneID: "UTC", zone: utc, allDay: false, duration: fractional.endOffsetMs)
+        let slots = try RemiloIOSRecurrence.future(decoded.rule, afterMs: -1, deviceZone: utc, mode: "None", limit: 3)
+        precondition(slots.count == 2 && slots[1].nominalSlot == "2027-03-16T10:00:00.123")
     }
 
     @MainActor
@@ -77,13 +112,17 @@ enum SeriesTextWriterChecks {
         static let master = "series-master"
         static let updatedETag = #""series-v2""#
         private let directory: URL
+        private let editsSchedule: Bool
         let calendar: [String: String]
         var allowCheckpoint = false
         var reveal = false
+        var acknowledgedSchedule = false
+        private(set) var revealedAuditCount = 0
         private(set) var writes = 0
 
-        init(directory: URL, email: String) {
+        init(directory: URL, email: String, editsSchedule: Bool) {
             self.directory = directory
+            self.editsSchedule = editsSchedule
             calendar = ["id": "series-calendar", "summary": "Remilo", "timeZone": "UTC", "accessRole": "owner", "dataOwner": email]
         }
 
@@ -93,22 +132,32 @@ enum SeriesTextWriterChecks {
 
         func send(_ request: URLRequest) throws -> HTTP.Response {
             let url = request.url!
-            let start = ["dateTime": "2027-03-15T10:00:00Z", "timeZone": "UTC"]
-            let end = ["dateTime": "2027-03-15T10:30:00Z", "timeZone": "UTC"]
+            let moved = editsSchedule && writes > 0
+            let start = ["dateTime": moved ? "2027-03-15T11:00:00Z" : "2027-03-15T10:00:00Z", "timeZone": "UTC"]
+            let end = ["dateTime": moved ? "2027-03-15T11:45:00Z" : "2027-03-15T10:30:00Z", "timeZone": "UTC"]
+            let updatedRule = "RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=MO;WKST=MO;COUNT=1"
             let master: [String: Any] = ["id": Self.master, "etag": writes == 0 ? #""series-v1""# : Self.updatedETag,
-                "summary": writes == 0 ? "Original title" : "Remilo edit", "description": "Original notes",
-                "start": start, "end": end, "recurrence": ["RRULE:FREQ=DAILY;COUNT=1"]]
+                "summary": writes == 0 || editsSchedule ? "Original title" : "Remilo edit", "description": "Original notes",
+                "start": start, "end": end, "recurrence": [moved ? updatedRule : "RRULE:FREQ=DAILY;COUNT=1"]]
             if request.httpMethod == "PATCH" {
                 precondition(url.lastPathComponent == Self.master && writes == 0 && request.value(forHTTPHeaderField: "If-Match") == #""series-v1""#)
                 let stored = try String(contentsOf: directory.appendingPathComponent("series-text-writes.json"), encoding: .utf8)
                 precondition(stored.contains(Self.master), "Checkpoint must already be durable when the PATCH leaves")
-                let payload = try JSONSerialization.jsonObject(with: request.httpBody!) as! [String: String]
-                precondition(payload == ["summary": "Remilo edit"], "Preserve recurrence, notes, and delivery settings")
+                let payload = try JSONSerialization.jsonObject(with: request.httpBody!) as! [String: Any]
+                if editsSchedule {
+                    precondition(Set(payload.keys) == ["start", "end", "recurrence"] &&
+                                 (payload["start"] as? [String: String])?["dateTime"] == "2027-03-15T11:00:00Z" &&
+                                 (payload["end"] as? [String: String])?["dateTime"] == "2027-03-15T11:45:00Z" &&
+                                 payload["recurrence"] as? [String] == [updatedRule])
+                } else {
+                    precondition(payload as? [String: String] == ["summary": "Remilo edit"], "Preserve recurrence, notes, and delivery settings")
+                }
                 writes += 1
                 return try body([:], status: 503)
             }
             if url.path.contains("/calendarList/") { return try body(calendar) }
             if url.lastPathComponent == "instances" {
+                if reveal { revealedAuditCount += 1 }
                 return try body(["items": [["id": "original-instance", "recurringEventId": Self.master,
                     "originalStartTime": start, "start": start, "end": end]]])
             }

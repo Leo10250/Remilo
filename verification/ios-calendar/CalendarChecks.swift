@@ -98,6 +98,8 @@ enum CalendarChecks {
                   "write grants can read and browse grants cannot write")
         try await PublicationChecks.run(configuration: configuration, access: writeAccess, readOnly: access, now: now)
         try await SeriesTextWriterChecks.run(configuration: configuration, access: writeAccess, readOnly: access, now: now)
+        try await SeriesTextWriterChecks.run(configuration: configuration, access: writeAccess, readOnly: access, now: now,
+                                             editsSchedule: true)
         let creationGrant = try RemiloIOSGoogleCalendarGrant(token: "fixture-bearer", scopes: Purpose.createManagedCalendar.required,
                                                              expiresAt: date.addingTimeInterval(3_600))
         let creationAccess = try await auth.verify(creationGrant, configuration: configuration, expectedSubject: "subject-A",

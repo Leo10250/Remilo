@@ -20,9 +20,15 @@ final class RemiloIOSGoogleCalendarSeriesTextWriter {
         let baselineETag: String
         let source: Import.Source
         let local: IOSCalendarSeriesTextSnapshot
+        var desiredSchedule: Import.Event.Schedule? = nil
 
         func patch() throws -> Writer.Patch {
-            try .init(seriesText: id, account: account, snapshot: local, source: source, lease: lease)
+            try .init(series: id, account: account, snapshot: local, source: source, lease: lease,
+                      desiredSchedule: desiredSchedule)
+        }
+
+        var desiredFields: Import.Event.Fields {
+            .init(title: local.title, notes: local.notes, schedule: desiredSchedule ?? source.fields.schedule)
         }
     }
 
@@ -78,14 +84,18 @@ final class RemiloIOSGoogleCalendarSeriesTextWriter {
               (try? connection.requireManualLinkWrite(account: account)) != nil else { return changed }
         let reserved = try read().sent
         var attempted = 0
+        let readLocal = local.readForExport ?? local.read
         for binding in try await imports.seriesTextExports(viewingAs: account, lease: lease) {
             guard attempted < 4, canRead(), budget.hasTimeRemaining, try activeLease(account) == lease else { break }
             let receipt = binding.receipt
             guard reserved[receipt.operationID] == nil, let family = receipt.local?.id,
-                  let snapshot = try local.read(family), binding.baseline.differs(from: snapshot) else { continue }
+                  let snapshot = try readLocal(family),
+                  binding.baseline.differs(from: snapshot) || snapshot.scheduleEdit != nil else { continue }
             attempted += 1
             let review: Import.Review
+            let desiredSchedule: Import.Event.Schedule?
             do {
+                desiredSchedule = try snapshot.scheduleEdit.map { try RemiloIOSGoogleCalendarRule.schedule($0.current) }
                 review = try await connection.prepareImport(expectedRevision: expectedRevision, calendarID: lease.calendarID,
                     eventID: receipt.source.eventID, recurringChoices: .init(mode: .none), managedLease: lease, budget: budget,
                     canRead: { [self] in canRead() && (try? activeLease(account)) == lease })
@@ -101,21 +111,23 @@ final class RemiloIOSGoogleCalendarSeriesTextWriter {
                 continue
             }
             guard try activeLease(account) == lease else { break }
-            guard try binding.accepts(local: snapshot, review: review) else {
+            guard desiredSchedule == nil || local.acknowledgeSchedule != nil,
+                  desiredSchedule.map({ !$0.allDay || $0.zoneId == lease.zoneID }) ?? true,
+                  try binding.accepts(local: snapshot, review: review, desiredSchedule: desiredSchedule) else {
                 try await imports.finishSeriesTextExport(receipt.operationID, lease: lease, expectedBaseline: binding.baseline.etag,
                                                          confirmed: nil, reason: Import.Failure.staleRemote.rawValue)
                 changed = true
                 continue
             }
-            if snapshot.title == review.source.fields.title && snapshot.notes == review.source.fields.notes {
-                try await imports.finishSeriesTextExport(receipt.operationID, lease: lease, expectedBaseline: binding.baseline.etag,
-                                                         confirmed: try .init(review.source), reason: nil)
-                changed = true
-                continue
-            }
             let work = Send(id: UUID(), importID: receipt.operationID, account: account, lease: lease,
-                            baselineETag: binding.baseline.etag, source: review.source, local: snapshot)
-            let settled = try await advance(work, viewer: account, phase: .notSent, budget: budget)
+                            baselineETag: binding.baseline.etag, source: review.source, local: snapshot,
+                            desiredSchedule: desiredSchedule)
+            let settled: Bool
+            if work.desiredFields == review.source.fields {
+                settled = try await finish(work, viewer: account, confirmed: .init(review.source), reason: nil)
+            } else {
+                settled = try await advance(work, viewer: account, phase: .notSent, budget: budget)
+            }
             changed = changed || settled
         }
         return changed
@@ -140,8 +152,13 @@ final class RemiloIOSGoogleCalendarSeriesTextWriter {
         switch outcome {
         case .confirmed(let event):
             guard let etag = event.strongETag else { return false }
-            let fields = Import.Event.Fields(title: work.local.title, notes: work.local.notes, schedule: work.source.fields.schedule)
-            next = try .init(etag: etag, fields: fields)
+            if work.desiredSchedule != nil, work.account.accountGeneration == viewer.accountGeneration,
+               try activeLease(viewer) == work.lease {
+                if let problem = try await scheduleReadbackIssue(work, viewer: viewer, etag: etag, budget: budget) {
+                    return try await finish(work, viewer: viewer, confirmed: nil, reason: problem)
+                }
+            }
+            next = try .init(etag: etag, fields: work.desiredFields)
             reason = nil
         case .staleRemote:
             next = nil
@@ -155,9 +172,46 @@ final class RemiloIOSGoogleCalendarSeriesTextWriter {
         case .unconfirmed, .notSent, .remoteUnavailable:
             return false
         }
+        return try await finish(work, viewer: viewer, confirmed: next, reason: reason)
+    }
+
+    private func scheduleReadbackIssue(_ work: Send, viewer: Account, etag: String,
+                                       budget: RemiloIOSGoogleCalendarHTTP.Budget) async throws -> String? {
+        do {
+            let review = try await connection.prepareImport(expectedRevision: viewer.connectionRevision, calendarID: work.lease.calendarID,
+                eventID: work.source.key.eventID, recurringChoices: .init(mode: .none), managedLease: work.lease, budget: budget,
+                canRead: { [self] in canRead() && (try? activeLease(viewer)) == work.lease })
+            guard review.source.etag == etag, review.source.fields == work.desiredFields,
+                  let proof = review.recurrenceEvidence, proof.exceptions.isEmpty, !proof.ordinarySlots.isEmpty else {
+                return Import.Failure.staleRemote.rawValue
+            }
+            return nil
+        } catch let failure as Import.Event.Reason {
+            return failure.rawValue
+        } catch let failure as RemiloIOSGoogleCalendarRecurringReview.Failure {
+            return failure.rawValue
+        } catch let failure as Import.Failure {
+            return failure.rawValue
+        }
+    }
+
+    private func finish(_ work: Send, viewer: Account, confirmed: Journal.SeriesTextBaseline?, reason: String?) async throws -> Bool {
         if work.account.accountGeneration == viewer.accountGeneration, try activeLease(viewer) == work.lease {
-            try await imports.finishSeriesTextExport(work.importID, lease: work.lease, expectedBaseline: work.baselineETag,
-                                                     confirmed: next, reason: reason)
+            var settled = confirmed
+            var issue = reason
+            if settled != nil, work.desiredSchedule != nil {
+                let acknowledged = try await local.acknowledgeSchedule?(work.local) { [self] in
+                    canRead() && (try? activeLease(viewer)) == work.lease
+                }
+                if acknowledged != true {
+                    settled = nil
+                    issue = Import.Failure.staleRemote.rawValue
+                }
+            }
+            if try activeLease(viewer) == work.lease {
+                try await imports.finishSeriesTextExport(work.importID, lease: work.lease, expectedBaseline: work.baselineETag,
+                                                         confirmed: settled, reason: issue)
+            }
         }
         var state = try read()
         if state.sent[work.importID] == work {

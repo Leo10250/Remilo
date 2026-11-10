@@ -5,6 +5,49 @@ enum RemiloIOSGoogleCalendarRule {
     private static let days = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"]
     private static let keys: Set<String> = ["FREQ", "INTERVAL", "BYDAY", "BYMONTHDAY", "BYMONTH", "BYSETPOS", "WKST", "COUNT", "UNTIL"]
 
+    static func schedule(_ rule: RemiloIOSRecurrence.Rule) throws -> RemiloIOSGoogleCalendarEvent.Schedule {
+        let failure = Event.Reason.unsupportedRecurrence
+        guard let zoneID = rule.zoneID else { throw failure }
+        let zone = try Event.namedZone(zoneID)
+        let authored = try RemiloIOSRecurrence.future(rule, afterMs: -1, deviceZone: zone, mode: "None", limit: 3)
+        guard let first = authored.first else {
+            throw failure
+        }
+        var cutoff: Int64?
+        if let end = rule.endExclusive {
+            cutoff = try RemiloIOSRecurrence.resolveOffset(end, by: 0, in: zone) - 1
+        }
+        if let until = rule.until {
+            let lastInstant = try RemiloIOSRecurrence.resolveOffset(until + "T00:00", by: 86_400_000, in: zone) - 1
+            cutoff = min(cutoff ?? lastInstant, lastInstant)
+        }
+        if cutoff != nil, let count = rule.count {
+            guard let last = try RemiloIOSRecurrence.future(rule, afterMs: -1, deviceZone: zone, mode: "None", limit: count).last else {
+                throw failure
+            }
+            cutoff = last.eventStartMs
+        }
+        let until = cutoff.map { instant -> String in
+            if rule.allDay { return Event.nominal(instant, zone: zone).prefix(10).replacingOccurrences(of: "-", with: "") }
+            // A date-time UNTIL has second precision. The civil kernel's
+            // slots are at least a day apart and retain the anchor fraction.
+            let fraction = instant % 1_000
+            let slotFraction = first.eventStartMs % 1_000
+            let rounded = slotFraction > 0 && fraction >= slotFraction ? instant + 1_000 - fraction : instant
+            return Event.nominal(rounded, zone: Event.utc).prefix(19)
+                .replacingOccurrences(of: "-", with: "").replacingOccurrences(of: ":", with: "") + "Z"
+        }
+        let wire = try canonicalLine(rule, until: until)
+        let checked = try decode([wire], anchor: first.nominalSlot, startMs: first.eventStartMs, zoneID: zoneID,
+                                 zone: zone, allDay: rule.allDay, duration: rule.endOffsetMs)
+        let decoded = try RemiloIOSRecurrence.future(checked.rule, afterMs: -1, deviceZone: zone, mode: "None", limit: 3)
+        guard decoded.count == authored.count, zip(decoded, authored).allSatisfy({ actual, expected in
+            actual.eventStartMs == expected.eventStartMs && actual.eventEndMs == expected.eventEndMs
+        }) else { throw failure }
+        return .init(eventStartMs: first.eventStartMs, eventEndMs: first.eventEndMs, allDay: rule.allDay,
+                     zoneId: zoneID, recurrence: [checked.canonical])
+    }
+
     static func decode(_ lines: [String], anchor: String, startMs: Int64, zoneID: String, zone: TimeZone,
                        allDay: Bool, duration: Int64) throws -> (rule: RemiloIOSRecurrence.Rule, canonical: String) {
         let failure = Event.Reason.unsupportedRecurrence
@@ -77,20 +120,36 @@ enum RemiloIOSGoogleCalendarRule {
             guard let first = try RemiloIOSRecurrence.future(rule, afterMs: -1, deviceZone: zone, mode: "None", limit: 1).first,
                   first.nominalSlot == rule.anchor, first.eventStartMs == startMs else { throw failure }
 
-            var wire = ["FREQ=\(rawFrequency)", "INTERVAL=\(rule.interval)"]
-            switch frequency {
-            case "weekly": wire.append("BYDAY=" + rule.weekdays.sorted().map { days[$0 - 1] }.joined(separator: ","))
-            case "monthlyDay": wire.append("BYMONTHDAY=\(rule.day)")
-            case "monthlyOrdinal": wire.append("BYDAY=\(rule.ordinal)\(days[rule.weekday - 1])")
-            case "lastWeekday": wire += ["BYDAY=MO,TU,WE,TH,FR", "BYSETPOS=-1"]
-            case "yearly": wire += ["BYMONTH=\(rule.month)", "BYMONTHDAY=\(rule.day)"]
-            default: break
-            }
-            wire.append("WKST=MO")
-            if let until = fields["UNTIL"] { wire.append("UNTIL=\(until)") }
-            else if let count = rule.count { wire.append("COUNT=\(count)") }
-            return (rule, "RRULE:" + wire.joined(separator: ";"))
+            return (rule, try canonicalLine(rule, until: fields["UNTIL"]))
         } catch { throw failure }
+    }
+
+    private static func canonicalLine(_ rule: RemiloIOSRecurrence.Rule, until: String?) throws -> String {
+        let frequency: String
+        var fields: [String] = []
+        switch rule.frequency {
+        case "daily": frequency = "DAILY"
+        case "weekly":
+            frequency = "WEEKLY"
+            fields = ["BYDAY=" + rule.weekdays.sorted().map { days[$0 - 1] }.joined(separator: ",")]
+        case "monthlyDay":
+            frequency = "MONTHLY"
+            fields = ["BYMONTHDAY=\(rule.day)"]
+        case "monthlyOrdinal":
+            frequency = "MONTHLY"
+            fields = ["BYDAY=\(rule.ordinal)\(days[rule.weekday - 1])"]
+        case "lastWeekday":
+            frequency = "MONTHLY"
+            fields = ["BYDAY=MO,TU,WE,TH,FR", "BYSETPOS=-1"]
+        case "yearly":
+            frequency = "YEARLY"
+            fields = ["BYMONTH=\(rule.month)", "BYMONTHDAY=\(rule.day)"]
+        default: throw Event.Reason.unsupportedRecurrence
+        }
+        var wire = ["FREQ=\(frequency)", "INTERVAL=\(rule.interval)"] + fields + ["WKST=MO"]
+        if let until { wire.append("UNTIL=\(until)") }
+        else if let count = rule.count { wire.append("COUNT=\(count)") }
+        return "RRULE:" + wire.joined(separator: ";")
     }
 
     private static func ending(_ value: String?, allDay: Bool, zone: TimeZone) throws -> (String?, String?) {

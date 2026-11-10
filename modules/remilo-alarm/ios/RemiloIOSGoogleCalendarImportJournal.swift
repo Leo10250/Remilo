@@ -117,9 +117,9 @@ actor RemiloIOSGoogleCalendarImportJournal {
             title != Self.digest(local.title) || notes != Self.digest(local.notes)
         }
 
-        func acceptsExport(local: IOSCalendarSeriesTextSnapshot, remote: Import.Source) throws -> Bool {
+        func acceptsExport(local: IOSCalendarSeriesTextSnapshot, remote: Import.Source, desiredSchedule: Import.Event.Schedule?) throws -> Bool {
             let current = try Self(remote)
-            return schedule == current.schedule &&
+            return (schedule == current.schedule || desiredSchedule == remote.fields.schedule) &&
                 (title == current.title || local.title == remote.fields.title) &&
                 (notes == current.notes || local.notes == remote.fields.notes)
         }
@@ -165,9 +165,12 @@ actor RemiloIOSGoogleCalendarImportJournal {
         let baseline: SeriesTextBaseline
         let exceptions: [RecurringInstanceVersion]
 
-        func accepts(local: IOSCalendarSeriesTextSnapshot, review: Import.Review) throws -> Bool {
+        func accepts(local: IOSCalendarSeriesTextSnapshot, review: Import.Review,
+                     desiredSchedule: Import.Event.Schedule? = nil) throws -> Bool {
             guard local.familyID == receipt.local?.id, review.source.key == receipt.source,
-                  let proof = review.recurrenceEvidence, try baseline.acceptsExport(local: local, remote: review.source) else { return false }
+                  let proof = review.recurrenceEvidence,
+                  try baseline.acceptsExport(local: local, remote: review.source, desiredSchedule: desiredSchedule) else { return false }
+            if desiredSchedule != nil, local.scheduleEdit?.hasFutureExceptions == true || !proof.exceptions.isEmpty { return false }
             return proof.exceptions.allSatisfy { candidate in
                 exceptions.contains { $0.identity == candidate.identity && ($0.identity.cancelled || $0.etag == candidate.etag) }
             }

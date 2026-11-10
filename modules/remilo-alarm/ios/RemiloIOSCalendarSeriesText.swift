@@ -1,9 +1,16 @@
 struct IOSCalendarSeriesTextSnapshot: Codable, Equatable, Sendable {
+    struct ScheduleEdit: Codable, Equatable, Sendable {
+        let baseline: RemiloIOSRecurrence.Rule
+        let current: RemiloIOSRecurrence.Rule
+        let hasFutureExceptions: Bool
+    }
+
     let familyID: String
     let segmentID: String
     let revision: Int
     let title: String
     let notes: String
+    var scheduleEdit: ScheduleEdit? = nil
 }
 
 struct IOSCalendarSeriesScheduleChange: Codable, Sendable {

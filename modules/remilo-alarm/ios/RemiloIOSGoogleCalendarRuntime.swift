@@ -27,6 +27,10 @@ final class RemiloIOSGoogleCalendarRuntime {
         var applySchedule: (@MainActor @Sendable (
             String, IOSCalendarSeriesTextSnapshot, IOSCalendarSeriesScheduleChange, @escaping ImportJournal.Scheduler.Permit
         ) async throws -> IOSCalendarSeriesScheduleResult)? = nil
+        var readForExport: (@MainActor @Sendable (String) throws -> IOSCalendarSeriesTextSnapshot?)? = nil
+        var acknowledgeSchedule: (@MainActor @Sendable (
+            IOSCalendarSeriesTextSnapshot, @escaping ImportJournal.Scheduler.Permit
+        ) async throws -> Bool)? = nil
     }
 
     private let connection: Connection
@@ -725,6 +729,9 @@ final class RemiloIOSGoogleCalendarRuntime {
                     return try await RemiloIOSEngine.shared.applyCalendarSeriesSchedule(operationKey: operation, snapshot: snapshot,
                                                                                        change: change, authorize: permit)
                 } catch is RemiloIOSRecurrence.InvalidRule { return .needsReview }
+            }, readForExport: { try RemiloIOSEngine.shared.calendarSeriesExportSnapshot($0) },
+            acknowledgeSchedule: { snapshot, permit in
+                try await RemiloIOSEngine.shared.acknowledgeCalendarSeriesExport(snapshot, authorize: permit)
             })
         let runtime = RemiloIOSGoogleCalendarRuntime(
             connection: connection, canUseForeground: canUseForeground,

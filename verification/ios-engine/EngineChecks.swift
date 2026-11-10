@@ -1110,6 +1110,28 @@ struct EngineChecks {
         precondition(shifted == .applied && revised.reminders[oldID]?.deliveryState == "Replaced" &&
                      revised.reminders[newID]?.registration?.targetMs == unsafe.eventStartMs)
         precondition(RemiloIOSDelivery.registrations[old.reminders[oldID]!.registration!.systemID] == nil)
+        let synced = try clean.calendarSeriesTextSnapshot(cleanFamily)!
+        let localStart = unsafe.eventStartMs + 3_600_000
+        _ = try await clean.apply([
+            "kind": "EditSeries", "operationId": "fixture-outbound-schedule-edit", "segmentId": synced.segmentID,
+            "expectedRevision": synced.revision, "eventStartMs": localStart, "eventEndMs": localStart + 2_700_000,
+            "alarmAtMs": localStart, "recurrence": ["frequency": "daily", "count": 5, "zoneMode": "pinned"],
+        ])
+        let outbound = try clean.calendarSeriesExportSnapshot(cleanFamily)!
+        let forInbound = try clean.calendarSeriesTextSnapshot(cleanFamily)
+        let sendPermit = try await clean.withCalendarSeriesTextPermit(for: outbound) { true }
+        precondition(forInbound == nil && outbound.scheduleEdit?.baseline.hasSameEventSchedule(as: unsafe.rule) == true &&
+                     outbound.scheduleEdit?.hasFutureExceptions == false && sendPermit == true)
+        let registrations = RemiloIOSDelivery.registrations.keys.sorted { $0.uuidString < $1.uuidString }
+        let refused = try await clean.acknowledgeCalendarSeriesExport(outbound, authorize: { false })
+        let pending = try clean.calendarSeriesExportSnapshot(cleanFamily)
+        precondition(!refused && pending == outbound)
+        let confirmedExport = try await clean.acknowledgeCalendarSeriesExport(outbound, authorize: { true })
+        let reopenedExport = cleanStore.engine()
+        let replayedExport = try await reopenedExport.acknowledgeCalendarSeriesExport(outbound, authorize: { true })
+        let baselineExport = try reopenedExport.calendarSeriesTextSnapshot(cleanFamily)
+        precondition(confirmedExport && replayedExport && baselineExport?.segmentID == outbound.segmentID && baselineExport?.scheduleEdit == nil)
+        precondition(registrations == RemiloIOSDelivery.registrations.keys.sorted { $0.uuidString < $1.uuidString })
     }
 
     private static func calendarSeriesAllowsAFutureMoveAfterItsLastOriginal() async throws {

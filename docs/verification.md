@@ -19,7 +19,7 @@ in the relevant task or [backlog](backlog.md).
 | `npm run verify:android` | Spotless, native unit tests, module/app lint and bundled release assembly |
 | `sh verification/ios-engine/run.sh` (macOS) | Swift storage, commands, simulated delivery, civil recurrence, dated routine progress, Calendar export intent and recurring schedule reconciliation that preserves local delivery state |
 | `sh verification/ios-archive/run.sh` and `sh verification/ios-media/run.sh` (macOS, after `pod install`) | Portable archives and normalized routine photos |
-| `sh verification/ios-calendar/run.sh` (macOS) | Protected Google account state, event normalization, managed setup, resumable import, recurring source and exception recovery, conditional one-time and recurring sends, and read-back after interruption |
+| `sh verification/ios-calendar/run.sh` (macOS) | Protected Google account state, event normalization, managed setup, resumable import, recurring source and exception recovery, conditional sends, and recurring schedule and instance read-back after interruption |
 | `npm run verify:all` | Shared plus Android checks and assembly, with a private summary |
 | `npm run release:prepare` | Combined checks and existing-key signed assembly; no installation/publication |
 

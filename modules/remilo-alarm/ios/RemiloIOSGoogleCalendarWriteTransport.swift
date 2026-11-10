@@ -35,7 +35,8 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
         fileprivate let payload: PatchPayload
         private let evidence: RemiloIOSGoogleCalendarManualLink.Evidence?
         private let schedule: Event.Schedule?
-        private let seriesText: Event.Fields?
+        private let seriesFields: Event.Fields?
+        private let seriesBeforeSchedule: Event.Schedule?
         fileprivate let calendarZone: String
         fileprivate let managedLease: RemiloIOSGoogleCalendarManualLink.ManagedLease?
 
@@ -65,21 +66,22 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
                           managedLease: transfer.automatic?.managedLease)
         }
 
-        init(seriesText operationID: UUID, account: Publication.Account, snapshot: IOSCalendarSeriesTextSnapshot,
-             source: RemiloIOSGoogleCalendarImport.Source, lease: RemiloIOSGoogleCalendarManualLink.ManagedLease) throws {
+        init(series operationID: UUID, account: Publication.Account, snapshot: IOSCalendarSeriesTextSnapshot,
+             source: RemiloIOSGoogleCalendarImport.Source, lease: RemiloIOSGoogleCalendarManualLink.ManagedLease,
+             desiredSchedule: Event.Schedule? = nil) throws {
             guard source.key.subject == account.subject, source.key.calendarID == lease.calendarID,
                   source.calendarZone == lease.zoneID else { throw Failure.invalidInput }
             let local = Publication.Local(occurrenceID: snapshot.segmentID, revision: snapshot.revision, generation: 0)
-            let desired = Event.Fields(title: snapshot.title, notes: snapshot.notes, schedule: source.fields.schedule)
+            let desired = Event.Fields(title: snapshot.title, notes: snapshot.notes, schedule: desiredSchedule ?? source.fields.schedule)
             try self.init(operationID: operationID, account: account, local: local, calendarID: source.key.calendarID,
                           eventID: source.key.eventID, etag: source.etag, before: source.fields, calendarZone: source.calendarZone,
-                          desired: desired, suppressGoogleReminders: false, evidence: nil, managedLease: lease, recurringTextOnly: true)
+                          desired: desired, suppressGoogleReminders: false, evidence: nil, managedLease: lease, recurringMaster: true)
         }
 
         private init(operationID: UUID, account: Publication.Account, local: Publication.Local, calendarID: String,
                      eventID: String, etag: String, before: Event.Fields, calendarZone: String, desired: Event.Fields,
                      suppressGoogleReminders: Bool, evidence: RemiloIOSGoogleCalendarManualLink.Evidence?,
-                     managedLease: RemiloIOSGoogleCalendarManualLink.ManagedLease? = nil, recurringTextOnly: Bool = false) throws {
+                     managedLease: RemiloIOSGoogleCalendarManualLink.ManagedLease? = nil, recurringMaster: Bool = false) throws {
             guard Transport.Event.validatedStrongETag(etag) != nil,
                   account.connectionRevision > 0, account.accountGeneration > 0, local.revision > 0, local.generation >= 0,
                   !local.occurrenceID.isEmpty, !calendarID.isEmpty, !eventID.isEmpty,
@@ -89,8 +91,9 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
                 guard evidence.source.belongs(to: account), evidence.source.calendarID == calendarID,
                       evidence.source.eventID == eventID else { throw Failure.invalidInput }
             }
-            if recurringTextOnly {
-                guard before.schedule.recurrence != nil, before.schedule == desired.schedule, !suppressGoogleReminders else {
+            if recurringMaster {
+                guard before.schedule.recurrence != nil, desired.schedule.recurrence != nil, !suppressGoogleReminders,
+                      before.schedule == desired.schedule || !desired.schedule.allDay || desired.schedule.zoneId == calendarZone else {
                     throw Failure.invalidInput
                 }
             } else {
@@ -100,7 +103,10 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
             let notes = before.notes == desired.notes ? nil : desired.notes
             let schedule = before.schedule == desired.schedule ? nil : desired.schedule
             guard title != nil || notes != nil || schedule != nil || suppressGoogleReminders else { throw Failure.invalidInput }
-            let bounds = try schedule.map(Publication.Bounds.init)
+            let bounds = try schedule.map { schedule in
+                try Publication.Bounds(.init(eventStartMs: schedule.eventStartMs, eventEndMs: schedule.eventEndMs,
+                                             allDay: schedule.allDay, zoneId: schedule.zoneId, recurrence: nil))
+            }
             self.operationID = operationID
             self.account = account
             self.local = local
@@ -109,21 +115,23 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
             self.etag = etag
             self.evidence = evidence
             self.schedule = schedule
-            self.seriesText = recurringTextOnly ? desired : nil
+            self.seriesFields = recurringMaster ? desired : nil
+            self.seriesBeforeSchedule = recurringMaster ? before.schedule : nil
             self.calendarZone = calendarZone
             self.managedLease = managedLease
             let switchesRepresentation = before.schedule.allDay != desired.schedule.allDay
             payload = PatchPayload(summary: title, description: notes,
                                    start: bounds.map { PatchBound(value: $0.start, switchesRepresentation: switchesRepresentation) },
                                    end: bounds.map { PatchBound(value: $0.end, switchesRepresentation: switchesRepresentation) },
-                                   reminders: suppressGoogleReminders ? NoReminders() : nil)
+                                   reminders: suppressGoogleReminders ? NoReminders() : nil,
+                                   recurrence: recurringMaster ? schedule?.recurrence : nil)
         }
 
         func matches(_ observed: Transport.Event) -> Bool {
             guard identifies(observed),
                   let object = RemiloIOSGoogleCalendarWriteTransport.object(observed.json),
                   let fields = try? Event.fields(object, calendarZone: calendarZone).fields else { return false }
-            if let seriesText { return fields == seriesText }
+            if let seriesFields { return fields == seriesFields }
             guard fields.schedule.recurrence == nil else { return false }
             if let summary = payload.summary, object["summary"] as? String != summary { return false }
             if let description = payload.description, fields.notes != description { return false }
@@ -139,7 +147,7 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
             guard identifies(observed), observed.strongETag == etag,
                   let object = RemiloIOSGoogleCalendarWriteTransport.object(observed.json),
                   let fields = try? Event.fields(object, calendarZone: calendarZone).fields else { return false }
-            if let seriesText { return fields.schedule == seriesText.schedule }
+            if let seriesBeforeSchedule { return fields.schedule == seriesBeforeSchedule }
             return fields.schedule.recurrence == nil
         }
 
@@ -169,6 +177,7 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
         let start: PatchBound?
         let end: PatchBound?
         let reminders: NoReminders?
+        let recurrence: [String]?
     }
 
     fileprivate struct PatchBound: Encodable, Sendable {

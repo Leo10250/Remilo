@@ -162,14 +162,32 @@ final class RemiloIOSEngine {
         Self.calendarSeriesTextSnapshot(familyID, in: try read())
     }
 
-    private static func calendarSeriesTextSnapshot(_ familyID: String, in state: IOSDatabase) -> IOSCalendarSeriesTextSnapshot? {
+    func calendarSeriesExportSnapshot(_ familyID: String) throws -> IOSCalendarSeriesTextSnapshot? {
+        Self.calendarSeriesTextSnapshot(familyID, in: try read(), includeScheduleEdit: true)
+    }
+
+    private static func calendarSeriesTextSnapshot(_ familyID: String, in state: IOSDatabase,
+                                                    includeScheduleEdit: Bool = false) -> IOSCalendarSeriesTextSnapshot? {
         guard let root = state.series[familyID], root.familyID == familyID,
               state.receipts.contains(where: { $0.key.hasPrefix(calendarCreatePrefix) && $0.value.seriesSegmentID == familyID }) else { return nil }
         let current = state.series.values.filter { $0.familyID == familyID && $0.state != "Archived" }
-        guard current.count == 1, let segment = current.first, segment.state == "Active",
-              segment.rule.hasSameEventSchedule(as: root.calendarBaselineRule ?? root.rule) else { return nil }
+        guard current.count == 1, let segment = current.first, segment.state == "Active" else { return nil }
+        let baseline = root.calendarBaselineRule ?? root.rule
+        let edit: IOSCalendarSeriesTextSnapshot.ScheduleEdit?
+        if segment.rule.hasSameEventSchedule(as: baseline) {
+            edit = nil
+        } else {
+            guard includeScheduleEdit else { return nil }
+            let now = iosMillis(Date())
+            let exceptions = state.reminders.values.contains { record in
+                guard record.active, record.independent == true, let segmentID = record.segmentID,
+                      state.series[segmentID]?.familyID == familyID, record.eventEndMs > now || record.agendaAtMs > now else { return false }
+                return record.history.contains { $0.kind == "Edit" || $0.kind == "Create" }
+            }
+            edit = .init(baseline: baseline, current: segment.rule, hasFutureExceptions: exceptions)
+        }
         return .init(familyID: familyID, segmentID: segment.id, revision: segment.revision,
-                     title: segment.template.title, notes: segment.template.notes)
+                     title: segment.template.title, notes: segment.template.notes, scheduleEdit: edit)
     }
 
     func withCalendarSeriesTextPermit<Value: Sendable>(for snapshot: IOSCalendarSeriesTextSnapshot,
@@ -177,8 +195,27 @@ final class RemiloIOSEngine {
         await acquire()
         defer { release() }
         try Task.checkCancellation()
-        guard try calendarSeriesTextSnapshot(snapshot.familyID) == snapshot else { return nil }
+        guard try calendarSeriesExportSnapshot(snapshot.familyID) == snapshot else { return nil }
         return try commit()
+    }
+
+    func acknowledgeCalendarSeriesExport(_ snapshot: IOSCalendarSeriesTextSnapshot,
+                                         authorize: @MainActor @Sendable () throws -> Bool) async throws -> Bool {
+        guard let edit = snapshot.scheduleEdit else { return true }
+        await acquire()
+        defer { release() }
+        try Task.checkCancellation()
+        var state = try read()
+        guard var root = state.series[snapshot.familyID], root.id == root.familyID,
+              state.receipts.contains(where: { $0.key.hasPrefix(Self.calendarCreatePrefix) && $0.value.seriesSegmentID == root.id }),
+              try authorize() else { return false }
+        let current = root.calendarBaselineRule ?? root.rule
+        if current.hasSameEventSchedule(as: edit.current) { return true }
+        guard current.hasSameEventSchedule(as: edit.baseline) else { return false }
+        root.calendarBaselineRule = edit.current
+        state.series[root.id] = root
+        try commit(state, notify: false)
+        return true
     }
 
     func applyCalendarSeriesText(operationKey: String, snapshot: IOSCalendarSeriesTextSnapshot, title: String, notes: String,
