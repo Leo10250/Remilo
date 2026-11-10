@@ -263,7 +263,7 @@ enum ManagedSetupChecks {
             let remainingApprovals = try reopened.resumedImports(authorized.account)
             precondition(importedAfterResume.imported == 1 && importedAfterResume.needsReview == 1 &&
                          local.commands.last?.title == "resume-keep" && local.commands.last?.mode == .some(.alarm) &&
-                         remainingApprovals.isEmpty)
+                         remainingApprovals.isEmpty && fixture.resumeStartedFrom == "stable")
             precondition(afterImport?.pending.contains { $0.eventID == "resume-changed" && $0.kind == .needsReview(reason: "STALE_REMOTE") } == true &&
                          afterImport?.pending.contains { $0.eventID == "resume-unselected" } == false)
             let replayedImport = try await restartedRuntime.syncManagedIncoming(expectedRevision: revision)
@@ -356,6 +356,7 @@ enum ManagedSetupChecks {
         private var incoming = false
         var stageResumeCandidates = false
         var scanAfterResume = false
+        private(set) var resumeStartedFrom: String?
         private(set) var initialPages: [Int] = []
         private(set) var deltaTokens: [String] = []
         private(set) var consents: [RemiloIOSGoogleCalendarPurpose] = []
@@ -424,7 +425,9 @@ enum ManagedSetupChecks {
             let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
             let payload: [String: Any]
             if scanAfterResume {
-                let initial = !query.contains { $0.name == "syncToken" }
+                let token = query.first(where: { $0.name == "syncToken" })?.value
+                let initial = resumeStartedFrom == nil
+                if initial { resumeStartedFrom = token }
                 payload = ["items": initial ? Self.resumeIDs.map { timedEvent($0, version: $0 == "resume-changed" ? "v3" : "v2") } : [],
                            "nextSyncToken": initial ? "resumed" : "resumed-next"]
             } else if let token = query.first(where: { $0.name == "syncToken" })?.value {

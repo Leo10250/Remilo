@@ -398,6 +398,12 @@ final class RemiloIOSGoogleCalendarRuntime {
             try setup.finishResumedImport(approved, scope: scan.scope, account: account)
             return
         }
+        guard approved.review.account == account else {
+            try setup.finishIncoming(permit, account: account, reviewReason: Import.Failure.staleConnection.rawValue)
+            try setup.finishResumedImport(approved, scope: scan.scope, account: account)
+            result.needsReview += 1
+            return
+        }
         do {
             let id = try await importJournal.captureManaged(permit, review: approved.review, choices: approved.choices)
             let receipt = try await runImport(id, viewingAs: account, budget: budget)

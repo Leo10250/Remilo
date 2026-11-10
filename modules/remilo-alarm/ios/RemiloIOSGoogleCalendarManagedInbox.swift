@@ -60,7 +60,7 @@ final class RemiloIOSGoogleCalendarManagedInbox {
 
     private struct State: Codable {
         var schemaVersion = 1
-        let scope: Scope
+        var scope: Scope
         var version = 0
         var initialComplete = false
         var since: Transport.SyncCheckpoint?
@@ -130,6 +130,27 @@ final class RemiloIOSGoogleCalendarManagedInbox {
         Array(try read(scope).observations.values)
     }
 
+    func savedScope(matching scopes: [Scope]) throws -> Scope? {
+        guard let saved = try savedState(), scopes.contains(saved.scope) else { return nil }
+        return saved.scope
+    }
+
+    func resumeCheckpoint(from prior: Scope, to current: Scope, reviewed: [Observation]) throws {
+        guard prior != current, var saved = try savedState(), saved.scope == prior else { return }
+        guard Journal.sameDestination(prior.binding.linkLease, as: current.binding),
+              prior.binding.account.subject == current.binding.account.subject,
+              prior.binding.account.clientID == current.binding.account.clientID,
+              prior.binding.account.accountGeneration == current.binding.account.accountGeneration,
+              prior.policy == current.policy, prior.binding.authEpoch < current.binding.authEpoch else {
+            throw Failure.staleConnection
+        }
+        saved.scope = current
+        for observation in reviewed where current.resumedEventIDs?.contains(observation.eventID) == true {
+            saved.observations[observation.eventID] = observation
+        }
+        try advance(&saved)
+    }
+
     func reviewedPermit(_ reviewed: Observation, scope: Scope) throws -> Permit? {
         var state = try read(scope)
         guard scope.resumedEventIDs?.contains(reviewed.eventID) == true, state.initialComplete, state.next == nil,
@@ -194,11 +215,16 @@ final class RemiloIOSGoogleCalendarManagedInbox {
     }
 
     private func read(_ scope: Scope) throws -> State {
+        if let saved = try savedState(), saved.scope == scope { return saved }
+        return State(scope: scope)
+    }
+
+    private func savedState() throws -> State? {
         do {
             let state = try JSONDecoder().decode(State.self, from: Data(contentsOf: file))
             guard state.schemaVersion == 1 else { throw RemiloIOSGoogleCalendarStore.Failure.unsupportedSchema }
-            return state.scope == scope ? state : State(scope: scope)
-        } catch CocoaError.fileReadNoSuchFile { return State(scope: scope) }
+            return state
+        } catch CocoaError.fileReadNoSuchFile { return nil }
     }
 
     private func advance(_ state: inout State) throws {

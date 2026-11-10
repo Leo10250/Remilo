@@ -191,6 +191,7 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         var heldIncomingObservations: [Inbox.Observation]?
         var resumedIncomingIDs: Set<String>?
         var resumedImports: [ResumeImport]?
+        var resumeCheckpointScope: Inbox.Scope?
 
         var mode: Mode { savedMode ?? (binding == nil ? .disabled : .enabled) }
     }
@@ -290,7 +291,9 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         }
         for observation in state.heldIncomingObservations ?? [] { byID[observation.eventID] = observation }
         for approval in state.resumedImports ?? [] { byID[approval.observation.eventID] = approval.observation }
-        for observation in try managedInbox().staged(Self.inboxScope(binding, in: state)) {
+        let current = Self.inboxScope(binding, in: state)
+        let saved = try savedIncomingScope(current, in: state)
+        for observation in try managedInbox().staged(saved ?? current) {
             if let prior = byID[observation.eventID] {
                 byID[observation.eventID] = .init(eventID: observation.eventID, etag: observation.etag, kind: observation.kind,
                     importMode: prior.importMode, initialRecovery: prior.initialRecovery, instanceCancelled: observation.instanceCancelled)
@@ -299,6 +302,19 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
             }
         }
         return byID.values.sorted { $0.eventID < $1.eventID }
+    }
+
+    private func savedIncomingScope(_ current: Inbox.Scope, in state: State) throws -> Inbox.Scope? {
+        try managedInbox().savedScope(matching: [current] + (state.resumeCheckpointScope.map { [$0] } ?? []))
+    }
+
+    func resumeInboxCheckpoint(_ scope: Inbox.Scope, account: Account) throws {
+        let state = try read()
+        guard let binding = try? Self.activeBinding(in: state, account: account), Self.inboxScope(binding, in: state) == scope else {
+            throw Failure.staleConnection
+        }
+        guard let prior = state.resumeCheckpointScope else { return }
+        try managedInbox().resumeCheckpoint(from: prior, to: scope, reviewed: (state.resumedImports ?? []).map(\.observation))
     }
 
     func resumedImports(_ account: Account) throws -> [ResumeImport] {
@@ -380,11 +396,13 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         var initialImport = review.binding.initialImport
         if state.policy.automaticImport {
             let old = Self.inboxScope(review.binding, in: state)
-            let inbox = try managedInbox().progress(old, pages: 0, continuation: false)
+            let saved = try savedIncomingScope(old, in: state)
+            let inbox = try managedInbox().progress(saved ?? old, pages: 0, continuation: false)
             let held = try collectHeldIncoming(review.binding, state: state).filter { !approvedIDs.contains($0.eventID) }
             guard held.count <= 10_000 else { throw Failure.discoveryLimit }
             state.heldIncomingIDs = held.isEmpty ? nil : Set(held.map(\.eventID))
             state.heldIncomingObservations = held.isEmpty ? nil : held
+            state.resumeCheckpointScope = saved
             if inbox.initialComplete { initialImport = .init(mode: state.policy.importMode, recoveringExistingCalendar: false) }
         }
         state.bindingRevision = try Self.advance(state.bindingRevision)
@@ -642,6 +660,7 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         state.heldIncomingObservations = nil
         state.resumedIncomingIDs = nil
         state.resumedImports = nil
+        state.resumeCheckpointScope = nil
         state.pendingOperationID = nil
         state.operations[id] = entry
         try write(state)

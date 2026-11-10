@@ -87,6 +87,7 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         }
         try fence()
         guard calendar.zoneId == scope.binding.record.zoneId else { throw Journal.Rejection.stalePreview }
+        try journal.resumeInboxCheckpoint(scope, account: account)
         var pages = 0
         while pages < 10 {
             let request = try inbox.request(scope)
