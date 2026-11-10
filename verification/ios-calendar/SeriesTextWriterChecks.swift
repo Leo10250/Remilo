@@ -100,7 +100,57 @@ enum SeriesTextWriterChecks {
                 _ = try await connection.observeManagedInstance(work, account: viewer, budget: .init(), canRead: { true })
                 preconditionFailure("A child of a different master cannot be applied")
             } catch Service.Import.Failure.staleRemote {}
+            try await instanceWrite(fixture, account: account, lease: lease, access: access, readOnly: readOnly, now: now)
         }
+    }
+
+    private static func instanceWrite(_ fixture: Fixture, account: Service.Account, lease: Service.Lease,
+                                      access: RemiloIOSGoogleCalendarAccess, readOnly: RemiloIOSGoogleCalendarAccess,
+                                      now: @escaping @Sendable () -> Date) async throws {
+        let writer = Service.Writer(http: .init(send: { request, _, _ in try await fixture.send(request) }), now: now)
+        fixture.resolveChild = true
+        func resolve() async throws -> Service.Writer.InstanceObservation {
+            try await writer.resolveInstance(access: access, lease: lease, masterID: Fixture.master,
+                                             masterETag: Fixture.updatedETag, nominalSlot: "2027-03-15T10:00")
+        }
+        do {
+            _ = try await resolve()
+            preconditionFailure("An occurrence from a different series cannot be captured")
+        } catch RemiloIOSGoogleCalendarEvent.Reason.invalidInstance {}
+        fixture.childMaster = Fixture.master
+        let observed = try await resolve()
+        precondition(observed.identity.eventID == Fixture.child && observed.originalStart == "2027-03-15T10:00:00Z")
+        let later = Service.Writer.Event.Schedule(eventStartMs: observed.fields.schedule.eventStartMs + 3_600_000,
+            eventEndMs: observed.fields.schedule.eventEndMs + 3_600_000, allDay: false, zoneId: "UTC", recurrence: nil)
+        let patch = try Service.Writer.Patch(instance: UUID(), account: account,
+            local: .init(occurrenceID: "occurrence", revision: 2, generation: 1), observed: observed, lease: lease,
+            desired: .init(title: "Edited occurrence", notes: observed.fields.notes, schedule: later))
+        fixture.wrongChildSlot = true
+        let wrongSlot = try await writer.patch(patch, access: access, phase: .notSent) { _ in
+            preconditionFailure("The original slot has changed")
+        }
+        guard case .staleRemote = wrongSlot else { preconditionFailure("Expected stale child identity") }
+        fixture.wrongChildSlot = false
+        fixture.staleChildMaster = true
+        let wrongMasterVersion = try await writer.patch(patch, access: access, phase: .notSent) { _ in
+            preconditionFailure("The parent changed after capture")
+        }
+        guard case .staleRemote = wrongMasterVersion else { preconditionFailure("Expected stale master") }
+        fixture.staleChildMaster = false
+        fixture.staleChildVersion = true
+        let wrongChildVersion = try await writer.patch(patch, access: access, phase: .notSent) { _ in
+            preconditionFailure("The child changed after capture")
+        }
+        guard case .staleRemote = wrongChildVersion else { preconditionFailure("Expected stale child version") }
+        fixture.staleChildVersion = false
+        let unconfirmed = try await writer.patch(patch, access: access, phase: .notSent) { _ in .granted }
+        guard case .unconfirmed = unconfirmed else { preconditionFailure("Expected a lost response") }
+        fixture.revealChildWrite = true
+        let confirmed = try await writer.patch(patch, access: readOnly, phase: .sent) { _ in
+            preconditionFailure("An uncertain PATCH can only be read back")
+        }
+        guard case .confirmed(let remote) = confirmed else { preconditionFailure("Expected a matching child readback") }
+        precondition(remote.id == Fixture.child && remote.strongETag == #""child-v2""# && fixture.childWrites == 1 && fixture.writes == 1)
     }
 
     private static func recurrenceEncoding() throws {
@@ -136,6 +186,12 @@ enum SeriesTextWriterChecks {
         var reveal = false
         var acknowledgedSchedule = false
         var childMaster = Fixture.master
+        var resolveChild = false
+        var wrongChildSlot = false
+        var staleChildMaster = false
+        var staleChildVersion = false
+        var revealChildWrite = false
+        private(set) var childWrites = 0
         private(set) var revealedAuditCount = 0
         private(set) var writes = 0
 
@@ -155,10 +211,26 @@ enum SeriesTextWriterChecks {
             let start = ["dateTime": moved ? "2027-03-15T11:00:00Z" : "2027-03-15T10:00:00Z", "timeZone": "UTC"]
             let end = ["dateTime": moved ? "2027-03-15T11:45:00Z" : "2027-03-15T10:30:00Z", "timeZone": "UTC"]
             let updatedRule = "RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=MO;WKST=MO;COUNT=1"
-            let master: [String: Any] = ["id": Self.master, "etag": writes == 0 ? #""series-v1""# : Self.updatedETag,
+            let master: [String: Any] = ["id": Self.master, "etag": writes == 0 ? #""series-v1""# : (staleChildMaster ? #""series-v3""# : Self.updatedETag),
                 "summary": writes == 0 || editsSchedule ? "Original title" : "Remilo edit", "description": "Original notes",
                 "start": start, "end": end, "recurrence": [moved ? updatedRule : "RRULE:FREQ=DAILY;COUNT=1"]]
+            let child: [String: Any] = ["id": Self.child, "etag": staleChildVersion || revealChildWrite ? #""child-v2""# : #""child-v1""#,
+                "recurringEventId": childMaster,
+                "originalStartTime": wrongChildSlot ? ["dateTime": "2027-03-16T10:00:00Z", "timeZone": "UTC"] : start,
+                "summary": revealChildWrite ? "Edited occurrence" : "Moved",
+                "start": ["dateTime": revealChildWrite ? "2027-03-15T15:00:00Z" : "2027-03-15T14:00:00Z", "timeZone": "UTC"],
+                "end": ["dateTime": revealChildWrite ? "2027-03-15T15:30:00Z" : "2027-03-15T14:30:00Z", "timeZone": "UTC"]]
             if request.httpMethod == "PATCH" {
+                if url.lastPathComponent == Self.child {
+                    precondition(childWrites == 0 && request.value(forHTTPHeaderField: "If-Match") == #""child-v1""#)
+                    let payload = try JSONSerialization.jsonObject(with: request.httpBody!) as! [String: Any]
+                    precondition(Set(payload.keys) == ["summary", "start", "end"] &&
+                                 payload["summary"] as? String == "Edited occurrence" &&
+                                 (payload["start"] as? [String: String])?["dateTime"] == "2027-03-15T15:00:00Z" &&
+                                 (payload["end"] as? [String: String])?["dateTime"] == "2027-03-15T15:30:00Z")
+                    childWrites += 1
+                    return try body([:], status: 503)
+                }
                 precondition(url.lastPathComponent == Self.master && writes == 0 && request.value(forHTTPHeaderField: "If-Match") == #""series-v1""#)
                 let stored = try String(contentsOf: directory.appendingPathComponent("series-text-writes.json"), encoding: .utf8)
                 precondition(stored.contains(Self.master), "Checkpoint must already be durable when the PATCH leaves")
@@ -176,6 +248,11 @@ enum SeriesTextWriterChecks {
             }
             if url.path.contains("/calendarList/") { return try body(calendar) }
             if url.lastPathComponent == "instances" {
+                if resolveChild {
+                    let original = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "originalStart" }?.value
+                    precondition(original == "2027-03-15T10:00:00Z")
+                    return try body(["items": [child]])
+                }
                 if reveal { revealedAuditCount += 1 }
                 return try body(["items": [["id": "original-instance", "recurringEventId": Self.master,
                     "originalStartTime": start, "start": start, "end": end]]])
@@ -185,9 +262,8 @@ enum SeriesTextWriterChecks {
                 return try body(["items": changed ? [] : [master], "nextSyncToken": "checkpoint"])
             }
             if url.lastPathComponent == Self.child {
-                return try body(["id": Self.child, "etag": #""child-v1""#, "recurringEventId": childMaster,
-                    "originalStartTime": start, "summary": "Moved", "start": ["dateTime": "2027-03-15T14:00:00Z", "timeZone": "UTC"],
-                    "end": ["dateTime": "2027-03-15T14:30:00Z", "timeZone": "UTC"]])
+                if childWrites > 0 && !revealChildWrite { return try body([:], status: 503) }
+                return try body(child)
             }
             precondition(url.lastPathComponent == Self.master)
             if writes > 0 && !reveal { return try body([:], status: 503) }
