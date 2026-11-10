@@ -217,13 +217,13 @@ enum ManagedSetupChecks {
                 Setup.Journal.ResumeExport(operationID: UUID(), local: .init(occurrenceID: id, revision: 3, generation: 1),
                     originLease: saved.binding!.exportLease, waitingLease: nil)
             }
-            let review = try await reopened.previewResume(expectedRevision: revision) { _, _ in
+            let resumeReview = try await reopened.previewResume(expectedRevision: revision) { _, _ in
                 heldExports.map { .init(itemID: $0.itemID, occurrenceID: $0.local.occurrenceID, title: $0.local.occurrenceID,
                                         export: $0, reason: nil) }
             }
             let resumeID = UUID()
             do {
-                _ = try await reopened.confirmResume(resumeID, reviewID: review.review.id,
+                _ = try await reopened.confirmResume(resumeID, reviewID: resumeReview.review.id,
                     selectedItemIDs: [heldExports[0].itemID], expectedRevision: revision) { _, _, _ in
                         throw Setup.Journal.Rejection.stalePreview
                     }
@@ -231,7 +231,7 @@ enum ManagedSetupChecks {
             } catch Setup.Journal.Rejection.stalePreview {}
             let afterStale = try reopened.view(expectedRevision: revision)
             precondition(afterStale == paused)
-            let resumedMode = try await reopened.confirmResume(resumeID, reviewID: review.review.id,
+            let resumedMode = try await reopened.confirmResume(resumeID, reviewID: resumeReview.review.id,
                 selectedItemIDs: [heldExports[0].itemID], expectedRevision: revision) { selected, binding, account in
                     precondition(selected == [heldExports[0]] && binding == saved.binding && account == authorized.account)
                 }
@@ -242,7 +242,7 @@ enum ManagedSetupChecks {
             precondition(resumedView.mode == .enabled && resumedView.authEpoch == paused.authEpoch + 1 &&
                          resumedView.binding?.operationID == paused.binding?.operationID && approvals == [heldExports[0]] &&
                          !oldLinkAfterResume && (inbox.heldEventIDs ?? []) == Set(pausedProgress?.pending.map(\.eventID) ?? []))
-            let replayResume = try await setup.confirmResume(resumeID, reviewID: review.review.id,
+            let replayResume = try await setup.confirmResume(resumeID, reviewID: resumeReview.review.id,
                 selectedItemIDs: [heldExports[0].itemID], expectedRevision: revision) { _, _, _ in
                     preconditionFailure("Resume replay must use the durable receipt")
                 }
