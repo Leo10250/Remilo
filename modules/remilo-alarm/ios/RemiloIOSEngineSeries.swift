@@ -332,9 +332,45 @@ extension RemiloIOSEngine {
         if existing == nil && change.eventEndMs <= now { return .ignored }
         let slot = try Recurrence.resolve(segment.rule, nominal: change.nominalSlot, deviceZone: zone, index: index)
         let old = existing ?? RemiloIOSSeries.makeOccurrence(segment, slot: slot)
+        let acknowledgedEdit = old.calendarInstanceID == change.eventID &&
+            old.calendarInstanceEditBaseline == Self.calendarInstanceFields(old)
         guard old.calendarInstanceID.map({ $0 == change.eventID }) ?? true,
-              !old.history.contains(where: { ["Edit", "Reopen", "UndoDelete"].contains($0.kind) }),
+              acknowledgedEdit || !old.history.contains(where: { $0.kind == "Edit" }),
+              !old.history.contains(where: { $0.kind == "Reopen" || $0.kind == "UndoDelete" }),
               change.previouslyImported || !old.history.contains(where: { $0.kind == "Create" }) else { return .needsReview }
+        let result = try saveCalendarInstance(change, old: old, isNew: existing == nil, state: &state, now: now)
+        if result == .applied, acknowledgedEdit, let saved = state.reminders[id] {
+            state.reminders[id]?.calendarInstanceEditBaseline = Self.calendarInstanceFields(saved)
+        }
+        return result
+    }
+
+    func reconcileCalendarInstanceConfirmation(_ confirmation: IOSCalendarSeriesInstanceConfirmation, record: IOSReminder,
+                                               state: inout IOSDatabase, now: Int64) throws -> IOSCalendarSeriesInstanceResult {
+        let desired = confirmation.edit.desired
+        let verified = confirmation.fields
+        let current = IOSCalendarInboundChange.Schedule(record)
+        let authoredSchedule = IOSCalendarInboundChange.Schedule(desired)
+        let schedule = current == authoredSchedule ? IOSCalendarInboundChange.Schedule(verified) : current
+        let title = record.title == desired.title ? verified.title : record.title
+        let notes = record.notes == desired.notes ? verified.notes : record.notes
+        if title != record.title || notes != record.notes || schedule != current {
+            let change = IOSCalendarSeriesInstanceChange(eventID: confirmation.eventID, nominalSlot: confirmation.edit.nominalSlot,
+                previouslyImported: true, title: title, notes: notes, eventStartMs: schedule.eventStartMs,
+                eventEndMs: schedule.eventEndMs, allDay: schedule.allDay, zoneID: schedule.zoneID)
+            let result = try saveCalendarInstance(change, old: record, isNew: false, state: &state, now: now)
+            guard result == .applied else { return result }
+        } else {
+            state.reminders[record.id]?.calendarInstanceID = confirmation.eventID
+        }
+        state.reminders[record.id]?.calendarInstanceEditBaseline = verified
+        return .applied
+    }
+
+    private func saveCalendarInstance(_ change: IOSCalendarSeriesInstanceChange, old: IOSReminder, isNew: Bool,
+                                      state: inout IOSDatabase, now: Int64) throws -> IOSCalendarSeriesInstanceResult {
+        typealias Recurrence = RemiloIOSRecurrence
+        guard let zone = TimeZone(identifier: change.zoneID) else { return .needsReview }
         let schedule = IOSCalendarInboundChange.Schedule(eventStartMs: change.eventStartMs, eventEndMs: change.eventEndMs,
                                                           allDay: change.allDay, zoneID: change.zoneID)
         if schedule != .init(old), let registration = old.registration, registration.mode == "Alarm",
@@ -361,11 +397,11 @@ extension RemiloIOSEngine {
         } catch let failure as IOSInputFailure {
             return failure.code == "ELAPSED_ALERT" ? .elapsedAlert : .needsReview
         }
-        if existing == nil, old.mode != "None", projected.record.alarmAtMs <= now { return .elapsedAlert }
+        if isNew, old.mode != "None", projected.record.alarmAtMs <= now { return .elapsedAlert }
         var record = projected.record
         record.independent = true
         record.calendarInstanceID = change.eventID
-        if existing == nil { record.createdAtMs = now }
+        if isNew { record.createdAtMs = now }
         else { record.revision += 1 }
         if projected.replacesRegistration {
             record.adjustment = nil
@@ -375,7 +411,7 @@ extension RemiloIOSEngine {
             if record.registration == nil { record.deferSeriesOverride(target: record.alarmAtMs) }
             else { record.deferredSeriesOverride = true }
         }
-        state.reminders[id] = record
+        state.reminders[record.id] = record
         _ = try replenishSeries(state: &state, now: now)
         return .applied
     }

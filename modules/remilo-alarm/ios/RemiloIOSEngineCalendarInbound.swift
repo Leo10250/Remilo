@@ -34,6 +34,10 @@ extension IOSCalendarInboundChange.Schedule {
     init(_ record: IOSReminder) {
         self.init(eventStartMs: record.eventStartMs, eventEndMs: record.eventEndMs, allDay: record.allDay, zoneID: record.zoneID)
     }
+
+    init(_ fields: IOSCalendarSeriesInstanceEdit.Fields) {
+        self.init(eventStartMs: fields.eventStartMs, eventEndMs: fields.eventEndMs, allDay: fields.allDay, zoneID: fields.zoneID)
+    }
 }
 
 struct IOSCalendarInboundTiming: Equatable, Sendable {

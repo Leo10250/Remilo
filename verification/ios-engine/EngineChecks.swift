@@ -1219,10 +1219,41 @@ struct EngineChecks {
         let stale = try await afterRestart.withCalendarSeriesInstancePermit(for: first) { true }
         let allowed = try await afterRestart.withCalendarSeriesInstancePermit(for: second) { true }
         precondition(stale == nil && allowed == true)
+        let merged = IOSCalendarSeriesInstanceEdit.Fields(title: first.desired.title, notes: "Google note",
+            eventStartMs: first.desired.eventStartMs + 60_000, eventEndMs: first.desired.eventEndMs + 60_000,
+            allDay: false, zoneID: "UTC")
+        let confirmation = IOSCalendarSeriesInstanceConfirmation(operationID: UUID(), edit: first, eventID: update.eventID, fields: merged)
+        let acknowledged = try await afterRestart.acknowledgeCalendarSeriesInstance(confirmation, authorize: { true })
+        let rebased = try afterRestart.calendarSeriesInstanceEdits(family, limit: 2)
+        guard let remaining = rebased.first else { preconditionFailure("The newer notes edit still needs sync") }
+        precondition(acknowledged == .applied && remaining.baseline == merged &&
+                     remaining.desired.notes == second.desired.notes && remaining.desired.eventStartMs == merged.eventStartMs)
+        let replayed = try await afterRestart.acknowledgeCalendarSeriesInstance(confirmation, authorize: { true })
+        let afterReplay = try afterRestart.calendarSeriesInstanceEdits(family, limit: 2)
+        precondition(replayed == .applied && afterReplay == rebased)
+        let secondConfirmation = IOSCalendarSeriesInstanceConfirmation(operationID: UUID(), edit: remaining,
+            eventID: update.eventID, fields: remaining.desired)
+        let settled = try await afterRestart.acknowledgeCalendarSeriesInstance(secondConfirmation, authorize: { true })
+        let empty = try afterRestart.calendarSeriesInstanceEdits(family, limit: 2)
+        precondition(settled == .applied && empty.isEmpty)
+        let latestGoogle = IOSCalendarSeriesInstanceChange(eventID: update.eventID, nominalSlot: original.nominalSlot!,
+            previouslyImported: true, title: "Later Google title", notes: remaining.desired.notes, eventStartMs: merged.eventStartMs,
+            eventEndMs: merged.eventEndMs, allDay: false, zoneID: "UTC")
+        let latestApplied = try await afterRestart.applyCalendarSeriesInstance(operationKey: "after-export", snapshot: snapshot,
+            change: latestGoogle, authorize: { true })
+        let updated = try store.load().reminders[moved.id]!
+        precondition(latestApplied == .applied && updated.title == latestGoogle.title && updated.nextAlertMs == postponement)
+        _ = try await afterRestart.apply(["kind": "Edit", "operationId": "instance-final-edit", "occurrenceId": moved.id,
+                                           "expectedRevision": updated.revision, "title": "Last edit"])
+        guard let retiring = try afterRestart.calendarSeriesInstanceEdits(family, limit: 1).first else {
+            preconditionFailure("Expected final edit")
+        }
         _ = try await afterRestart.apply(["kind": "Done", "operationId": "instance-done-before-sync", "occurrenceId": moved.id,
-                                           "expectedRevision": second.revision])
-        let retired = try await afterRestart.withCalendarSeriesInstancePermit(for: second) { true }
-        precondition(retired == nil)
+                                           "expectedRevision": retiring.revision])
+        let retired = try await afterRestart.withCalendarSeriesInstancePermit(for: retiring) { true }
+        let ignoredConfirmation = try await afterRestart.acknowledgeCalendarSeriesInstance(
+            .init(operationID: UUID(), edit: retiring, eventID: update.eventID, fields: retiring.desired), authorize: { true })
+        precondition(retired == nil && ignoredConfirmation == .ignored)
     }
 
     private static func calendarSeriesAllowsAFutureMoveAfterItsLastOriginal() async throws {

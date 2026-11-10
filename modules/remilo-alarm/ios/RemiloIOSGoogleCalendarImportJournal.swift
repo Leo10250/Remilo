@@ -190,6 +190,18 @@ actor RemiloIOSGoogleCalendarImportJournal {
         let baseline: SeriesTextBaseline
         let exceptions: [RecurringInstanceVersion]
 
+        func instanceExport(_ observed: RemiloIOSGoogleCalendarWriteTransport.InstanceObservation,
+                            edit: IOSCalendarSeriesInstanceEdit) -> SeriesInstanceExport? {
+            let identity = observed.identity
+            let matches = exceptions.filter { $0.identity.nominalSlot == edit.nominalSlot || $0.identity.eventID == identity.eventID }
+            guard receipt.local?.id == edit.series.familyID, receipt.source.eventID == identity.masterID,
+                  baseline.etag == observed.masterETag, identity.nominalSlot == edit.nominalSlot,
+                  edit.knownEventID.map({ $0 == identity.eventID }) ?? true,
+                  matches.count <= 1, matches.allSatisfy({ $0.identity == identity }),
+                  exceptions.count < 500 || !matches.isEmpty else { return nil }
+            return .init(receipt: receipt, lease: observed.lease, masterETag: baseline.etag, identity: identity, prior: matches.first)
+        }
+
         func accepts(local: IOSCalendarSeriesTextSnapshot, review: Import.Review,
                      desiredSchedule: Import.Event.Schedule? = nil) throws -> Bool {
             guard local.familyID == receipt.local?.id, review.source.key == receipt.source,
@@ -200,6 +212,14 @@ actor RemiloIOSGoogleCalendarImportJournal {
                 exceptions.contains { $0.identity == candidate.identity && ($0.identity.cancelled || $0.etag == candidate.etag) }
             }
         }
+    }
+
+    struct SeriesInstanceExport: Codable, Equatable, Sendable {
+        let receipt: Receipt
+        let lease: RemiloIOSGoogleCalendarManualLink.ManagedLease
+        let masterETag: String
+        let identity: Import.Event.InstanceIdentity
+        let prior: RecurringInstanceVersion?
     }
 
     struct Receipt: Codable, Equatable, Sendable {
@@ -522,6 +542,47 @@ actor RemiloIOSGoogleCalendarImportJournal {
         if let confirmed { entry.seriesTextBaseline = confirmed }
         else if let reason { entry.recurringIssue = .init(eventID: receipt.source.eventID, etag: expectedBaseline, code: reason) }
         else { throw Failure.invalidInput }
+        state.entries[id] = entry
+        try write(state)
+    }
+
+    func permitsSeriesInstanceExport(_ work: SeriesInstanceExport) throws -> Bool {
+        guard let entry = try read().entries[work.receipt.operationID] else { return false }
+        return Self.matchesSeriesInstanceExport(work, in: entry) &&
+            Self.instanceVersions(for: work.identity, in: entry) == (work.prior.map { [$0] } ?? [])
+    }
+
+    private static func matchesSeriesInstanceExport(_ work: SeriesInstanceExport, in entry: Entry) -> Bool {
+        entry.receipt == work.receipt && entry.managed?.scope.binding.linkLease == work.lease &&
+            entry.seriesTextBaseline?.etag == work.masterETag && entry.recurringIssue == nil &&
+            canSaveInstance(work.identity.eventID, in: entry)
+    }
+
+    private static func instanceVersions(for identity: Import.Event.InstanceIdentity, in entry: Entry) -> [RecurringInstanceVersion] {
+        (entry.recurringInstances ?? []).filter {
+            $0.identity.eventID == identity.eventID || $0.identity.nominalSlot == identity.nominalSlot
+        }
+    }
+
+    func finishSeriesInstanceExport(_ work: SeriesInstanceExport, etag: String?, reason: String?) throws {
+        var state = try read()
+        let id = work.receipt.operationID
+        guard var entry = state.entries[id], Self.matchesSeriesInstanceExport(work, in: entry) else { return }
+        let current = Self.instanceVersions(for: work.identity, in: entry)
+        if let etag, reason == nil {
+            let confirmed = RecurringInstanceVersion(identity: work.identity, etag: etag)
+            if current == [confirmed] { return }
+            guard current == (work.prior.map { [$0] } ?? []) else { throw Failure.stalePreview }
+            var saved = entry.recurringInstances ?? []
+            saved.removeAll { $0.identity == work.identity }
+            saved.append(confirmed)
+            entry.recurringInstances = saved
+        } else if let reason, etag == nil {
+            guard current == (work.prior.map { [$0] } ?? []) else { throw Failure.stalePreview }
+            entry.recurringIssue = .init(eventID: work.identity.eventID, etag: work.prior?.etag, code: reason)
+        } else {
+            throw Failure.invalidInput
+        }
         state.entries[id] = entry
         try write(state)
     }

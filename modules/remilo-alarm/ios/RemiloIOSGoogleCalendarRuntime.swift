@@ -18,6 +18,14 @@ final class RemiloIOSGoogleCalendarRuntime {
 
     struct SeriesTextAuthority: Sendable {
         typealias SendCheckpoint = @MainActor @Sendable () throws -> RemiloIOSGoogleCalendarWriteTransport.Permission
+        struct InstanceExport: Sendable {
+            let read: @MainActor @Sendable (String, Int) throws -> [IOSCalendarSeriesInstanceEdit]
+            let permit: @MainActor @Sendable (IOSCalendarSeriesInstanceEdit, @escaping SendCheckpoint) async throws
+                -> RemiloIOSGoogleCalendarWriteTransport.Permission?
+            let acknowledge: @MainActor @Sendable (
+                IOSCalendarSeriesInstanceConfirmation, @escaping ImportJournal.Scheduler.Permit
+            ) async throws -> IOSCalendarSeriesInstanceResult
+        }
         let read: @MainActor @Sendable (String) throws -> IOSCalendarSeriesTextSnapshot?
         let apply: @MainActor @Sendable (
             String, IOSCalendarSeriesTextSnapshot, String, String, @escaping ImportJournal.Scheduler.Permit
@@ -34,6 +42,7 @@ final class RemiloIOSGoogleCalendarRuntime {
         var applyInstance: (@MainActor @Sendable (
             String, IOSCalendarSeriesTextSnapshot, IOSCalendarSeriesInstanceChange, @escaping ImportJournal.Scheduler.Permit
         ) async throws -> IOSCalendarSeriesInstanceResult)? = nil
+        var instanceExport: InstanceExport? = nil
     }
 
     private let connection: Connection
@@ -211,7 +220,7 @@ final class RemiloIOSGoogleCalendarRuntime {
     func syncManagedIncoming(expectedRevision: Int) async throws -> ManagedImportPass {
         try requireForeground()
         guard let managedSetup else { throw Failure.invalidConfiguration }
-        guard !importingManaged else { throw Import.Failure.operationPending }
+        guard !importingManaged, seriesTextWriter?.isRunning != true else { throw Import.Failure.operationPending }
         importingManaged = true
         defer { importingManaged = false }
         let account = try connection.account(expectedRevision: expectedRevision)
@@ -603,7 +612,7 @@ final class RemiloIOSGoogleCalendarRuntime {
     private func runAutomaticPass(_ opportunity: AutomaticOpportunity) async {
         guard let view = try? connection.view(), view.connected else { return }
         try? await syncManagedOutgoing(expectedRevision: view.revision)
-        if (try? await seriesTextWriter?.sync(expectedRevision: view.revision)) == true {
+        if !importingManaged, (try? await seriesTextWriter?.sync(expectedRevision: view.revision)) == true {
             NotificationCenter.default.post(name: .remiloIOSChange, object: nil, userInfo: [Self.automaticStatusChangeKey: true])
         }
         // Resolve outbound identities first so a just-published event is
@@ -797,7 +806,14 @@ final class RemiloIOSGoogleCalendarRuntime {
                     return try await RemiloIOSEngine.shared.applyCalendarSeriesInstance(operationKey: operation, snapshot: snapshot,
                                                                                        change: change, authorize: permit)
                 } catch is RemiloIOSRecurrence.InvalidRule { return .needsReview }
-            })
+            }, instanceExport: .init(read: { try RemiloIOSEngine.shared.calendarSeriesInstanceEdits($0, limit: $1) },
+                permit: { edit, checkpoint in
+                    try await RemiloIOSEngine.shared.withCalendarSeriesInstancePermit(for: edit, commit: checkpoint)
+                }, acknowledge: { confirmation, permit in
+                    do {
+                        return try await RemiloIOSEngine.shared.acknowledgeCalendarSeriesInstance(confirmation, authorize: permit)
+                    } catch is RemiloIOSRecurrence.InvalidRule { return .needsReview }
+                }))
         let runtime = RemiloIOSGoogleCalendarRuntime(
             connection: connection, canUseForeground: canUseForeground,
             importJournal: imports, scheduler: .localEngine(.shared), publication: publication, manualLink: manualLink,

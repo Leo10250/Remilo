@@ -1,3 +1,5 @@
+import Foundation
+
 struct IOSCalendarSeriesTextSnapshot: Codable, Equatable, Sendable {
     struct ScheduleEdit: Codable, Equatable, Sendable {
         let baseline: RemiloIOSRecurrence.Rule
@@ -59,4 +61,11 @@ struct IOSCalendarSeriesInstanceEdit: Codable, Equatable, Sendable {
     let generation: Int
     let baseline: Fields
     let desired: Fields
+}
+
+struct IOSCalendarSeriesInstanceConfirmation: Codable, Sendable {
+    let operationID: UUID
+    let edit: IOSCalendarSeriesInstanceEdit
+    let eventID: String
+    let fields: IOSCalendarSeriesInstanceEdit.Fields
 }

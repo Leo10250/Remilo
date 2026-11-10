@@ -8,7 +8,7 @@ enum SeriesTextWriterChecks {
 
     static func run(configuration: RemiloIOSGoogleCalendarConfiguration, access: RemiloIOSGoogleCalendarAccess,
                     readOnly: RemiloIOSGoogleCalendarAccess, now: @escaping @Sendable () -> Date,
-                    editsSchedule: Bool = false) async throws {
+                    editsSchedule: Bool = false, editsInstance: Bool = false) async throws {
         if editsSchedule { try recurrenceEncoding() }
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent("remilo-series-write-\(UUID())")
         defer { try? FileManager.default.removeItem(at: directory) }
@@ -40,6 +40,11 @@ enum SeriesTextWriterChecks {
                 return .acknowledged(local)
             }))
         precondition(imported.relationship == .automaticRequested)
+        if editsInstance {
+            try await instanceSync(fixture, directory: directory, connection: connection, imports: imports, account: account,
+                                   scope: scope, master: review.source, importID: id, access: access, readOnly: readOnly)
+            return
+        }
         let scheduleEdit: IOSCalendarSeriesTextSnapshot.ScheduleEdit?
         if editsSchedule {
             let rule = try RemiloIOSRecurrence.Rule(anchor: "2027-03-15T11:00", frequency: "weekly", weekdays: [1],
@@ -102,6 +107,80 @@ enum SeriesTextWriterChecks {
             } catch Service.Import.Failure.staleRemote {}
             try await instanceWrite(fixture, account: account, lease: lease, access: access, readOnly: readOnly, now: now)
         }
+    }
+
+    private static func instanceSync(_ fixture: Fixture, directory: URL, connection: Service.Runtime.Connection,
+                                     imports: Service.Journal, account: Service.Account, scope: Inbox.Scope,
+                                     master: Service.Import.Source, importID: UUID, access: RemiloIOSGoogleCalendarAccess,
+                                     readOnly: RemiloIOSGoogleCalendarAccess) async throws {
+        fixture.resolveChild = true
+        fixture.googleChildNotes = "Google added notes"
+        let lease = scope.binding.linkLease
+        let series = IOSCalendarSeriesTextSnapshot(familyID: "family", segmentID: "family", revision: 1,
+            title: master.fields.title, notes: master.fields.notes)
+        let start = try RemiloIOSGoogleCalendarEvent.timestamp("2027-03-15T14:00:00Z")
+        let baseline = IOSCalendarSeriesInstanceEdit.Fields(title: "Moved", notes: "", eventStartMs: start,
+            eventEndMs: start + 1_800_000, allDay: false, zoneID: "UTC")
+        let desired = IOSCalendarSeriesInstanceEdit.Fields(title: "Edited occurrence", notes: "", eventStartMs: start + 3_600_000,
+            eventEndMs: start + 5_400_000, allDay: false, zoneID: "UTC")
+        let edit = IOSCalendarSeriesInstanceEdit(series: series, occurrenceID: "occurrence", nominalSlot: "2027-03-15T10:00",
+            knownEventID: nil, revision: 2, generation: 1, baseline: baseline, desired: desired)
+        fixture.instanceEdit = edit
+        func service() -> Service {
+            .init(directory: directory, connection: connection, imports: imports, local: .init(read: { _ in series },
+                apply: { _, _, _, _, _ in preconditionFailure("Expected only occurrence work") },
+                permit: { _, _ in preconditionFailure("The master has no local edit") },
+                instanceExport: .init(read: { _, _ in fixture.instanceEdit.map { [$0] } ?? [] },
+                    permit: { current, checkpoint in
+                        guard fixture.allowCheckpoint, fixture.instanceEdit == current else { return nil }
+                        return try checkpoint()
+                    }, acknowledge: { confirmation, permits in
+                        guard try permits(), fixture.allowInstanceAcknowledgement else { return .deferred }
+                        precondition(confirmation.edit == edit && confirmation.eventID == Fixture.child &&
+                                     confirmation.fields.title == desired.title && confirmation.fields.notes == fixture.googleChildNotes &&
+                                     confirmation.fields.eventStartMs == desired.eventStartMs)
+                        fixture.confirmedInstance = confirmation.fields
+                        fixture.instanceEdit = nil
+                        return .applied
+                    })), canRead: { true }, activeLease: { $0.accountGeneration == account.accountGeneration ? lease : nil })
+        }
+        let writer = service()
+        _ = try await writer.sync(expectedRevision: account.connectionRevision)
+        precondition(fixture.childWrites == 0)
+        fixture.allowCheckpoint = true
+        _ = try await writer.sync(expectedRevision: account.connectionRevision)
+        let pending = try writer.unconfirmedImports(viewingAs: account)
+        precondition(pending == [importID] && fixture.childWrites == 1 && fixture.confirmedInstance == nil)
+        let observation = Inbox.Observation(eventID: Fixture.child, etag: #""child-v2""#, kind: .changedInstance(masterID: Fixture.master),
+            importMode: .none, initialRecovery: false, instanceCancelled: false)
+        let scan = Inbox.Progress(scope: scope, pages: 1, initialComplete: true, continuation: false, pending: [observation])
+        let waiting = try await imports.reconcileManagedSeries(scan, viewingAs: account, limit: 2, allowInstanceTransfers: true, waitingExports: pending)
+        precondition(waiting.isEmpty)
+        fixture.revealChildWrite = true
+        let renewed = try await connection.connectFromUserAction(expectedRevision: account.connectionRevision, consent: .reauthorizeCurrentAccount) { _, _ in readOnly }
+        _ = try await service().sync(expectedRevision: renewed.revision)
+        let beforeNative = try await imports.seriesTextExports(viewingAs: account, lease: lease)
+        precondition(beforeNative.first?.exceptions.isEmpty == true && fixture.childWrites == 1)
+        fixture.allowInstanceAcknowledgement = true
+        let resumed = service()
+        let confirmed = try await resumed.sync(expectedRevision: renewed.revision)
+        let remaining = try resumed.unconfirmedImports(viewingAs: account)
+        let saved = try await imports.seriesTextExports(viewingAs: account, lease: lease)
+        precondition(confirmed && remaining.isEmpty && fixture.confirmedInstance != nil && fixture.childWrites == 1)
+        precondition(saved.first?.exceptions.first?.identity.nominalSlot == edit.nominalSlot &&
+                     saved.first?.exceptions.first?.etag == observation.etag)
+        let acknowledged = try await imports.reconcileManagedSeries(scan, viewingAs: account, limit: 2, allowInstanceTransfers: true)
+        precondition(acknowledged.count == 1 && acknowledged[0].instanceWork == nil && !acknowledged[0].recordedIssue)
+        let previous = fixture.confirmedInstance!
+        fixture.instanceEdit = .init(series: series, occurrenceID: edit.occurrenceID, nominalSlot: edit.nominalSlot,
+            knownEventID: Fixture.child, revision: 3, generation: 1, baseline: previous,
+            desired: .init(title: "Second local title", notes: previous.notes, eventStartMs: previous.eventStartMs,
+                           eventEndMs: previous.eventEndMs, allDay: false, zoneID: "UTC"))
+        fixture.googleChildTitle = "Another title from Google"
+        let writable = try await connection.connectFromUserAction(expectedRevision: renewed.revision, consent: .writeOwnedEvents) { _, _ in access }
+        let reviewed = try await resumed.sync(expectedRevision: writable.revision)
+        let conflicts = try await imports.seriesTextExports(viewingAs: account, lease: lease)
+        precondition(reviewed && conflicts.isEmpty && fixture.childWrites == 1 && fixture.instanceEdit != nil)
     }
 
     private static func instanceWrite(_ fixture: Fixture, account: Service.Account, lease: Service.Lease,
@@ -191,6 +270,11 @@ enum SeriesTextWriterChecks {
         var staleChildMaster = false
         var staleChildVersion = false
         var revealChildWrite = false
+        var instanceEdit: IOSCalendarSeriesInstanceEdit?
+        var confirmedInstance: IOSCalendarSeriesInstanceEdit.Fields?
+        var allowInstanceAcknowledgement = false
+        var googleChildNotes: String?
+        var googleChildTitle: String?
         private(set) var childWrites = 0
         private(set) var revealedAuditCount = 0
         private(set) var writes = 0
@@ -214,15 +298,21 @@ enum SeriesTextWriterChecks {
             let master: [String: Any] = ["id": Self.master, "etag": writes == 0 ? #""series-v1""# : (staleChildMaster ? #""series-v3""# : Self.updatedETag),
                 "summary": writes == 0 || editsSchedule ? "Original title" : "Remilo edit", "description": "Original notes",
                 "start": start, "end": end, "recurrence": [moved ? updatedRule : "RRULE:FREQ=DAILY;COUNT=1"]]
-            let child: [String: Any] = ["id": Self.child, "etag": staleChildVersion || revealChildWrite ? #""child-v2""# : #""child-v1""#,
+            let childETag = googleChildTitle != nil ? #""child-v3""# : (staleChildVersion || revealChildWrite ? #""child-v2""# : #""child-v1""#)
+            var child: [String: Any] = ["id": Self.child, "etag": childETag,
                 "recurringEventId": childMaster,
                 "originalStartTime": wrongChildSlot ? ["dateTime": "2027-03-16T10:00:00Z", "timeZone": "UTC"] : start,
-                "summary": revealChildWrite ? "Edited occurrence" : "Moved",
+                "summary": googleChildTitle ?? (revealChildWrite ? "Edited occurrence" : "Moved"),
                 "start": ["dateTime": revealChildWrite ? "2027-03-15T15:00:00Z" : "2027-03-15T14:00:00Z", "timeZone": "UTC"],
                 "end": ["dateTime": revealChildWrite ? "2027-03-15T15:30:00Z" : "2027-03-15T14:30:00Z", "timeZone": "UTC"]]
+            child["description"] = googleChildNotes
             if request.httpMethod == "PATCH" {
                 if url.lastPathComponent == Self.child {
                     precondition(childWrites == 0 && request.value(forHTTPHeaderField: "If-Match") == #""child-v1""#)
+                    if instanceEdit != nil {
+                        let stored = try String(contentsOf: directory.appendingPathComponent("series-text-writes.json"), encoding: .utf8)
+                        precondition(stored.contains(Self.child))
+                    }
                     let payload = try JSONSerialization.jsonObject(with: request.httpBody!) as! [String: Any]
                     precondition(Set(payload.keys) == ["summary", "start", "end"] &&
                                  payload["summary"] as? String == "Edited occurrence" &&

@@ -15,6 +15,7 @@ xcrun swiftc -swift-version 5 -I "$build_dir" -L "$build_dir" -lZIPFoundation -o
   modules/remilo-alarm/ios/RemiloIOSLegacyBackup.swift \
   modules/remilo-alarm/ios/RemiloIOSPortableRoutines.swift \
   modules/remilo-alarm/ios/RemiloIOSStore.swift \
+  modules/remilo-alarm/ios/RemiloIOSCalendarSeriesText.swift \
   modules/remilo-alarm/ios/RemiloIOSProjection.swift \
   modules/remilo-alarm/ios/RemiloIOSSeries.swift \
   modules/remilo-alarm/ios/RemiloIOSRecurrence.swift \

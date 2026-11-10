@@ -429,6 +429,10 @@ struct RemiloIOSGoogleCalendarWriteTransport: Sendable {
         guard let etag = child.strongETag else { throw Event.Reason.invalidInstance }
         let fields = try RemiloIOSGoogleCalendarRecurringReview.instanceFields(child, zoneID: parsed.fields.schedule.zoneId)
         guard fields.schedule.recurrence == nil else { throw Event.Reason.invalidInstance }
+        let latest = try await transport.lookup(access, calendarID: calendar.id, eventID: masterID, budget: budget)
+        guard case .found(let current) = latest, !current.cancelled, current.strongETag == masterETag else {
+            throw RemiloIOSGoogleCalendarImport.Failure.staleRemote
+        }
         return .init(subject: access.account.subject, clientID: access.clientID, lease: lease, identity: identity,
                      originalStart: original, masterETag: masterETag, masterZone: parsed.fields.schedule.zoneId, etag: etag, fields: fields)
     }

@@ -199,9 +199,48 @@ final class RemiloIOSEngine {
         return try commit()
     }
 
-    private static func calendarInstanceFields(_ record: IOSReminder) -> IOSCalendarSeriesInstanceEdit.Fields {
+    static func calendarInstanceFields(_ record: IOSReminder) -> IOSCalendarSeriesInstanceEdit.Fields {
         .init(title: record.title, notes: record.notes, eventStartMs: record.eventStartMs, eventEndMs: record.eventEndMs,
               allDay: record.allDay, zoneID: record.zoneID)
+    }
+
+    func acknowledgeCalendarSeriesInstance(_ confirmation: IOSCalendarSeriesInstanceConfirmation,
+                                           authorize: @MainActor @Sendable () throws -> Bool) async throws -> IOSCalendarSeriesInstanceResult {
+        await acquire()
+        defer { release() }
+        let edit = confirmation.edit
+        let operationID = Self.calendarInboundPrefix + "series-instance-confirm:" + confirmation.operationID.uuidString.lowercased()
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        let fingerprint = Data(SHA256.hash(data: try encoder.encode(confirmation)))
+        var state = try read()
+        try Task.checkCancellation()
+        guard try authorize() else { return .deferred }
+        if let receipt = state.receipts[operationID] {
+            guard receipt.fingerprint == fingerprint else { throw IOSInputFailure("OPERATION_REUSED") }
+            let result = try JSONDecoder().decode(IOSCalendarSeriesInstanceResult.self, from: receipt.result)
+            if result == .applied { try await drain() }
+            return result
+        }
+        let result: IOSCalendarSeriesInstanceResult
+        if let record = state.reminders[edit.occurrenceID], record.active {
+            guard record.segmentID == edit.series.segmentID, record.nominalSlot == edit.nominalSlot,
+                  record.revision >= edit.revision, record.calendarInstanceEditBaseline == edit.baseline,
+                  record.calendarInstanceID == edit.knownEventID,
+                  state.series[edit.series.segmentID]?.familyID == edit.series.familyID,
+                  Self.isCalendarImportedFamily(edit.series.familyID, in: state) else { return .needsReview }
+            result = try reconcileCalendarInstanceConfirmation(confirmation, record: record, state: &state, now: iosMillis(Date()))
+        } else {
+            result = .ignored
+        }
+        guard result == .applied || result == .ignored else { return result }
+        try Task.checkCancellation()
+        guard try authorize() else { return .deferred }
+        state.receipts[operationID] = IOSOperationReceipt(fingerprint: fingerprint, occurrenceID: nil, registrationID: nil,
+            seriesSegmentID: edit.series.familyID, result: try encoder.encode(result), finalized: true)
+        try commit(state, notify: result == .applied)
+        if result == .applied { try await drain() }
+        return result
     }
 
     private static func isCalendarImportedFamily(_ familyID: String, in state: IOSDatabase) -> Bool {
