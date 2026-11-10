@@ -317,8 +317,36 @@ enum ManagedSetupChecks {
                          afterImport?.pending.contains { $0.eventID == "resume-unselected" } == false)
             let replayedImport = try await restartedRuntime.syncManagedIncoming(expectedRevision: revision)
             precondition(replayedImport.imported == 0 && local.commands.count == 3)
+
+            let syncID = UUID()
+            let requestsBeforeCapture = fixture.requests
+            let captured = try await restartedRuntime.captureGlobalSync(syncID, expectedRevision: revision)
+            precondition(captured.outcome == nil && captured.startedAtMs == nil && fixture.requests == requestsBeforeCapture,
+                         "A global request is durable before Google I/O")
+            try await restartedRuntime.runGlobalSync(syncID, expectedRevision: revision) { _ in throw Failure.network }
+            let waiting = try restartedRuntime.globalSyncStatus(syncID, expectedRevision: revision)
+            precondition(waiting?.request.outcome == .pending && waiting?.request.reason == "NETWORK")
+            let afterRestart = runtime().0
+            let replay = try await afterRestart.captureGlobalSync(syncID, expectedRevision: revision)
+            precondition(replay == waiting?.request)
+            try await afterRestart.runGlobalSync(syncID, expectedRevision: revision) { _ in 0 }
+            let globalStatus = try afterRestart.globalSyncStatus(syncID, expectedRevision: revision)
+            let globalSummary = try await afterRestart.savedSyncSummary()
+            precondition(globalStatus?.current == true && globalStatus?.request.outcome == .needsReview &&
+                         globalStatus?.request.pages == 1 && globalStatus?.request.checked == 2 &&
+                         globalStatus?.request.children?.count == 2 && globalStatus?.request.startedAtMs == waiting?.request.startedAtMs &&
+                         globalSummary.request?.id == syncID && fixture.posts == 0,
+                         "Resume one global request, reuse native link checks, and preserve a known review issue")
+            let retiredSync = UUID()
+            _ = try await afterRestart.captureGlobalSync(retiredSync, expectedRevision: revision)
             let disabled = try reopened.changeMode(.disabled, operationID: UUID(), expectedRevision: resumedView.bindingRevision,
                                                    expectedConnectionRevision: revision)
+            try await afterRestart.runGlobalSync(retiredSync, expectedRevision: revision) { _ in
+                preconditionFailure("An old global request cannot run after the Calendar scope changes")
+            }
+            let staleSync = try afterRestart.globalSyncStatus(retiredSync, expectedRevision: revision)
+            let newSummary = try await afterRestart.savedSyncSummary()
+            precondition(staleSync?.current == false && staleSync?.request.startedAtMs == nil && newSummary.request == nil)
             let disabledView = try setup.view(expectedRevision: revision)
             let heldAfterDisable = try setup.heldBinding(authorized.account)
             precondition(disabledView.mode == .disabled && disabledView.binding == resumedView.binding &&

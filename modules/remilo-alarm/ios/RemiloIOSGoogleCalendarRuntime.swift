@@ -14,6 +14,7 @@ final class RemiloIOSGoogleCalendarRuntime {
     typealias Import = RemiloIOSGoogleCalendarImport
     typealias ImportJournal = RemiloIOSGoogleCalendarImportJournal
     typealias Inbox = RemiloIOSGoogleCalendarManagedInbox
+    typealias SyncRequest = Inbox.Journal.SyncRequest
     nonisolated static let automaticStatusChangeKey = "calendarStatusOnly"
 
     enum Authorization: Equatable { case connectOrChangeAccount, reauthorizeCurrentAccount, writeOwnedEvents }
@@ -57,12 +58,14 @@ final class RemiloIOSGoogleCalendarRuntime {
     let publication: RemiloIOSGoogleCalendarPublicationRuntime?
     let manualLink: RemiloIOSGoogleCalendarManualLinkRuntime?
     let managedSetup: RemiloIOSGoogleCalendarManagedSetup?
+    private let managedSetupJournal: Inbox.Journal?
     private let managedImportSound: @MainActor () throws -> Import.Sound
     private let seriesText: SeriesTextAuthority?
     private var seriesTextWriter: RemiloIOSGoogleCalendarSeriesTextWriter?
     private var reviews: [Import.Review] = []
     private var importingManaged = false
     private var advancingManagedSetups: Set<UUID> = []
+    private var runningSyncRequest: UUID?
 
     struct ManagedImportPass: Sendable {
         var pages = 0
@@ -70,6 +73,7 @@ final class RemiloIOSGoogleCalendarRuntime {
         var needsReview = 0
         var linked = 0
         var updatedSeries = 0
+        var updatedFamilies = Set<String>()
         var resumedSeries = 0
         var continuation = false
     }
@@ -82,6 +86,9 @@ final class RemiloIOSGoogleCalendarRuntime {
         var candidateReview = 0
         var setupReview = 0
         var blocking = 0
+        var unconfirmed = false
+        var accessRequired = false
+        var request: SyncRequest?
 
         var review: Int { reminderReview + candidateReview + setupReview }
     }
@@ -101,6 +108,7 @@ final class RemiloIOSGoogleCalendarRuntime {
         self.scheduler = scheduler
         self.publication = publication
         self.manualLink = manualLink
+        self.managedSetupJournal = managedSetupJournal
         self.managedImportSound = managedImportSound
         self.seriesText = seriesText
         self.managedSetup = managedSetupJournal.map {
@@ -130,12 +138,16 @@ final class RemiloIOSGoogleCalendarRuntime {
         var blocking = Set(links.compactMap { ["UnconfirmedWrite", "AccessRequired"].contains($0.value.reason) ? $0.key : nil })
 
         var summary = SyncSummary(connected: true)
+        summary.unconfirmed = links.values.contains { $0.state == .unconfirmed }
+        summary.accessRequired = links.values.contains { $0.reason == "AccessRequired" }
         if let setup = managedSetup, let binding,
            let id = binding.pendingOperationID ?? binding.retiredCreationOperationID,
            let operation = try setup.operation(id, expectedRevision: view.revision) {
             let status = try setup.status(operation, connection: view, advancing: isAdvancingManagedSetup(id))
             if ["NeedsReview", "Unconfirmed", "NeedsAccess"].contains(status.stage) { summary.setupReview = 1 }
             if ["Unconfirmed", "NeedsAccess"].contains(status.stage) { summary.blocking += 1 }
+            summary.unconfirmed = summary.unconfirmed || status.stage == "Unconfirmed"
+            summary.accessRequired = summary.accessRequired || status.stage == "NeedsAccess"
         }
         let observations = progress?.pending ?? []
         summary.candidateReview = observations.filter { if case .needsReview = $0.kind { return true }; return false }.count
@@ -152,6 +164,7 @@ final class RemiloIOSGoogleCalendarRuntime {
             if entry.phase == .sent {
                 review.insert(id)
                 blocking.insert(id)
+                summary.unconfirmed = true
             } else if !latest {
                 continue
             } else if entry.phase == .waiting, entry.managedLease == nil || entry.managedLease == outgoingLease {
@@ -180,6 +193,7 @@ final class RemiloIOSGoogleCalendarRuntime {
                 if unconfirmed.contains(series.receipt.operationID) {
                     review.insert(id)
                     blocking.insert(id)
+                    summary.unconfirmed = true
                 } else if item.issue != nil {
                     review.insert(id)
                 } else if item.priorLease == lease, view.canWriteOwnedEvents {
@@ -196,8 +210,210 @@ final class RemiloIOSGoogleCalendarRuntime {
         summary.pending += pending.count
         summary.reminderReview = review.count
         summary.blocking += blocking.count
+        summary.request = try managedSetupJournal?.latestSyncRequest(account: account)
         return summary
     }
+
+    func captureGlobalSync(_ id: UUID, expectedRevision: Int) async throws -> SyncRequest {
+        try requireForeground()
+        guard let managedSetupJournal else { throw Failure.invalidConfiguration }
+        let account = try connection.savedAccount(expectedRevision: expectedRevision)
+        if try managedSetupJournal.syncRequest(id, account: account) == nil {
+            if let manualLink {
+                guard try manualLink.operation(id, expectedConnectionRevision: expectedRevision) == nil,
+                      try manualLink.transferOperation(id, expectedConnectionRevision: expectedRevision) == nil,
+                      try manualLink.associationStatus(id, expectedConnectionRevision: expectedRevision) == nil else {
+                    throw Failure.operationReused
+                }
+            }
+            guard try publication?.operations(expectedConnectionRevision: expectedRevision).contains(where: { $0.entry.identity.operationID == id }) != true,
+                  try await importJournal.savedOperation(id, viewingAs: account) == nil else { throw Failure.operationReused }
+            try requireForeground()
+            guard try connection.savedAccount(expectedRevision: expectedRevision) == account else { throw Failure.staleConnection }
+        }
+        let request = try managedSetupJournal.captureSyncRequest(id, account: account)
+        #if os(iOS)
+        if request.retryable, try managedSetupJournal.syncRequest(id, account: account)?.current == true {
+            requestedGlobalSync = id
+            requestAutomaticPass(.foreground)
+        }
+        #endif
+        return request
+    }
+
+    func globalSyncStatus(_ id: UUID, expectedRevision: Int) throws -> (request: SyncRequest, current: Bool, running: Bool)? {
+        try requireForeground()
+        let account = try connection.savedAccount(expectedRevision: expectedRevision)
+        guard let saved = try managedSetupJournal?.syncRequest(id, account: account) else { return nil }
+        return (saved.request, saved.current, runningSyncRequest == id)
+    }
+
+    func runGlobalSync(_ id: UUID, expectedRevision: Int, outgoing: (Int) async throws -> Int) async throws {
+        guard runningSyncRequest == nil, let journal = managedSetupJournal else { return }
+        let account = try connection.savedAccount(expectedRevision: expectedRevision)
+        guard let saved = try journal.syncRequest(id, account: account), saved.current, saved.request.retryable else { return }
+        runningSyncRequest = id
+        defer { runningSyncRequest = nil }
+        var request = saved.request
+        func requireScope() throws {
+            try requireForeground()
+            try Task.checkCancellation()
+            guard try connection.savedAccount(expectedRevision: expectedRevision) == account,
+                  try journal.syncRequest(id, account: account)?.current == true else { throw Failure.staleConnection }
+        }
+        try requireScope()
+        if request.startedAtMs == nil { request.startedAtMs = Self.syncTime() }
+        request.finishedAtMs = nil
+        request.outcome = nil
+        request.reason = nil
+        try journal.checkpointSyncRequest(request, account: account)
+        do {
+            let access = try connection.view().access
+            guard access == .ownedCalendars || access == .managedCreation else { throw Failure.needsAccess }
+            try requireCurrentAccount(account)
+            request.published += try await outgoing(expectedRevision)
+            try requireScope()
+            try journal.checkpointSyncRequest(request, account: account)
+            var changedSeries = request.changedSeries ?? []
+            if !importingManaged, let seriesTextWriter {
+                let lease = try managedSetup?.activeSeriesLease(account)
+                let prior = try await globalSeriesBaselines(account: account, lease: lease)
+                try requireScope()
+                if try await seriesTextWriter.sync(expectedRevision: expectedRevision) {
+                    let current = try await globalSeriesBaselines(account: account, lease: lease)
+                    for (family, series) in current {
+                        guard let previous = prior[family] else { continue }
+                        if !previous.baseline.agreesWith(series.baseline) || previous.exceptions != series.exceptions {
+                            changedSeries.insert(family)
+                        }
+                    }
+                }
+                try requireScope()
+                request.changedSeries = changedSeries
+                try journal.checkpointSyncRequest(request, account: account)
+            }
+            try requireScope()
+            var continuation = false
+            if let managedSetup, try managedSetup.hasActiveIncomingBinding(expectedRevision: expectedRevision) {
+                let pass = try await syncManagedIncoming(expectedRevision: expectedRevision)
+                try requireScope()
+                request.pages += pass.pages
+                request.imported += pass.imported
+                changedSeries.formUnion(pass.updatedFamilies)
+                request.changedSeries = changedSeries
+                continuation = pass.continuation || pass.resumedSeries > 0
+                try journal.checkpointSyncRequest(request, account: account)
+            }
+            let view = try connection.view()
+            if let manualLink {
+                let childIDs = Set((request.children ?? []).map(\.id))
+                let transfers = try manualLink.transferOperations(expectedConnectionRevision: expectedRevision)
+                    .filter { !childIDs.contains($0.operationID) && $0.transfer?.automatic != nil &&
+                        ($0.phase == .sent || ($0.phase.pending && $0.transfer?.automatic?.kind == .transfer)) }
+                for transfer in transfers.prefix(4) {
+                    try requireScope()
+                    _ = try await manualLink.retry(transfer.operationID, expectedConnectionRevision: expectedRevision)
+                }
+                try requireScope()
+                if view.canWriteOwnedEvents {
+                    _ = try await managedSetup?.syncResumedLinks(manualLink, expectedRevision: expectedRevision)
+                    try requireScope()
+                }
+            }
+            let result = try await syncGlobalChildren(&request, account: account, view: view, requireScope: requireScope)
+            let summary = try await savedSyncSummary()
+            try requireScope()
+            let mode = try managedSetup?.view(expectedRevision: expectedRevision).mode
+            request.review = max(summary.review, result.review)
+            request.pending = max(summary.pending, result.pending, continuation ? 1 : 0)
+            if summary.accessRequired || result.accessRequired { request.outcome = .accessRequired }
+            else if summary.unconfirmed || result.unconfirmed { request.outcome = .unconfirmed }
+            else if request.review > 0 { request.outcome = .needsReview }
+            else if mode == .paused && summary.automatic == 0 && request.checked == 0 { request.outcome = .paused }
+            else if result.failed { request.outcome = .failed }
+            else if request.pending > 0 { request.outcome = .pending }
+            else if result.stale || request.checked + request.pages + request.published == 0 { request.outcome = .notChecked }
+            else { request.outcome = request.changed + request.imported + request.published > 0 ? .synced : .noChanges }
+        } catch is CancellationError { return }
+        catch {
+            try requireScope()
+            if let failure = error as? Failure {
+                request.reason = failure.rawValue
+                if [.needsAccess, .auth, .accountChanged].contains(failure) { request.outcome = .accessRequired }
+                else if [.network, .retry, .budget, .cancelled, .staleConnection].contains(failure) { request.outcome = .pending }
+                else { request.outcome = .failed }
+            } else if (error as? Import.Failure) == .operationPending || (error as? LinkStore.Rejection) == .operationPending {
+                request.outcome = .pending
+            } else { request.outcome = .failed }
+            if request.outcome == .pending { request.pending = max(1, request.pending) }
+        }
+        request.finishedAtMs = Self.syncTime()
+        try requireScope()
+        try journal.checkpointSyncRequest(request, account: account)
+    }
+
+    private typealias LinkStore = RemiloIOSGoogleCalendarManualLinkStore
+
+    private func globalSeriesBaselines(account: Import.Account, lease: Inbox.Journal.Lease?) async throws
+        -> [String: ImportJournal.SeriesTextExport] {
+        guard let lease else { return [:] }
+        let entries = try await importJournal.seriesTextExports(viewingAs: account, lease: lease)
+        return Dictionary(entries.compactMap { entry in entry.receipt.local.map { ($0.id, entry) } },
+                          uniquingKeysWith: { previous, _ in previous })
+    }
+
+    private struct GlobalChildResult {
+        var pending = 0
+        var review = 0
+        var unconfirmed = false
+        var accessRequired = false
+        var failed = false
+        var stale = false
+    }
+
+    private func syncGlobalChildren(_ request: inout SyncRequest, account: Import.Account, view: Connection.View,
+                                    requireScope: () throws -> Void) async throws -> GlobalChildResult {
+        var result = GlobalChildResult()
+        request.checked = 0
+        request.changed = request.changedSeries?.count ?? 0
+        guard let manualLink, let managedSetupJournal else { return result }
+        if request.children == nil {
+            let children = try manualLink.globalSyncChildren(view)
+            guard children.count <= 1_000 else { throw Failure.discoveryLimit }
+            request.children = children
+            try managedSetupJournal.checkpointSyncRequest(request, account: account)
+        }
+        let budget = RemiloIOSGoogleCalendarHTTP.Budget()
+        var attempted = 0
+        for child in request.children ?? [] {
+            try requireScope()
+            var status = try manualLink.associationStatus(child.id, expectedConnectionRevision: view.revision)
+            if status?.request.outcome == nil, attempted < 8, budget.hasTimeRemaining {
+                attempted += 1
+                do { status = try await manualLink.runGlobalSyncChild(child, account: account) }
+                catch LinkStore.Rejection.operationPending {}
+                catch LinkStore.Rejection.stalePreview { result.stale = true; continue }
+                catch RemiloIOSGoogleCalendarManualLink.Failure.stalePreview { result.stale = true; continue }
+                catch RemiloIOSGoogleCalendarManualLink.Failure.ineligible { result.stale = true; continue }
+            }
+            if status?.request.checked == true { request.checked += 1 }
+            if status?.request.changed == true { request.changed += 1 }
+            switch status?.request.outcome {
+            case .none:
+                if status?.transfer?.phase == .sent { result.unconfirmed = true }
+                else { result.pending += 1 }
+            case .needsReview?: result.review += 1
+            case .accessRequired?: result.accessRequired = true
+            case .failed?: result.failed = true
+            case .paused?, .scopeChanged?: result.stale = true
+            case .synced?, .noChanges?:
+                if status?.currentScope != true { result.stale = true }
+            }
+        }
+        return result
+    }
+
+    private static func syncTime() -> Int64 { Int64((Date().timeIntervalSince1970 * 1_000).rounded()) }
 
     func isAdvancingManagedSetup(_ operation: UUID) -> Bool {
         advancingManagedSetups.contains(operation)
@@ -408,7 +624,11 @@ final class RemiloIOSGoogleCalendarRuntime {
                 }
                 if let disposition {
                     switch disposition {
-                    case .updated: result.updatedSeries += 1
+                    case .updated:
+                        result.updatedSeries += 1
+                        if let receipt = match.textWork?.receipt ?? match.instanceWork?.receipt, let family = receipt.local?.id {
+                            result.updatedFamilies.insert(family)
+                        }
                     case .review: result.needsReview += 1
                     case .deferred:
                         result.continuation = true
@@ -941,6 +1161,7 @@ final class RemiloIOSGoogleCalendarRuntime {
     private static let automaticBudget = 4
     private var automaticWork: Task<Void, Never>?
     private var requestedAutomaticPass: AutomaticOpportunity?
+    private var requestedGlobalSync: UUID?
     private var automaticAccountGeneration: Int?
     private var automaticCursor: String?
     private var automaticLocalVersions: [String: AutomaticLocalVersion] = [:]
@@ -1003,7 +1224,24 @@ final class RemiloIOSGoogleCalendarRuntime {
 
     private func runAutomaticPass(_ opportunity: AutomaticOpportunity) async {
         guard let view = try? connection.view(), view.connected else { return }
-        try? await syncManagedOutgoing(expectedRevision: view.revision)
+        if opportunity == .foreground, let account = try? connection.savedAccount(expectedRevision: view.revision) {
+            let request = requestedGlobalSync ?? (try? managedSetupJournal?.latestSyncRequest(account: account, pendingOnly: true))?.id
+            requestedGlobalSync = nil
+            if let request {
+                let before = try? managedSetupJournal?.syncRequest(request, account: account)?.request
+                try? await runGlobalSync(request, expectedRevision: view.revision, outgoing: syncManagedOutgoing)
+                if requestedGlobalSync == nil, let before, let saved = try? managedSetupJournal?.syncRequest(request, account: account),
+                   saved.current, saved.request.outcome == .pending, saved.request.reason == nil,
+                   saved.request.checked > before.checked || saved.request.imported > before.imported ||
+                    saved.request.published > before.published || saved.request.pages - before.pages >= 10 {
+                    requestedGlobalSync = request
+                    requestAutomaticPass(.foreground)
+                }
+                NotificationCenter.default.post(name: .remiloIOSChange, object: nil, userInfo: [Self.automaticStatusChangeKey: true])
+                return
+            }
+        }
+        _ = try? await syncManagedOutgoing(expectedRevision: view.revision)
         if !importingManaged, (try? await seriesTextWriter?.sync(expectedRevision: view.revision)) == true {
             NotificationCenter.default.post(name: .remiloIOSChange, object: nil, userInfo: [Self.automaticStatusChangeKey: true])
         }
@@ -1175,14 +1413,15 @@ final class RemiloIOSGoogleCalendarRuntime {
         return candidates
     }
 
-    private func syncManagedOutgoing(expectedRevision: Int) async throws {
-        guard let publication else { return }
+    private func syncManagedOutgoing(expectedRevision: Int) async throws -> Int {
+        guard let publication else { return 0 }
         let candidates = try managedOutgoingCandidates(expectedRevision: expectedRevision)
         let changed = try await publication.syncManaged(candidates, expectedConnectionRevision: expectedRevision)
         let linked = try await attachManagedPublications(publication, expectedRevision: expectedRevision)
         if !changed.isEmpty || linked {
             NotificationCenter.default.post(name: .remiloIOSChange, object: nil, userInfo: [Self.automaticStatusChangeKey: true])
         }
+        return changed.filter { $0.phase == .published }.count
     }
 
     private func attachManagedPublications(_ publication: RemiloIOSGoogleCalendarPublicationRuntime,

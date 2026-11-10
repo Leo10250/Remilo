@@ -121,6 +121,43 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         case enabled = "Enabled", paused = "Paused", disabled = "Disabled"
     }
 
+    struct SyncRequest: Codable, Equatable, Sendable {
+        enum Outcome: String, Codable, Sendable {
+            case pending = "Pending", noChanges = "NoChanges", synced = "Synced"
+            case needsReview = "NeedsReview", accessRequired = "AccessRequired", unconfirmed = "Unconfirmed"
+            case paused = "Paused", failed = "Failed", notChecked = "NotChecked"
+        }
+
+        struct Child: Codable, Equatable, Sendable {
+            let id: UUID
+            let occurrenceID: String
+            let linkRevision: Int
+            let activationRevision: Int
+        }
+
+        let id: UUID
+        let account: Account
+        let bindingRevision: Int
+        let authEpoch: Int
+        let sequence: Int
+        let setupOperationID: UUID?
+        var startedAtMs: Int64?
+        var finishedAtMs: Int64?
+        var outcome: Outcome?
+        var reason: String?
+        var children: [Child]?
+        var changedSeries: Set<String>?
+        var checked = 0
+        var changed = 0
+        var pages = 0
+        var imported = 0
+        var published = 0
+        var review = 0
+        var pending = 0
+
+        var retryable: Bool { outcome == nil || outcome == .pending || outcome == .unconfirmed }
+    }
+
     struct ModeReceipt: Codable, Equatable, Sendable {
         let account: Account
         let expectedRevision: Int
@@ -218,6 +255,7 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         var resumedLinkProofs: [ResumeLink]?
         var resumedSeriesProofs: [ResumeSeries]?
         var resumeCheckpointScope: Inbox.Scope?
+        var syncRequests: [UUID: SyncRequest]?
 
         var mode: Mode { savedMode ?? (binding == nil ? .disabled : .enabled) }
     }
@@ -265,6 +303,48 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
     func modeOperation(_ id: UUID, viewingAs account: Account) throws -> ModeReceipt? {
         guard let receipt = try read().modeReceipts?[id], Self.sameOwner(receipt.account, account) else { return nil }
         return receipt
+    }
+
+    private static func current(_ request: SyncRequest, state: State, account: Account) -> Bool {
+        request.account == account && request.bindingRevision == state.bindingRevision && request.authEpoch == state.authEpoch &&
+            request.setupOperationID == state.pendingOperationID
+    }
+
+    func captureSyncRequest(_ id: UUID, account: Account) throws -> SyncRequest {
+        var state = try read()
+        if let saved = state.syncRequests?[id] {
+            guard Self.sameOwner(saved.account, account) else { throw Failure.operationReused }
+            return saved
+        }
+        guard state.operations[id] == nil, state.modeReceipts?[id] == nil else { throw Failure.operationReused }
+        var requests = state.syncRequests ?? [:]
+        let request = SyncRequest(id: id, account: account, bindingRevision: state.bindingRevision,
+                                  authEpoch: state.authEpoch, sequence: requests.count + 1, setupOperationID: state.pendingOperationID)
+        requests[id] = request
+        state.syncRequests = requests
+        try write(state)
+        return request
+    }
+
+    func syncRequest(_ id: UUID, account: Account) throws -> (request: SyncRequest, current: Bool)? {
+        let state = try read()
+        guard let request = state.syncRequests?[id], Self.sameOwner(request.account, account) else { return nil }
+        return (request, Self.current(request, state: state, account: account))
+    }
+
+    func latestSyncRequest(account: Account, pendingOnly: Bool = false) throws -> SyncRequest? {
+        let state = try read()
+        let latest = state.syncRequests?.values.filter { Self.current($0, state: state, account: account) }
+            .max { $0.sequence < $1.sequence }
+        return pendingOnly && latest?.retryable != true ? nil : latest
+    }
+
+    func checkpointSyncRequest(_ request: SyncRequest, account: Account) throws {
+        var state = try read()
+        guard let saved = state.syncRequests?[request.id], saved.sequence == request.sequence,
+              Self.current(saved, state: state, account: account), saved.retryable else { throw Failure.staleConnection }
+        state.syncRequests?[request.id] = request
+        try write(state)
     }
 
     func incomingScope(_ account: Account) throws -> RemiloIOSGoogleCalendarManagedInbox.Scope {
@@ -448,7 +528,7 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
                   receipt.selections == selections else { throw Failure.operationReused }
             return receipt
         }
-        guard state.operations[operationID] == nil else { throw Failure.operationReused }
+        guard state.operations[operationID] == nil, state.syncRequests?[operationID] == nil else { throw Failure.operationReused }
         return nil
     }
 
@@ -522,7 +602,7 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
                   saved.mode == mode else { throw Failure.operationReused }
             return saved
         }
-        guard state.operations[operationID] == nil else { throw Failure.operationReused }
+        guard state.operations[operationID] == nil, state.syncRequests?[operationID] == nil else { throw Failure.operationReused }
         guard expectedRevision == state.bindingRevision else { throw Rejection.stalePreview }
         let ownsBinding = state.binding?.belongs(to: account) == true
         let pending = state.pendingOperationID.flatMap { state.operations[$0] }
@@ -609,7 +689,7 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
 
     func capture(operationID: UUID, review: Review, currentAccount: Account) throws -> Entry {
         var state = try read()
-        guard state.modeReceipts?[operationID] == nil else { throw Failure.operationReused }
+        guard state.modeReceipts?[operationID] == nil, state.syncRequests?[operationID] == nil else { throw Failure.operationReused }
         if let existing = state.operations[operationID] {
             guard Self.sameOwner(existing.account, currentAccount), existing.review == review else { throw Failure.operationReused }
             return existing

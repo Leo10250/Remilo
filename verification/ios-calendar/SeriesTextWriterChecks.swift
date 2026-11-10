@@ -197,6 +197,14 @@ enum SeriesTextWriterChecks {
         let activeSummary = try await runtime().savedSyncSummary()
         precondition(repeated.resumedSeries == 0 && repeated.updatedSeries == 0 && fixture.localSeries?.revision == 2 &&
                      activeSummary.automatic == 1 && activeSummary.reminderReview == 0)
+        let sync = runtime()
+        let id = UUID()
+        _ = try await sync.captureGlobalSync(id, expectedRevision: revision)
+        try await sync.runGlobalSync(id, expectedRevision: revision) { _ in 0 }
+        let checked = try sync.globalSyncStatus(id, expectedRevision: revision)
+        precondition(checked?.current == true && checked?.request.outcome == .noChanges &&
+                     checked?.request.pages == 1 && checked?.request.finishedAtMs != nil,
+                     "Only a completed collection check can confirm a clean global result")
     }
 
     private static func instanceSync(_ fixture: Fixture, directory: URL, connection: Service.Runtime.Connection,

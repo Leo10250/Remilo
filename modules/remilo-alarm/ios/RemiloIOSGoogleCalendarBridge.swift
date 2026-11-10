@@ -44,12 +44,21 @@ final class RemiloIOSGoogleCalendarBridge {
     func syncSummary() async throws -> [String: Any] {
         let runtime = try Runtime.configuredForegroundRuntime()
         let summary = try await runtime?.savedSyncSummary() ?? .init()
+        let request = summary.request
+        let lastRun = request.flatMap { request -> [String: Any]? in
+            guard let time = request.finishedAtMs else { return nil }
+            return ["atMs": time, "pages": request.pages, "attempted": request.children?.count ?? 0,
+                    "confirmed": request.checked, "continuation": request.retryable,
+                    "checked": request.checked, "changed": request.changed, "imported": request.imported,
+                    "published": request.published, "review": request.review]
+        }
         return [
             "connected": summary.connected, "automaticCount": summary.automatic, "pendingCount": summary.pending,
             "reviewCount": summary.review,
             "reviewCounts": ["reminders": summary.reminderReview, "candidates": summary.candidateReview,
                              "setup": summary.setupReview, "total": summary.review],
             "attention": ["blocking": summary.blocking, "tone": summary.blocking > 0 ? "danger" : "warning"],
+            "syncRequestId": iosBridgeValue(request?.id.uuidString.lowercased()), "lastRun": iosBridgeValue(lastRun),
             "notifications": ["enabled": false, "revision": 1],
         ]
     }
@@ -489,9 +498,15 @@ final class RemiloIOSGoogleCalendarBridge {
                                                      expectedLinkRevision: linkRevision)
             return ["unlinked": true]
         case "RequestCalendarSync":
-            guard let values = command["scope"] as? [String: Any], values["kind"] as? String == "Association" else {
+            guard let values = command["scope"] as? [String: Any], let scope = values["kind"] as? String else {
                 throw Failure.invalidInput
             }
+            if scope == "AllAuthorized" {
+                guard values["occurrenceId"] == nil else { throw Failure.invalidInput }
+                let request = try await runtime.captureGlobalSync(operation, expectedRevision: revision)
+                return ["operationId": request.id.uuidString.lowercased(), "captured": true]
+            }
+            guard scope == "Association" else { throw Failure.invalidInput }
             let id = try IOSInput(values: values).text("occurrenceId", maximum: 200)
             try Self.validateOccurrenceID(id)
             let linkRevision = try Int(input.integer("expectedLinkRevision", range: 1...9_007_199_254_740_991))
@@ -502,6 +517,10 @@ final class RemiloIOSGoogleCalendarBridge {
             )
             return ["operationId": request.operationID.uuidString, "captured": true]
         case "RetryCalendarOperation":
+            if try runtime.globalSyncStatus(operation, expectedRevision: revision) != nil {
+                let request = try await runtime.captureGlobalSync(operation, expectedRevision: revision)
+                return ["operationId": request.id.uuidString.lowercased(), "captured": true]
+            }
             if let manual = runtime.manualLink, try manual.associationStatus(operation, expectedConnectionRevision: revision) != nil {
                 try manual.retryAssociation(operation, expectedConnectionRevision: revision)
                 return ["operationId": operation.uuidString, "captured": true]
@@ -548,6 +567,9 @@ final class RemiloIOSGoogleCalendarBridge {
                     "pending": 0, "review": 0, "held": 0, "children": [String](), "currentScope": current]
         }
         guard view.connected else { return nil }
+        if let status = try runtime.globalSyncStatus(id, expectedRevision: revision) {
+            return Self.globalSyncStatus(status.request, current: status.current, running: status.running)
+        }
         if let association = try runtime.manualLink?.associationStatus(id, expectedConnectionRevision: revision) {
             return Self.associationStatus(association, connection: view)
         }
@@ -852,6 +874,40 @@ final class RemiloIOSGoogleCalendarBridge {
             "lastCheckAttemptAtMs": iosBridgeValue(check?.attemptedAtMs), "lastCheckErrorCode": errorCode,
             "remoteDiffers": iosBridgeValue(check?.remoteDiffers), "requiresReview": requiresReview,
             "source": ["calendarId": record.source.calendarID, "eventId": record.source.eventID, "expectedConnectionRevision": view.revision],
+        ]
+    }
+
+    private static func globalSyncStatus(_ request: Runtime.SyncRequest, current: Bool, running: Bool) -> [String: Any] {
+        let presentation: (stage: String, action: String, outcome: String)
+        if !current {
+            presentation = ("Cancelled", "None", "ScopeChanged")
+        } else if running {
+            presentation = ("CheckingEvents", "None", "Checking")
+        } else {
+            switch request.outcome {
+            case .none, .pending?: presentation = ("Waiting", "Retry", "Pending")
+            case .unconfirmed?: presentation = ("Unconfirmed", "Retry", "Unconfirmed")
+            case .accessRequired?: presentation = ("NeedsAccess", "Authorize", "AccessRequired")
+            case .needsReview?: presentation = ("NeedsReview", "ReviewItems", "NeedsReview")
+            case .paused?: presentation = ("Paused", "None", "Paused")
+            case .failed?: presentation = ("Failed", "Retry", "Failed")
+            case .noChanges?, .synced?, .notChecked?:
+                presentation = ("Confirmed", "None", request.outcome?.rawValue ?? "NotChecked")
+            }
+        }
+        let result: [String: Any] = [
+            "scope": ["kind": "AllAuthorized"], "outcome": presentation.outcome,
+            "checked": request.checked, "changed": request.changed, "imported": request.imported,
+            "published": request.published, "startedAtMs": iosBridgeValue(request.startedAtMs),
+            "finishedAtMs": iosBridgeValue(request.finishedAtMs),
+        ]
+        return [
+            "operationId": request.id.uuidString.lowercased(), "kind": "Sync", "stage": presentation.stage,
+            "reason": request.reason.map(bridgeErrorCode) ?? "", "action": presentation.action,
+            "confirmed": request.checked, "pending": request.retryable ? max(1, request.pending) : request.pending,
+            "review": request.review, "held": 0,
+            "children": (request.children ?? []).map { $0.id.uuidString.lowercased() }, "currentScope": current,
+            "correlationComplete": current && ["Synced", "NoChanges"].contains(presentation.outcome), "syncResult": result,
         ]
     }
 

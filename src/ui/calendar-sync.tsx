@@ -356,41 +356,49 @@ export function useCalendarSync(
   scope: CalendarSyncScope,
   savedId?: string | null,
   association?: { connectionRevision: number; linkRevision: number; activationRevision: number },
+  globalConnectionRevision?: number,
 ) {
   const action = useCalendarAction(scope.kind === 'Association' ? scope.occurrenceId : 'all');
   const starting = useRef(false),
     [settling, setSettling] = useState(false);
   // Native's latest scope wins after refresh, including a request made by another screen.
   const requestId = savedId || action.operationId;
+  const revision = association?.connectionRevision ?? globalConnectionRevision;
   const status = useQuery({
     queryKey: iosReminders
-      ? ['calendar', 'operation-status', requestId, association?.connectionRevision]
+      ? ['calendar', 'operation-status', requestId, revision]
       : ['calendar', 'operation-status', requestId],
     queryFn: () =>
       iosReminders
-        ? engine().getCalendarOperationStatus(requestId!, association?.connectionRevision)
+        ? engine().getCalendarOperationStatus(requestId!, revision)
         : engine().getCalendarOperationStatus(requestId!),
-    enabled: nativeAvailable && !!requestId && (!iosReminders || !!association),
+    enabled: nativeAvailable && !!requestId && (!iosReminders || revision !== undefined),
     refetchInterval: (query) =>
       query.state.data && ['Waiting', 'CheckingEvents'].includes(query.state.data.stage)
         ? 1000
         : false,
   });
   const start = async () => {
-    if (starting.current || (iosReminders && !association)) return false;
+    if (
+      starting.current ||
+      (iosReminders && (revision === undefined || (scope.kind === 'Association' && !association)))
+    )
+      return false;
     starting.current = true;
     setSettling(true);
     try {
       return await action.run({
         kind: 'RequestCalendarSync',
         operationId:
-          !iosReminders && status.data?.stage === 'Waiting' && requestId
+          (!iosReminders || scope.kind === 'AllAuthorized') &&
+          status.data?.stage === 'Waiting' &&
+          requestId
             ? requestId
             : engine().createOperationId(),
         scope,
+        ...(iosReminders ? { expectedConnectionRevision: revision } : {}),
         ...(iosReminders && association
           ? {
-              expectedConnectionRevision: association.connectionRevision,
               expectedLinkRevision: association.linkRevision,
               expectedActivationRevision: association.activationRevision,
             }
@@ -403,11 +411,12 @@ export function useCalendarSync(
   };
   const retryRequest = () => {
     if (action.unknown) return action.retry();
-    return iosReminders && association && requestId
+    const retrySaved = association || ['Waiting', 'Unconfirmed'].includes(status.data?.stage ?? '');
+    return iosReminders && revision !== undefined && retrySaved && requestId
       ? action.run({
           kind: 'RetryCalendarOperation',
           operationId: requestId,
-          expectedConnectionRevision: association.connectionRevision,
+          expectedConnectionRevision: revision,
         })
       : start();
   };

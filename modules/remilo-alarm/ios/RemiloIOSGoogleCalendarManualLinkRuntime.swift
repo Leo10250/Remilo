@@ -586,22 +586,56 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
     func requestAssociationSync(_ id: UUID, occurrenceID: String, expectedConnectionRevision: Int,
                                 expectedLinkRevision: Int, expectedActivationRevision: Int) throws -> Store.AssociationRequest {
         let account = try viewer(expectedConnectionRevision)
+        let request = try captureAssociation(id, occurrenceID: occurrenceID, account: account,
+                                             linkRevision: expectedLinkRevision, activationRevision: expectedActivationRevision)
+        startAssociation(request, viewer: account)
+        return request
+    }
+
+    func globalSyncChildren(_ view: Connection.View) throws -> [Managed.SyncRequest.Child] {
+        let account = try viewer(view.revision)
+        let status = try savedSyncStatuses(view)
+        let requests = try store.pendingAssociationRequests(viewingAs: account)
+        return try store.links(viewingAs: account).compactMap { record in
+            guard status[record.occurrenceID]?.automatic == true, let consent = record.automatic else { return nil }
+            let pending = requests.first {
+                $0.occurrenceID == record.occurrenceID && $0.linkRevision == record.revision &&
+                    $0.activationRevision == consent.activationRevision
+            }
+            return .init(id: pending?.operationID ?? UUID(), occurrenceID: record.occurrenceID, linkRevision: record.revision,
+                         activationRevision: consent.activationRevision)
+        }
+    }
+
+    func runGlobalSyncChild(_ child: Managed.SyncRequest.Child, account: Account) async throws -> AssociationStatus {
+        let request = try captureAssociation(child.id, occurrenceID: child.occurrenceID, account: account,
+                                             linkRevision: child.linkRevision, activationRevision: child.activationRevision)
+        if request.outcome == nil, associationWorkers.insert(request.operationID).inserted {
+            defer { associationWorkers.remove(request.operationID) }
+            try await runAssociation(request, viewer: account)
+        }
+        guard let status = try associationStatus(child.id, expectedConnectionRevision: account.connectionRevision) else {
+            throw Failure.notFound
+        }
+        return status
+    }
+
+    private func captureAssociation(_ id: UUID, occurrenceID: String, account: Account,
+                                    linkRevision: Int, activationRevision: Int) throws -> Store.AssociationRequest {
+        let expectedConnectionRevision = account.connectionRevision
         let fingerprint = try Command(kind: "associationSync", connectionRevision: expectedConnectionRevision,
-                                      reviewID: nil, occurrenceID: occurrenceID, linkRevision: expectedLinkRevision,
-                                      selections: nil, activationRevision: expectedActivationRevision).fingerprint()
+                                      reviewID: nil, occurrenceID: occurrenceID, linkRevision: linkRevision,
+                                      selections: nil, activationRevision: activationRevision).fingerprint()
         if let existing = try store.associationRequest(id, viewingAs: account, fingerprint: fingerprint) {
-            startAssociation(existing, viewer: account)
             return existing
         }
-        guard let record = try store.link(occurrenceID), record.revision == expectedLinkRevision,
-              let consent = record.automatic, consent.activationRevision == expectedActivationRevision,
+        guard let record = try store.link(occurrenceID), record.revision == linkRevision,
+              let consent = record.automatic, consent.activationRevision == activationRevision,
               try permitsManagedLease(consent.managedLease, account: account),
               try local.lifecycleRevision(occurrenceID) == consent.lifecycleRevision else { throw Link.Failure.stalePreview }
         guard !checkingLinks.contains(occurrenceID) else { throw Store.Rejection.operationPending }
         try connection.requireManualLinkWrite(account: account)
-        let request = try store.captureAssociationRequest(id, fingerprint: fingerprint, record: record, viewingAs: account, at: now())
-        startAssociation(request, viewer: account)
-        return request
+        return try store.captureAssociationRequest(id, fingerprint: fingerprint, record: record, viewingAs: account, at: now())
     }
 
     func associationStatus(_ id: UUID, expectedConnectionRevision: Int) throws -> AssociationStatus? {

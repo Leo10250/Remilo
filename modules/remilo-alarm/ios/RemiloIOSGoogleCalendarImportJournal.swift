@@ -143,6 +143,10 @@ actor RemiloIOSGoogleCalendarImportJournal {
             title != Self.digest(local.title) || notes != Self.digest(local.notes)
         }
 
+        func agreesWith(_ other: Self) -> Bool {
+            title == other.title && notes == other.notes && schedule == other.schedule
+        }
+
         func acceptsExport(local: IOSCalendarSeriesTextSnapshot, remote: Import.Source, desiredSchedule: Import.Event.Schedule?) throws -> Bool {
             let current = try Self(remote)
             return (schedule == current.schedule || desiredSchedule == remote.fields.schedule) &&

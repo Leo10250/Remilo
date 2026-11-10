@@ -399,7 +399,12 @@ function ManagedCalendarSettings() {
     queryFn: () => engine().getManagedCalendarState(),
     enabled: nativeAvailable,
   });
-  const syncRequest = useCalendarSync({ kind: 'AllAuthorized' }, sync.data?.syncRequestId);
+  const syncRequest = useCalendarSync(
+    { kind: 'AllAuthorized' },
+    sync.data?.syncRequestId,
+    undefined,
+    connection.data?.revision,
+  );
   const [automaticExpanded, setAutomaticExpanded] = useState(false);
   const [selecting, setSelecting] = useState(false),
     [busy, setBusy] = useState(false),
