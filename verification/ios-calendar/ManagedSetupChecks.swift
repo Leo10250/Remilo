@@ -274,6 +274,13 @@ enum ManagedSetupChecks {
             let (restartedRuntime, restartedLinks) = runtime()
             let pendingLinks = try journal.resumedLinks(authorized.account)
             precondition(pendingLinks.count == 1 && pendingLinks.first?.0 == selectedLink)
+            fixture.recoveredVersion = "v3"
+            do {
+                try await restartedLinks.applyManagedResume(selectedLink, lease: inbox.binding.linkLease,
+                    account: authorized.account, budget: .init(), canRead: { true })
+                preconditionFailure("Changes after confirmation cannot activate an old link")
+            } catch LinkRuntime.Link.Failure.stalePreview {}
+            fixture.recoveredVersion = "v2"
             try await restartedLinks.applyManagedResume(selectedLink, lease: inbox.binding.linkLease,
                 account: authorized.account, budget: .init(), canRead: { true })
             let reactivated = try restartedLinks.automaticCandidates(expectedConnectionRevision: revision, inspectUnchanged: true)

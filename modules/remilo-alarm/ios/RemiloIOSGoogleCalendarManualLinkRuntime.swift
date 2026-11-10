@@ -50,6 +50,13 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
         var itemID: String { "association:" + occurrenceID }
     }
 
+    private struct ResumeSnapshot: Encodable {
+        let id: UUID
+        let record: Store.Record
+        let local: Publication.LocalSnapshot
+        let remote: Link.Observation
+    }
+
     struct LocalAuthority: Sendable {
         typealias Commit = @MainActor @Sendable () throws -> Checkpoint
         typealias Permission = @MainActor @Sendable () throws -> Bool
@@ -386,9 +393,8 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
             let id = record.occurrenceID
             guard let snapshot = try local.read(id) else { continue }
             do {
-                let approval = try await inspectManagedResume(id: UUID(), record: record, snapshot: snapshot, account: account,
-                                                              budget: budget, canRead: canRead)
-                let changes = Link.Comparison.compare(local: snapshot.fields, remote: approval.remote.fields, baseline: record.baseline)
+                let (approval, changes) = try await inspectManagedResume(id: UUID(), record: record, snapshot: snapshot, account: account,
+                                                                        budget: budget, canRead: canRead)
                 rows.append(.init(occurrenceID: id, title: snapshot.fields.title, approval: approval, reason: nil,
                                   inbound: changes.inbound.map(\.rawValue).sorted(), outbound: changes.outbound.map(\.rawValue).sorted()))
             } catch {
@@ -399,27 +405,34 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
         return rows
     }
 
+    @discardableResult
     func validateManagedResume(_ approval: Managed.ResumeLink, account: Account, budget: RemiloIOSGoogleCalendarHTTP.Budget,
-                               canRead: @escaping @MainActor @Sendable () -> Bool) async throws {
-        let current = try await inspectManagedResume(id: approval.id, record: approval.record, snapshot: approval.local,
-                                                     account: account, budget: budget, canRead: canRead)
+                               canRead: @escaping @MainActor @Sendable () -> Bool) async throws -> (Store.Record, Publication.LocalSnapshot) {
+        let id = approval.occurrenceID
+        guard let record = try store.link(id), record.source == approval.source, record.revision == approval.linkRevision,
+              record.automatic?.managedLease == approval.priorLease, let snapshot = try local.read(id) else {
+            throw Link.Failure.stalePreview
+        }
+        let (current, _) = try await inspectManagedResume(id: approval.id, record: record, snapshot: snapshot,
+                                                          account: account, budget: budget, canRead: canRead)
         guard current == approval else { throw Link.Failure.stalePreview }
+        return (record, snapshot)
     }
 
     func applyManagedResume(_ approval: Managed.ResumeLink, lease: Link.ManagedLease, account: Account,
                             budget: RemiloIOSGoogleCalendarHTTP.Budget,
                             canRead: @escaping @MainActor @Sendable () -> Bool) async throws {
-        let id = approval.record.occurrenceID
+        let id = approval.occurrenceID
         guard canRead(), try permitsManagedLease(lease, account: account) else { throw Failure.staleConnection }
         if let saved = try store.link(id)?.automatic, saved.resumeID == approval.id, saved.managedLease == lease { return }
         try connection.requireManualLinkWrite(account: account)
-        try await validateManagedResume(approval, account: account, budget: budget, canRead: canRead)
-        _ = try await local.permit(approval.local) { [self] in
+        let (record, snapshot) = try await validateManagedResume(approval, account: account, budget: budget, canRead: canRead)
+        _ = try await local.permit(snapshot) { [self] in
             try Task.checkCancellation()
             guard canRead(), try permitsManagedLease(lease, account: account) else { throw Failure.staleConnection }
             try connection.requireManualLinkWrite(account: account)
-            guard try local.lifecycleRevision(id) == approval.record.automatic?.lifecycleRevision else { throw Link.Failure.stalePreview }
-            return .observation(try store.resumeManaged(approval.record, id: approval.id, lease: lease, account: account))
+            guard try local.lifecycleRevision(id) == record.automatic?.lifecycleRevision else { throw Link.Failure.stalePreview }
+            return .observation(try store.resumeManaged(record, id: approval.id, lease: lease, account: account))
         }
     }
 
@@ -430,9 +443,11 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
 
     private func inspectManagedResume(id: UUID, record: Store.Record, snapshot: Publication.LocalSnapshot, account: Account,
                                       budget: RemiloIOSGoogleCalendarHTTP.Budget,
-                                      canRead: @escaping @MainActor @Sendable () -> Bool) async throws -> Managed.ResumeLink {
+                                      canRead: @escaping @MainActor @Sendable () -> Bool) async throws
+        -> (Managed.ResumeLink, Link.Comparison.Result) {
         let occurrenceID = record.occurrenceID
-        guard canRead(), let consent = record.automatic, let lease = consent.managedLease else { throw Failure.staleConnection }
+        guard canRead(), let consent = record.automatic, consent.accountGeneration == account.accountGeneration,
+              let lease = consent.managedLease else { throw Failure.staleConnection }
         func requireReviewedState() throws {
             guard try store.link(occurrenceID) == record, try local.read(occurrenceID) == snapshot,
                   try local.lifecycleRevision(occurrenceID) == consent.lifecycleRevision else { throw Link.Failure.stalePreview }
@@ -453,7 +468,14 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
                                      desired: comparison.desired, linkRevision: record.revision, checkedAtMs: now())
         if transfer.needsLocal { _ = try local.timing(snapshot, comparison.desired) }
         if transfer.needsRemote { _ = try Writer.Patch(transfer) }
-        return .init(id: id, record: record, local: snapshot, remote: remote)
+        // Retain a proof of the exact review across restart without copying
+        // private event or reminder content into the setup journal.
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        let reviewed = ResumeSnapshot(id: id, record: record, local: snapshot, remote: remote)
+        let digest = Data(SHA256.hash(data: try encoder.encode(reviewed)))
+        return (.init(id: id, occurrenceID: occurrenceID, source: record.source, linkRevision: record.revision,
+                      priorLease: lease, reviewedDigest: digest), comparison)
     }
 
     func automaticCandidates(expectedConnectionRevision: Int, inspectUnchanged: Bool) throws -> [Store.Record] {
