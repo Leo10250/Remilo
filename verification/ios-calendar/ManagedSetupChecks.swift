@@ -220,18 +220,32 @@ enum ManagedSetupChecks {
                 Setup.Journal.ResumeExport(operationID: UUID(), local: .init(occurrenceID: id, revision: 3, generation: 1),
                     originLease: saved.binding!.exportLease, waitingLease: nil)
             }
-            let resumeReview = try await reopened.previewResume(expectedRevision: revision, incoming: resumedRuntime.reviewHeldIncoming) { _, _ in
+            let resumeReview = try await reopened.previewResume(expectedRevision: revision, incoming: resumedRuntime.reviewHeldIncoming,
+                                                                 manual: resumedLinks) { _, _ in
                 heldExports.map { .init(itemID: $0.itemID, occurrenceID: $0.local.occurrenceID, title: $0.local.occurrenceID,
                                         export: $0, reason: nil) }
             }
             let selectedIncoming = ["candidate:resume-keep", "candidate:resume-changed"]
             let ready = resumeReview.imports.filter { selectedIncoming.contains($0.itemID) }
             precondition(ready.count == 2 && ready.allSatisfy { $0.approval != nil && $0.importMode == .alarm })
-            let selection = [heldExports[0].itemID] + selectedIncoming
+            guard let selectedLink = resumeReview.links.first(where: { $0.occurrenceID == recoveredLink.occurrenceID })?.approval else {
+                preconditionFailure("A paused link with matching local and remote evidence is eligible for Resume")
+            }
+            precondition(resumeReview.links.count == 2 && resumeReview.links.allSatisfy { $0.approval != nil })
+            let selection = [heldExports[0].itemID, selectedLink.itemID] + selectedIncoming
             let resumeID = UUID()
+            fixture.recoveredVersion = "v3"
+            do {
+                _ = try await reopened.confirmResume(resumeID, reviewID: resumeReview.review.id, selectedItemIDs: selection,
+                    expectedRevision: revision, manual: resumedLinks) { _, _, _ in
+                        preconditionFailure("A changed Google event must return to review before the binding can Resume")
+                    }
+                preconditionFailure("A different remote version cannot resume the reviewed link")
+            } catch LinkRuntime.Link.Failure.stalePreview {}
+            fixture.recoveredVersion = "v2"
             do {
                 _ = try await reopened.confirmResume(resumeID, reviewID: resumeReview.review.id,
-                    selectedItemIDs: selection, expectedRevision: revision) { _, _, _ in
+                    selectedItemIDs: selection, expectedRevision: revision, manual: resumedLinks) { _, _, _ in
                         throw Setup.Journal.Rejection.stalePreview
                     }
                 preconditionFailure("Changed local work cannot activate the binding")
@@ -239,7 +253,7 @@ enum ManagedSetupChecks {
             let afterStale = try reopened.view(expectedRevision: revision)
             precondition(afterStale == paused)
             let resumedMode = try await reopened.confirmResume(resumeID, reviewID: resumeReview.review.id,
-                selectedItemIDs: selection, expectedRevision: revision) { selected, binding, account in
+                selectedItemIDs: selection, expectedRevision: revision, manual: resumedLinks) { selected, binding, account in
                     precondition(selected == [heldExports[0]] && binding == saved.binding && account == authorized.account)
                 }
             let resumedView = try reopened.view(expectedRevision: revision)
@@ -257,7 +271,22 @@ enum ManagedSetupChecks {
                 }
             precondition(replayResume == resumedMode)
             fixture.scanAfterResume = true
-            let restartedRuntime = runtime().0
+            let (restartedRuntime, restartedLinks) = runtime()
+            let pendingLinks = try journal.resumedLinks(authorized.account)
+            precondition(pendingLinks.count == 1 && pendingLinks.first?.0 == selectedLink)
+            try await restartedLinks.applyManagedResume(selectedLink, lease: inbox.binding.linkLease,
+                account: authorized.account, budget: .init(), canRead: { true })
+            let reactivated = try restartedLinks.automaticCandidates(expectedConnectionRevision: revision, inspectUnchanged: true)
+            precondition(reactivated.count == 1 && reactivated.first?.source == recoveredLink.source &&
+                         reactivated.first?.baseline == recoveredLink.baseline && reactivated.first?.revision == recoveredLink.revision + 1 &&
+                         reactivated.first?.automatic?.activationRevision == activation + 1 &&
+                         reactivated.first?.automatic?.managedLease == inbox.binding.linkLease,
+                         "Only the selected link regains authority, with its original source and baseline")
+            let replayedLink = try await setup.syncResumedLinks(runtime().1, expectedRevision: revision)
+            let settledLinks = try journal.resumedLinks(authorized.account)
+            let afterReplay = try restartedLinks.automaticCandidates(expectedConnectionRevision: revision, inspectUnchanged: true)
+            precondition(replayedLink && settledLinks.isEmpty && afterReplay == reactivated,
+                         "A restart between link activation and journal cleanup cannot rotate the link twice")
             let importedAfterResume = try await restartedRuntime.syncManagedIncoming(expectedRevision: revision)
             let afterImport = try reopened.savedIncomingProgress(expectedRevision: revision)
             let remainingApprovals = try reopened.resumedImports(authorized.account)
@@ -356,6 +385,7 @@ enum ManagedSetupChecks {
         private var incoming = false
         var stageResumeCandidates = false
         var scanAfterResume = false
+        var recoveredVersion = "v2"
         private(set) var resumeStartedFrom: String?
         private(set) var initialPages: [Int] = []
         private(set) var deltaTokens: [String] = []
@@ -413,7 +443,8 @@ enum ManagedSetupChecks {
             }
             if url.deletingLastPathComponent().lastPathComponent == "events" {
                 let id = url.lastPathComponent
-                let event = id == "all-day" ? allDayEvent() : timedEvent(id, version: scanAfterResume && id == "resume-changed" ? "v3" : "v2")
+                let version = id == "recovered" ? recoveredVersion : (scanAfterResume && id == "resume-changed" ? "v3" : "v2")
+                let event = id == "all-day" ? allDayEvent() : timedEvent(id, version: version)
                 return .init(status: 200, body: try JSONSerialization.data(withJSONObject: event))
             }
             precondition(url.lastPathComponent == Self.calendarID)

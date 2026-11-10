@@ -10,6 +10,7 @@ final class RemiloIOSGoogleCalendarManagedSetup {
     typealias Failure = RemiloIOSGoogleCalendarFailure
     typealias Inbox = RemiloIOSGoogleCalendarManagedInbox
     typealias Import = RemiloIOSGoogleCalendarImport
+    typealias Manual = RemiloIOSGoogleCalendarManualLinkRuntime
 
     struct ResumeImportRow: Sendable {
         let itemID: String
@@ -146,8 +147,10 @@ final class RemiloIOSGoogleCalendarManagedSetup {
 
     func previewResume(expectedRevision: Int,
                        incoming: (([Inbox.Observation], Inbox.Scope, Account) async throws -> [ResumeImportRow])? = nil,
+                       manual: Manual? = nil,
                        exports: (Journal.Binding, Account) throws -> [RemiloIOSGoogleCalendarPublicationRuntime.ResumeRow])
-        async throws -> (review: Journal.ResumeReview, rows: [RemiloIOSGoogleCalendarPublicationRuntime.ResumeRow], imports: [ResumeImportRow]) {
+        async throws -> (review: Journal.ResumeReview, rows: [RemiloIOSGoogleCalendarPublicationRuntime.ResumeRow],
+                         imports: [ResumeImportRow], links: [Manual.ResumeRow]) {
         let account = try currentAccount(expectedRevision)
         let state = try journal.view(viewingAs: account)
         guard state.pendingOperationID == nil, let binding = try journal.heldBinding(account) else { throw Journal.Rejection.stalePreview }
@@ -156,17 +159,21 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         if let incoming, let scope = try journal.heldIncomingScope(account) {
             imports = try await incoming(journal.heldIncomingObservations(account), scope, account)
         }
+        let links = try await manual?.reviewManagedResume(binding, policy: state.policy, account: account) { [self] in
+            canUseForeground() && (try? journal.view(viewingAs: account)) == state
+        } ?? []
         guard try journal.view(viewingAs: account) == state else { throw Journal.Rejection.stalePreview }
         let rows = try exports(binding, account)
         let review = try journal.reviewResume(account: account, binding: binding, exports: rows.compactMap(\.export),
-                                              imports: imports.compactMap(\.approval))
+                                              imports: imports.compactMap(\.approval), links: links.compactMap(\.approval))
         resumeReviews.removeAll { $0.account != account }
         if resumeReviews.count == 8 { resumeReviews.removeFirst() }
         resumeReviews.append(review)
-        return (review, rows, imports)
+        return (review, rows, imports, links)
     }
 
     func confirmResume(_ operationID: UUID, reviewID: UUID, selectedItemIDs: [String], expectedRevision: Int,
+                       manual: Manual? = nil,
                        validate: ([Journal.ResumeExport], Journal.Binding, Account) throws -> Void) async throws -> Journal.ModeReceipt {
         try requireForeground()
         let account = try connection.savedAccount(expectedRevision: expectedRevision)
@@ -180,8 +187,10 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         }
         let selected = review.exports.filter { selections.contains($0.itemID) }
         let selectedImports = review.imports.filter { selections.contains($0.itemID) }
-        guard selected.count + selectedImports.count == selections.count else { throw Failure.invalidInput }
-        if !selected.isEmpty || review.policy.exportNewReminders || (review.policy.automaticImport && review.policy.disableGoogleReminders) {
+        let selectedLinks = review.links.filter { selections.contains($0.itemID) }
+        guard selected.count + selectedImports.count + selectedLinks.count == selections.count else { throw Failure.invalidInput }
+        if !selected.isEmpty || !selectedLinks.isEmpty || review.policy.exportNewReminders ||
+            (review.policy.automaticImport && review.policy.disableGoogleReminders) {
             try connection.requireManualLinkWrite(account: account)
         }
         let verified = try await verifyResumeDestination(review.binding, account: account)
@@ -204,8 +213,45 @@ final class RemiloIOSGoogleCalendarManagedSetup {
                 _ = try Import.Capture(operationID: operationID, review: approved.review, choices: approved.choices, now: checkedAtMs)
             }
         }
+        if !selectedLinks.isEmpty {
+            guard let manual else { throw Failure.invalidConfiguration }
+            let budget = RemiloIOSGoogleCalendarHTTP.Budget()
+            let canRead: @MainActor @Sendable () -> Bool = { [self] in
+                guard canUseForeground(), let state = try? journal.view(viewingAs: account) else { return false }
+                return state.bindingRevision == review.bindingRevision && state.pendingOperationID == nil &&
+                    (try? journal.heldBinding(account)) == review.binding
+            }
+            for approval in selectedLinks {
+                try await manual.validateManagedResume(approval, account: account, budget: budget, canRead: canRead)
+            }
+            try connection.requireManualLinkWrite(account: account)
+        }
         try validate(selected, review.binding, account)
         return try journal.resume(review, operationID: operationID, selections: selections, account: account, verified: verified)
+    }
+
+    func syncResumedLinks(_ manual: Manual, expectedRevision: Int) async throws -> Bool {
+        let account = try currentAccount(expectedRevision)
+        let budget = RemiloIOSGoogleCalendarHTTP.Budget()
+        var settled = false
+        for (approval, lease) in try journal.resumedLinks(account) {
+            try Task.checkCancellation()
+            guard budget.hasTimeRemaining else { break }
+            let canRead: @MainActor @Sendable () -> Bool = { [self] in
+                guard canUseForeground(), (try? connection.isCurrentAccount(account)) == true,
+                      let pending = try? journal.resumedLinks(account) else { return false }
+                return pending.contains { $0.0 == approval && $0.1 == lease }
+            }
+            guard canRead() else { break }
+            do {
+                try await manual.applyManagedResume(approval, lease: lease, account: account, budget: budget, canRead: canRead)
+            } catch {
+                guard canRead(), manual.resumeReviewFailure(error) != nil else { throw error }
+            }
+            try journal.finishResumedLink(approval, lease: lease, account: account)
+            settled = true
+        }
+        return settled
     }
 
     func permitsResumeRead(_ scope: Inbox.Scope, account: Account) throws -> Bool {

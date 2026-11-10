@@ -57,6 +57,7 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         let operationID: UUID?
         fileprivate(set) var issue: AutomaticIssue? = nil
         var managedLease: Link.ManagedLease? = nil
+        var resumeID: UUID? = nil
     }
 
     struct Record: Codable, Equatable, Sendable {
@@ -421,6 +422,26 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         // has a newer record revision than the consent that established it.
         let record = Record(occurrenceID: occurrenceID, source: source, origin: origin, revision: 2, state: .linked,
                             baseline: baseline, calendarName: remote.calendarName, observedAtMs: observedAtMs, automatic: consent)
+        state.links[occurrenceID] = record
+        try write(state)
+        return record
+    }
+
+    func resumeManaged(_ reviewed: Record, id: UUID, lease: Link.ManagedLease, account: Account) throws -> Record {
+        var state = try read()
+        let occurrenceID = reviewed.occurrenceID
+        guard var record = state.links[occurrenceID], record == reviewed, record.state == .linked,
+              record.source.belongs(to: account), record.revision < Self.maximumRevision,
+              let consent = record.automatic, consent.phase == .active, consent.accountGeneration == account.accountGeneration,
+              let prior = consent.managedLease, prior.setupID == lease.setupID, prior.calendarID == lease.calendarID,
+              prior.zoneID == lease.zoneID, prior.publication == lease.publication,
+              prior.authEpoch < lease.authEpoch, prior.bindingRevision < lease.bindingRevision else { throw Rejection.stalePreview }
+        try requireUnreserved(occurrenceID, source: record.source, in: state)
+        guard try !pendingAssociationOccurrenceIDs(viewingAs: account).contains(occurrenceID) else { throw Rejection.operationPending }
+        record.revision += 1
+        record.automatic = .init(phase: .active, activationRevision: consent.activationRevision + 1,
+                                 lifecycleRevision: consent.lifecycleRevision, accountGeneration: account.accountGeneration,
+                                 operationID: nil, managedLease: lease, resumeID: id)
         state.links[occurrenceID] = record
         try write(state)
         return record

@@ -777,7 +777,12 @@ final class RemiloIOSGoogleCalendarRuntime {
         }
         guard let manualLink, view.canWriteOwnedEvents else { return }
         let inspectUnchanged = opportunity == .foreground
-        if inspectUnchanged { try? manualLink.resumeAssociationRequests(expectedConnectionRevision: view.revision, limit: 2) }
+        if inspectUnchanged {
+            if (try? await managedSetup?.syncResumedLinks(manualLink, expectedRevision: view.revision)) == true {
+                NotificationCenter.default.post(name: .remiloIOSChange, object: nil, userInfo: [Self.automaticStatusChangeKey: true])
+            }
+            try? manualLink.resumeAssociationRequests(expectedConnectionRevision: view.revision, limit: 2)
+        }
         guard let candidates = try? manualLink.automaticCandidates(expectedConnectionRevision: view.revision,
                                                                     inspectUnchanged: inspectUnchanged),
               let local = try? RemiloIOSEngine.shared.read() else { return }
@@ -878,9 +883,10 @@ final class RemiloIOSGoogleCalendarRuntime {
 
     func previewManagedResume(expectedRevision: Int) async throws
         -> (review: RemiloIOSGoogleCalendarManagedSetupJournal.ResumeReview, rows: [RemiloIOSGoogleCalendarPublicationRuntime.ResumeRow],
-            imports: [RemiloIOSGoogleCalendarManagedSetup.ResumeImportRow]) {
+            imports: [RemiloIOSGoogleCalendarManagedSetup.ResumeImportRow], links: [RemiloIOSGoogleCalendarManualLinkRuntime.ResumeRow]) {
         guard let managedSetup, let publication else { throw Failure.invalidConfiguration }
-        return try await managedSetup.previewResume(expectedRevision: expectedRevision, incoming: reviewHeldIncoming) { binding, account in
+        return try await managedSetup.previewResume(expectedRevision: expectedRevision, incoming: reviewHeldIncoming,
+                                                    manual: manualLink) { binding, account in
             let candidates = try RemiloIOSEngine.shared.read().reminders.values.compactMap { Self.heldExport($0, binding: binding) }
             guard candidates.count <= 500 else { throw Failure.discoveryLimit }
             return try publication.reviewHeldExports(candidates, viewingAs: account).sorted { $0.itemID < $1.itemID }
@@ -891,7 +897,7 @@ final class RemiloIOSGoogleCalendarRuntime {
         -> RemiloIOSGoogleCalendarManagedSetupJournal.ModeReceipt {
         guard let managedSetup, let publication else { throw Failure.invalidConfiguration }
         let receipt = try await managedSetup.confirmResume(operationID, reviewID: reviewID, selectedItemIDs: selectedItemIDs,
-                                                          expectedRevision: expectedRevision) { exports, binding, account in
+                                                          expectedRevision: expectedRevision, manual: manualLink) { exports, binding, account in
             let records = try RemiloIOSEngine.shared.read().reminders
             for export in exports {
                 guard let record = records[export.local.occurrenceID], let candidate = Self.heldExport(record, binding: binding),

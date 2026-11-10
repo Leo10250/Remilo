@@ -139,6 +139,9 @@ final class RemiloIOSGoogleCalendarBridge {
                     "ready": row.approval != nil, "reason": row.reason ?? "", "alertMode": row.importMode.rawValue]
                 if let alert = row.alertAtMs { item["alertAtMs"] = alert }
                 return item
+            } + result.links.map { row -> [String: Any] in
+                ["itemId": row.itemID, "occurrenceId": row.occurrenceID, "kind": "Transfer", "title": row.title,
+                 "ready": row.approval != nil, "reason": row.reason ?? "", "inbound": row.inbound, "outbound": row.outbound]
             },
         ]
     }
