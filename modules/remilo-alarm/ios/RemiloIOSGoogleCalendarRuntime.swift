@@ -321,7 +321,17 @@ final class RemiloIOSGoogleCalendarRuntime {
             if attempted == 10 { result.continuation = true }
             let reconciled = Set(recurring.map(\.observation.eventID))
             let reserved = try await reservedEvents(account, calendarID: scan.scope.binding.record.id)
-            for observation in scan.pending where !reconciled.contains(observation.eventID) && !reserved.contains(observation.eventID) {
+            for approved in try managedSetup.resumedImports(account) {
+                guard attempted < 10, budget.hasTimeRemaining else {
+                    result.continuation = true
+                    return result
+                }
+                attempted += 1
+                try await runResumedImport(approved, scan: scan, account: account, reserved: reserved,
+                                           setup: managedSetup, budget: budget, result: &result)
+            }
+            for observation in scan.pending where !reconciled.contains(observation.eventID) && !reserved.contains(observation.eventID)
+                && scan.scope.resumedEventIDs?.contains(observation.eventID) != true {
                 guard [.oneTime, .recurringMaster].contains(observation.kind) else { continue }
                 guard attempted < 10, budget.hasTimeRemaining else {
                     result.continuation = true
@@ -369,6 +379,96 @@ final class RemiloIOSGoogleCalendarRuntime {
             try await attachPendingManagedLinks(account: account, budget: budget, result: &result)
         } catch Failure.budget { result.continuation = true }
         return result
+    }
+
+    private func runResumedImport(_ approved: RemiloIOSGoogleCalendarManagedSetupJournal.ResumeImport,
+                                  scan: RemiloIOSGoogleCalendarManagedInbox.Progress, account: Import.Account, reserved: Set<String>,
+                                  setup: RemiloIOSGoogleCalendarManagedSetup, budget: RemiloIOSGoogleCalendarHTTP.Budget,
+                                  result: inout ManagedImportPass) async throws {
+        let eventID = approved.observation.eventID
+        if try reserved.contains(eventID) || outboundAndLinkedEvents(account, calendarID: scan.scope.binding.record.id).contains(eventID) {
+            if let observed = scan.pending.first(where: { $0.eventID == eventID }) {
+                try setup.finishIncoming(.init(scope: scan.scope, observation: observed), account: account, reviewReason: nil)
+            }
+            try setup.finishResumedImport(approved, scope: scan.scope, account: account)
+            return
+        }
+        guard let permit = try setup.reviewedImportPermit(approved, scope: scan.scope, account: account) else {
+            result.needsReview += 1
+            try setup.finishResumedImport(approved, scope: scan.scope, account: account)
+            return
+        }
+        do {
+            let id = try await importJournal.captureManaged(permit, review: approved.review, choices: approved.choices)
+            let receipt = try await runImport(id, viewingAs: account, budget: budget)
+            try finishManagedImport(receipt, permit: permit, account: account, result: &result)
+            if receipt.errorCode == Import.Failure.staleConnection.rawValue { return }
+        } catch Import.Failure.operationPending {
+            result.continuation = true
+            return
+        } catch Import.Failure.alreadyImported {
+            try setup.finishIncoming(permit, account: account, reviewReason: nil)
+        } catch let failure as Import.Failure {
+            try setup.finishIncoming(permit, account: account, reviewReason: failure.rawValue)
+            result.needsReview += 1
+        }
+        try setup.finishResumedImport(approved, scope: scan.scope, account: account)
+    }
+
+    func reviewHeldIncoming(_ observations: [RemiloIOSGoogleCalendarManagedInbox.Observation],
+                            scope: RemiloIOSGoogleCalendarManagedInbox.Scope, account: Import.Account) async throws
+        -> [RemiloIOSGoogleCalendarManagedSetup.ResumeImportRow] {
+        typealias Row = RemiloIOSGoogleCalendarManagedSetup.ResumeImportRow
+        guard let managedSetup else { throw Failure.invalidConfiguration }
+        let candidates = observations.filter {
+            switch $0.kind {
+            case .oneTime, .recurringMaster, .needsReview: return true
+            case .removed, .changedInstance: return false
+            }
+        }
+        guard candidates.count <= 500 else { throw Failure.discoveryLimit }
+        let reserved = try await reservedEvents(account, calendarID: scope.binding.record.id)
+        let sound = try managedImportSound()
+        let budget = RemiloIOSGoogleCalendarHTTP.Budget()
+        let canRead: @MainActor @Sendable () -> Bool = {
+            (try? managedSetup.permitsResumeRead(scope, account: account)) == true
+        }
+        var rows: [Row] = []
+        for candidate in candidates {
+            guard canRead() else { throw Failure.staleConnection }
+            let itemID = "candidate:" + candidate.eventID
+            if reserved.contains(candidate.eventID) {
+                rows.append(.init(itemID: itemID, title: "", importMode: candidate.importMode,
+                                  alertAtMs: nil, approval: nil, reason: "OperationPending"))
+                continue
+            }
+            let choices = Import.Choices(mode: candidate.importMode, sound: sound, allDayAlarmMinutes: scope.policy.allDayAlarmMinutes)
+            var title = ""
+            do {
+                let review = try await connection.prepareImport(expectedRevision: account.connectionRevision,
+                    calendarID: scope.binding.record.id, eventID: candidate.eventID, recurringChoices: choices,
+                    managedLease: scope.binding.linkLease, budget: budget, canRead: canRead)
+                title = review.source.fields.title
+                let recurring = review.source.fields.schedule.recurrence != nil
+                guard recurring || review.source.fields.schedule.eventEndMs > review.checkedAtMs else { throw Import.Failure.alertExpired }
+                let preflight = try Import.Capture(operationID: UUID(), review: review, choices: choices, now: review.checkedAtMs)
+                let observation = RemiloIOSGoogleCalendarManagedInbox.Observation(eventID: candidate.eventID, etag: review.source.etag,
+                    kind: recurring ? .recurringMaster : .oneTime, importMode: candidate.importMode, initialRecovery: candidate.initialRecovery)
+                rows.append(.init(itemID: itemID, title: title, importMode: candidate.importMode,
+                    alertAtMs: recurring || choices.mode == .none ? nil : preflight.command.alarmAtMs,
+                    approval: .init(observation: observation, review: review, choices: choices), reason: nil))
+            } catch let failure as Import.Failure {
+                rows.append(.init(itemID: itemID, title: title, importMode: candidate.importMode, alertAtMs: nil,
+                                  approval: nil, reason: failure == .alertExpired ? "ElapsedAlert" : "ReviewRequired"))
+            } catch is Import.Event.Reason {
+                rows.append(.init(itemID: itemID, title: title, importMode: candidate.importMode,
+                                  alertAtMs: nil, approval: nil, reason: "Unsupported"))
+            } catch is RemiloIOSGoogleCalendarRecurringReview.Failure {
+                rows.append(.init(itemID: itemID, title: title, importMode: candidate.importMode,
+                                  alertAtMs: nil, approval: nil, reason: "Unsupported"))
+            }
+        }
+        return rows
     }
 
     private enum SeriesTextDisposition { case updated, unchanged, review, deferred }
@@ -771,9 +871,10 @@ final class RemiloIOSGoogleCalendarRuntime {
     }
 
     func previewManagedResume(expectedRevision: Int) async throws
-        -> (review: RemiloIOSGoogleCalendarManagedSetupJournal.ResumeReview, rows: [RemiloIOSGoogleCalendarPublicationRuntime.ResumeRow]) {
+        -> (review: RemiloIOSGoogleCalendarManagedSetupJournal.ResumeReview, rows: [RemiloIOSGoogleCalendarPublicationRuntime.ResumeRow],
+            imports: [RemiloIOSGoogleCalendarManagedSetup.ResumeImportRow]) {
         guard let managedSetup, let publication else { throw Failure.invalidConfiguration }
-        return try await managedSetup.previewResume(expectedRevision: expectedRevision) { binding, account in
+        return try await managedSetup.previewResume(expectedRevision: expectedRevision, incoming: reviewHeldIncoming) { binding, account in
             let candidates = try RemiloIOSEngine.shared.read().reminders.values.compactMap { Self.heldExport($0, binding: binding) }
             guard candidates.count <= 500 else { throw Failure.discoveryLimit }
             return try publication.reviewHeldExports(candidates, viewingAs: account).sorted { $0.itemID < $1.itemID }

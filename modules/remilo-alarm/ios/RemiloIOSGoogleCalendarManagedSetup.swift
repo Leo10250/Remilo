@@ -9,6 +9,16 @@ final class RemiloIOSGoogleCalendarManagedSetup {
     typealias Account = Journal.Account
     typealias Failure = RemiloIOSGoogleCalendarFailure
     typealias Inbox = RemiloIOSGoogleCalendarManagedInbox
+    typealias Import = RemiloIOSGoogleCalendarImport
+
+    struct ResumeImportRow: Sendable {
+        let itemID: String
+        let title: String
+        let importMode: Import.Mode
+        let alertAtMs: Int64?
+        let approval: Journal.ResumeImport?
+        let reason: String?
+    }
 
     struct Preview: Sendable {
         let discovery: Connection.ManagedDiscoveryResult
@@ -133,19 +143,26 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         return try journal.holdsExport(lease, account: account)
     }
 
-    func previewResume(expectedRevision: Int, exports: (Journal.Binding, Account) throws -> [RemiloIOSGoogleCalendarPublicationRuntime.ResumeRow])
-        async throws -> (review: Journal.ResumeReview, rows: [RemiloIOSGoogleCalendarPublicationRuntime.ResumeRow]) {
+    func previewResume(expectedRevision: Int,
+                       incoming: (([Inbox.Observation], Inbox.Scope, Account) async throws -> [ResumeImportRow])? = nil,
+                       exports: (Journal.Binding, Account) throws -> [RemiloIOSGoogleCalendarPublicationRuntime.ResumeRow])
+        async throws -> (review: Journal.ResumeReview, rows: [RemiloIOSGoogleCalendarPublicationRuntime.ResumeRow], imports: [ResumeImportRow]) {
         let account = try currentAccount(expectedRevision)
         let state = try journal.view(viewingAs: account)
         guard state.pendingOperationID == nil, let binding = try journal.heldBinding(account) else { throw Journal.Rejection.stalePreview }
         _ = try await verifyResumeDestination(binding, account: account)
+        var imports: [ResumeImportRow] = []
+        if let incoming, let scope = try journal.heldIncomingScope(account) {
+            imports = try await incoming(journal.heldIncomingObservations(account), scope, account)
+        }
         guard try journal.view(viewingAs: account) == state else { throw Journal.Rejection.stalePreview }
         let rows = try exports(binding, account)
-        let review = try journal.reviewResume(account: account, binding: binding, exports: rows.compactMap(\.export))
+        let review = try journal.reviewResume(account: account, binding: binding, exports: rows.compactMap(\.export),
+                                              imports: imports.compactMap(\.approval))
         resumeReviews.removeAll { $0.account != account }
         if resumeReviews.count == 8 { resumeReviews.removeFirst() }
         resumeReviews.append(review)
-        return (review, rows)
+        return (review, rows, imports)
     }
 
     func confirmResume(_ operationID: UUID, reviewID: UUID, selectedItemIDs: [String], expectedRevision: Int,
@@ -161,13 +178,55 @@ final class RemiloIOSGoogleCalendarManagedSetup {
             throw Journal.Rejection.stalePreview
         }
         let selected = review.exports.filter { selections.contains($0.itemID) }
-        guard selected.count == selections.count else { throw Failure.invalidInput }
+        let selectedImports = review.imports.filter { selections.contains($0.itemID) }
+        guard selected.count + selectedImports.count == selections.count else { throw Failure.invalidInput }
         if !selected.isEmpty || review.policy.exportNewReminders || (review.policy.automaticImport && review.policy.disableGoogleReminders) {
             try connection.requireManualLinkWrite(account: account)
         }
         let verified = try await verifyResumeDestination(review.binding, account: account)
+        if !selectedImports.isEmpty {
+            guard let scope = try journal.heldIncomingScope(account), scope.binding == review.binding else {
+                throw Journal.Rejection.stalePreview
+            }
+            let budget = RemiloIOSGoogleCalendarHTTP.Budget()
+            let canRead: @MainActor @Sendable () -> Bool = { [self] in
+                (try? permitsResumeRead(scope, account: account)) == true
+            }
+            for approved in selectedImports {
+                let permit = Inbox.Permit(scope: scope, observation: approved.observation)
+                let current = try await connection.observeImport(approved.review, managed: permit, budget: budget, canRead: canRead)
+                let checkedAtMs = Int64((now().timeIntervalSince1970 * 1_000).rounded())
+                guard approved.review.matches(current), approved.review.valid(at: checkedAtMs),
+                      current.source.fields.schedule.recurrence != nil || current.source.fields.schedule.eventEndMs > checkedAtMs else {
+                    throw Journal.Rejection.stalePreview
+                }
+                _ = try Import.Capture(operationID: operationID, review: approved.review, choices: approved.choices, now: checkedAtMs)
+            }
+        }
         try validate(selected, review.binding, account)
         return try journal.resume(review, operationID: operationID, selections: selections, account: account, verified: verified)
+    }
+
+    func permitsResumeRead(_ scope: Inbox.Scope, account: Account) throws -> Bool {
+        guard canUseForeground(), try connection.isCurrentAccount(account),
+              try journal.view(viewingAs: account).pendingOperationID == nil else { return false }
+        return try journal.heldIncomingScope(account) == scope
+    }
+
+    func resumedImports(_ account: Account) throws -> [Journal.ResumeImport] {
+        try requireForeground()
+        return try journal.resumedImports(account)
+    }
+
+    func reviewedImportPermit(_ approval: Journal.ResumeImport, scope: Inbox.Scope, account: Account) throws -> Inbox.Permit? {
+        guard canUseForeground(), try connection.isCurrentAccount(account), try journal.incomingScope(account) == scope,
+              try journal.resumedImports(account).contains(approval) else { throw Failure.staleConnection }
+        return try inbox.reviewedPermit(approval.observation, scope: scope)
+    }
+
+    func finishResumedImport(_ approval: Journal.ResumeImport, scope: Inbox.Scope, account: Account) throws {
+        guard canUseForeground(), try connection.isCurrentAccount(account) else { throw Failure.staleConnection }
+        try journal.finishResumedImport(approval, scope: scope, account: account)
     }
 
     private func verifyResumeDestination(_ binding: Journal.Binding, account: Account) async throws -> Journal.Record {

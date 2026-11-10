@@ -169,6 +169,9 @@ enum ManagedSetupChecks {
                 preconditionFailure("Both links are ready to inspect")
             }
             precondition(candidates.allSatisfy { $0.automatic?.managedLease == lease && $0.baseline != nil })
+            fixture.stageResumeCandidates = true
+            let stagedForResume = try await reopened.scanIncoming(expectedRevision: revision)
+            precondition(Set(Fixture.resumeIDs).isSubset(of: Set(stagedForResume.pending.map(\.eventID))))
             let rediscovered = try await connection.discoverManagedCalendars(expectedRevision: revision, savedID: Fixture.calendarID,
                                                                               canRead: { true })
             let replacementReview = try journal.review(rediscovered, account: authorized.account, calendarZoneID: "UTC")
@@ -217,14 +220,18 @@ enum ManagedSetupChecks {
                 Setup.Journal.ResumeExport(operationID: UUID(), local: .init(occurrenceID: id, revision: 3, generation: 1),
                     originLease: saved.binding!.exportLease, waitingLease: nil)
             }
-            let resumeReview = try await reopened.previewResume(expectedRevision: revision) { _, _ in
+            let resumeReview = try await reopened.previewResume(expectedRevision: revision, incoming: resumedRuntime.reviewHeldIncoming) { _, _ in
                 heldExports.map { .init(itemID: $0.itemID, occurrenceID: $0.local.occurrenceID, title: $0.local.occurrenceID,
                                         export: $0, reason: nil) }
             }
+            let selectedIncoming = ["candidate:resume-keep", "candidate:resume-changed"]
+            let ready = resumeReview.imports.filter { selectedIncoming.contains($0.itemID) }
+            precondition(ready.count == 2 && ready.allSatisfy { $0.approval != nil && $0.importMode == .alarm })
+            let selection = [heldExports[0].itemID] + selectedIncoming
             let resumeID = UUID()
             do {
                 _ = try await reopened.confirmResume(resumeID, reviewID: resumeReview.review.id,
-                    selectedItemIDs: [heldExports[0].itemID], expectedRevision: revision) { _, _, _ in
+                    selectedItemIDs: selection, expectedRevision: revision) { _, _, _ in
                         throw Setup.Journal.Rejection.stalePreview
                     }
                 preconditionFailure("Changed local work cannot activate the binding")
@@ -232,21 +239,35 @@ enum ManagedSetupChecks {
             let afterStale = try reopened.view(expectedRevision: revision)
             precondition(afterStale == paused)
             let resumedMode = try await reopened.confirmResume(resumeID, reviewID: resumeReview.review.id,
-                selectedItemIDs: [heldExports[0].itemID], expectedRevision: revision) { selected, binding, account in
+                selectedItemIDs: selection, expectedRevision: revision) { selected, binding, account in
                     precondition(selected == [heldExports[0]] && binding == saved.binding && account == authorized.account)
                 }
             let resumedView = try reopened.view(expectedRevision: revision)
             let approvals = try reopened.resumedExports(authorized.account)
             let oldLinkAfterResume = try journal.permitsLink(lease, account: authorized.account)
             let inbox = try journal.incomingScope(authorized.account)
+            let selectedProviderIDs: Set<String> = ["resume-keep", "resume-changed"]
+            let stillHeld = Set(pausedProgress?.pending.map(\.eventID) ?? []).subtracting(selectedProviderIDs)
             precondition(resumedView.mode == .enabled && resumedView.authEpoch == paused.authEpoch + 1 &&
                          resumedView.binding?.operationID == paused.binding?.operationID && approvals == [heldExports[0]] &&
-                         !oldLinkAfterResume && (inbox.heldEventIDs ?? []) == Set(pausedProgress?.pending.map(\.eventID) ?? []))
+                         !oldLinkAfterResume && inbox.heldEventIDs == stillHeld && inbox.resumedEventIDs == selectedProviderIDs)
             let replayResume = try await setup.confirmResume(resumeID, reviewID: resumeReview.review.id,
-                selectedItemIDs: [heldExports[0].itemID], expectedRevision: revision) { _, _, _ in
+                selectedItemIDs: selection, expectedRevision: revision) { _, _, _ in
                     preconditionFailure("Resume replay must use the durable receipt")
                 }
             precondition(replayResume == resumedMode)
+            fixture.scanAfterResume = true
+            let restartedRuntime = runtime().0
+            let importedAfterResume = try await restartedRuntime.syncManagedIncoming(expectedRevision: revision)
+            let afterImport = try reopened.savedIncomingProgress(expectedRevision: revision)
+            let remainingApprovals = try reopened.resumedImports(authorized.account)
+            precondition(importedAfterResume.imported == 1 && importedAfterResume.needsReview == 1 &&
+                         local.commands.last?.title == "resume-keep" && local.commands.last?.mode == .some(.alarm) &&
+                         remainingApprovals.isEmpty)
+            precondition(afterImport?.pending.contains { $0.eventID == "resume-changed" && $0.kind == .needsReview(reason: "STALE_REMOTE") } == true &&
+                         afterImport?.pending.contains { $0.eventID == "resume-unselected" } == false)
+            let replayedImport = try await restartedRuntime.syncManagedIncoming(expectedRevision: revision)
+            precondition(replayedImport.imported == 0 && local.commands.count == 3)
             let disabled = try reopened.changeMode(.disabled, operationID: UUID(), expectedRevision: resumedView.bindingRevision,
                                                    expectedConnectionRevision: revision)
             let disabledView = try setup.view(expectedRevision: revision)
@@ -325,6 +346,7 @@ enum ManagedSetupChecks {
     @MainActor
     private final class Fixture {
         static let calendarID = "managed@example.test"
+        static let resumeIDs = ["resume-keep", "resume-changed", "resume-unselected"]
         let email: String
         let creation: RemiloIOSGoogleCalendarAccess
         private var name: String?
@@ -332,6 +354,8 @@ enum ManagedSetupChecks {
         private(set) var posts = 0
         private(set) var samples = 0
         private var incoming = false
+        var stageResumeCandidates = false
+        var scanAfterResume = false
         private(set) var initialPages: [Int] = []
         private(set) var deltaTokens: [String] = []
         private(set) var consents: [RemiloIOSGoogleCalendarPurpose] = []
@@ -388,7 +412,7 @@ enum ManagedSetupChecks {
             }
             if url.deletingLastPathComponent().lastPathComponent == "events" {
                 let id = url.lastPathComponent
-                let event = id == "all-day" ? allDayEvent() : timedEvent(id, version: "v2")
+                let event = id == "all-day" ? allDayEvent() : timedEvent(id, version: scanAfterResume && id == "resume-changed" ? "v3" : "v2")
                 return .init(status: 200, body: try JSONSerialization.data(withJSONObject: event))
             }
             precondition(url.lastPathComponent == Self.calendarID)
@@ -399,7 +423,11 @@ enum ManagedSetupChecks {
         private func incomingPage(_ url: URL) throws -> HTTP.Response {
             let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
             let payload: [String: Any]
-            if let token = query.first(where: { $0.name == "syncToken" })?.value {
+            if scanAfterResume {
+                let initial = !query.contains { $0.name == "syncToken" }
+                payload = ["items": initial ? Self.resumeIDs.map { timedEvent($0, version: $0 == "resume-changed" ? "v3" : "v2") } : [],
+                           "nextSyncToken": initial ? "resumed" : "resumed-next"]
+            } else if let token = query.first(where: { $0.name == "syncToken" })?.value {
                 deltaTokens.append(token)
                 if token == "next" { return .init(status: 410, body: Data("{}".utf8)) }
                 switch token {
@@ -407,7 +435,9 @@ enum ManagedSetupChecks {
                     payload = ["items": [timedEvent("recovered", version: "v2"), timedEvent("continuing", version: "v1"),
                                          ["id": "cancelled", "status": "cancelled"]], "nextSyncToken": "next"]
                 case "rebuilt": payload = ["items": [allDayEvent()], "nextSyncToken": "stable"]
-                case "stable": payload = ["items": [], "nextSyncToken": "stable"]
+                case "stable":
+                    payload = ["items": stageResumeCandidates ? Self.resumeIDs.map { timedEvent($0, version: "v2") } : [],
+                               "nextSyncToken": "stable"]
                 default: preconditionFailure("Unexpected provider checkpoint")
                 }
             } else if deltaTokens.last == "next" {

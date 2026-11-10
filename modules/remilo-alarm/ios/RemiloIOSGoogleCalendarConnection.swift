@@ -474,6 +474,8 @@ final class RemiloIOSGoogleCalendarConnection {
         guard case .found(let event) = lookup, !event.cancelled else { throw Import.Failure.staleRemote }
         if let managed {
             guard event.strongETag == managed.observation.etag else { throw Import.Failure.staleRemote }
+        }
+        if managed != nil || managedLease != nil {
             if let payload = (try? JSONSerialization.jsonObject(with: event.json)) as? [String: Any],
                let properties = payload["extendedProperties"] as? [String: Any],
                let privateValues = properties["private"] as? [String: Any],

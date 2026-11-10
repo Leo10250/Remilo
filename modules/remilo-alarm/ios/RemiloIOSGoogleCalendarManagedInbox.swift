@@ -14,6 +14,7 @@ final class RemiloIOSGoogleCalendarManagedInbox {
         let binding: Journal.Binding
         let policy: Journal.Policy
         var heldEventIDs: Set<String>? = nil
+        var resumedEventIDs: Set<String>? = nil
     }
 
     struct Observation: Codable, Equatable, Sendable {
@@ -85,6 +86,7 @@ final class RemiloIOSGoogleCalendarManagedInbox {
         let recovery = !state.initialComplete && (initial?.recoveringExistingCalendar ?? true)
         for event in page.items {
             let existing = state.observations[event.id]
+            if request.scope.resumedEventIDs?.contains(event.id) == true, case .needsReview? = existing?.kind { continue }
             if let kind = Self.classify(event, zoneID: request.scope.binding.record.zoneId, now: now) {
                 let instanceCancelled: Bool?
                 if case .changedInstance = kind { instanceCancelled = event.cancelled }
@@ -122,6 +124,31 @@ final class RemiloIOSGoogleCalendarManagedInbox {
                         continuation: continuation, pending: state.observations.values
                             .filter { scope.heldEventIDs?.contains($0.eventID) != true }
                             .sorted { $0.eventID < $1.eventID })
+    }
+
+    func staged(_ scope: Scope) throws -> [Observation] {
+        Array(try read(scope).observations.values)
+    }
+
+    func reviewedPermit(_ reviewed: Observation, scope: Scope) throws -> Permit? {
+        var state = try read(scope)
+        guard scope.resumedEventIDs?.contains(reviewed.eventID) == true, state.initialComplete, state.next == nil,
+              state.since != nil, reviewed.etag != nil, [.oneTime, .recurringMaster].contains(reviewed.kind) else {
+            throw Failure.staleConnection
+        }
+        let current = state.observations[reviewed.eventID]
+        if case .needsReview? = current?.kind { return nil }
+        guard current?.kind == reviewed.kind, current?.etag == reviewed.etag else {
+            state.observations[reviewed.eventID] = .init(eventID: reviewed.eventID, etag: current?.etag,
+                kind: .needsReview(reason: "STALE_REMOTE"), importMode: reviewed.importMode, initialRecovery: reviewed.initialRecovery)
+            try advance(&state)
+            return nil
+        }
+        if current != reviewed {
+            state.observations[reviewed.eventID] = reviewed
+            try advance(&state)
+        }
+        return .init(scope: scope, observation: reviewed)
     }
 
     func permits(_ permit: Permit) throws -> Bool {

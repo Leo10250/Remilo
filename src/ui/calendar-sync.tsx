@@ -627,7 +627,7 @@ export function CalendarReviewItems({
           {ready.map((item) => (
             <View key={item.itemId}>
               <CheckRow
-                label={item.title}
+                label={item.kind === 'Import' && !item.title ? t('m_f74c0be05e82') : item.title}
                 description={[item.calendarName, item.scope].filter(Boolean).join(' · ')}
                 selected={selected.includes(item.itemId)}
                 disabled={disabled}
@@ -680,7 +680,7 @@ export function CalendarReviewItems({
               <SettingRow
                 key={item.itemId}
                 prominent
-                label={item.title}
+                label={item.kind === 'Import' && !item.title ? t('m_f74c0be05e82') : item.title}
                 description={[item.calendarName, item.scope].filter(Boolean).join(' · ')}
                 statusLabel={reason}
                 supporting={supporting}

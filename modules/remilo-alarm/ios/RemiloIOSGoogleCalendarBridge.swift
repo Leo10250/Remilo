@@ -134,6 +134,11 @@ final class RemiloIOSGoogleCalendarBridge {
             "items": result.rows.map { row -> [String: Any] in
                 ["itemId": row.itemID, "occurrenceId": row.occurrenceID, "kind": "Publish",
                  "title": row.title, "ready": row.export != nil, "reason": row.reason ?? ""]
+            } + result.imports.map { row -> [String: Any] in
+                var item: [String: Any] = ["itemId": row.itemID, "kind": "Import", "title": row.title,
+                    "ready": row.approval != nil, "reason": row.reason ?? "", "alertMode": row.importMode.rawValue]
+                if let alert = row.alertAtMs { item["alertAtMs"] = alert }
+                return item
             },
         ]
     }
