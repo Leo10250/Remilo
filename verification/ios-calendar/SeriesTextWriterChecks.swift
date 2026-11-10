@@ -84,6 +84,23 @@ enum SeriesTextWriterChecks {
         precondition(confirmed && fixture.writes == 1 && remaining.isEmpty)
         precondition(saved.count == 1 && saved[0].baseline.etag == Fixture.updatedETag && !saved[0].baseline.differs(from: snapshot))
         precondition(fixture.acknowledgedSchedule == editsSchedule)
+        if !editsSchedule {
+            let viewer = try connection.account(expectedRevision: renewed.revision)
+            let child = Inbox.Observation(eventID: Fixture.child, etag: #""child-v1""#, kind: .changedInstance(masterID: Fixture.master),
+                                          importMode: .none, initialRecovery: false, instanceCancelled: false)
+            let changes = Inbox.Progress(scope: scope, pages: 1, initialComplete: true, continuation: false, pending: [child])
+            let pendingInstance = try await imports.reconcileManagedSeries(changes, viewingAs: viewer, limit: 10, allowInstanceTransfers: true)
+            guard let work = pendingInstance.first?.instanceWork else { preconditionFailure("Expected child work on the confirmed master") }
+            let observed = try await connection.observeManagedInstance(work, account: viewer, budget: .init(), canRead: { true })
+            let movedStart = try RemiloIOSGoogleCalendarEvent.timestamp("2027-03-15T14:00:00Z")
+            precondition(observed.identity.eventID == Fixture.child && observed.identity.nominalSlot == "2027-03-15T10:00" &&
+                         observed.fields.schedule.eventStartMs == movedStart)
+            fixture.childMaster = "unrelated-master"
+            do {
+                _ = try await connection.observeManagedInstance(work, account: viewer, budget: .init(), canRead: { true })
+                preconditionFailure("A child of a different master cannot be applied")
+            } catch Service.Import.Failure.staleRemote {}
+        }
     }
 
     private static func recurrenceEncoding() throws {
@@ -110,6 +127,7 @@ enum SeriesTextWriterChecks {
     @MainActor
     private final class Fixture {
         static let master = "series-master"
+        static let child = "moved-child"
         static let updatedETag = #""series-v2""#
         private let directory: URL
         private let editsSchedule: Bool
@@ -117,6 +135,7 @@ enum SeriesTextWriterChecks {
         var allowCheckpoint = false
         var reveal = false
         var acknowledgedSchedule = false
+        var childMaster = Fixture.master
         private(set) var revealedAuditCount = 0
         private(set) var writes = 0
 
@@ -164,6 +183,11 @@ enum SeriesTextWriterChecks {
             if url.lastPathComponent == "events" {
                 let changed = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.contains { $0.name == "syncToken" } == true
                 return try body(["items": changed ? [] : [master], "nextSyncToken": "checkpoint"])
+            }
+            if url.lastPathComponent == Self.child {
+                return try body(["id": Self.child, "etag": #""child-v1""#, "recurringEventId": childMaster,
+                    "originalStartTime": start, "summary": "Moved", "start": ["dateTime": "2027-03-15T14:00:00Z", "timeZone": "UTC"],
+                    "end": ["dateTime": "2027-03-15T14:30:00Z", "timeZone": "UTC"]])
             }
             precondition(url.lastPathComponent == Self.master)
             if writes > 0 && !reveal { return try body([:], status: 503) }

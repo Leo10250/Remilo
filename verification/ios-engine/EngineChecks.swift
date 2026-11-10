@@ -105,6 +105,7 @@ struct EngineChecks {
         try await calendarSeriesExceptionsAreAtomicAndBounded()
         try await calendarSeriesTextPreservesDelivery()
         try await calendarSeriesSchedulePreservesLocalState()
+        try await calendarSeriesInstancePreservesOriginalSlot()
         try await calendarSeriesAllowsAFutureMoveAfterItsLastOriginal()
         try await queuedCalendarCreateChecksAuthorityBeforeWriting()
         try await queuedCalendarReviewRechecksLocalVersion()
@@ -1132,6 +1133,68 @@ struct EngineChecks {
         let baselineExport = try reopenedExport.calendarSeriesTextSnapshot(cleanFamily)
         precondition(confirmedExport && replayedExport && baselineExport?.segmentID == outbound.segmentID && baselineExport?.scheduleEdit == nil)
         precondition(registrations == RemiloIOSDelivery.registrations.keys.sorted { $0.uuidString < $1.uuidString })
+    }
+
+    private static func calendarSeriesInstancePreservesOriginalSlot() async throws {
+        let store = FixtureStore()
+        defer {
+            store.remove()
+            RemiloIOSDelivery.registrations = [:]
+            RemiloIOSDelivery.alerting = []
+            RemiloIOSDelivery.attempts = []
+        }
+        let engine = store.engine()
+        let start = iosMillis(Date()) / 60_000 * 60_000 + 7_200_000
+        let zone = TimeZone(identifier: "UTC")!
+        let anchor = try RemiloIOSRecurrence.canonicalNominal(RemiloIOSSeries.civil(start, zone: zone))
+        let created = try await engine.applyCalendarCreate([
+            "kind": "CreateSeries", "operationId": "ios-calendar-import:" + UUID().uuidString,
+            "title": "Series", "mode": "Alarm", "zoneId": "UTC", "alarmLinked": true,
+            "eventStartMs": start, "eventEndMs": start + 1_800_000, "dueAtMs": start, "alarmAtMs": start,
+            "nativeCalendarAnchor": anchor, "recurrence": ["frequency": "daily", "count": 4, "zoneMode": "pinned"],
+        ], authorize: { true })
+        let family = created["localId"] as! String
+        let before = try store.load()
+        let ordinary = before.reminders.values.filter { $0.segmentID == family }.sorted { $0.eventStartMs < $1.eventStartMs }
+        let original = ordinary[0]
+        let terminal = ordinary[1]
+        let postponement = start + 5_400_000
+        _ = try await engine.apply(["kind": "Postpone", "operationId": "instance-postpone", "occurrenceId": original.id,
+                                    "expectedGeneration": original.generation, "alarmAtMs": postponement])
+        _ = try await engine.apply(["kind": "Done", "operationId": "instance-done", "occurrenceId": terminal.id,
+                                    "expectedRevision": terminal.revision])
+        let postponed = try store.load().reminders[original.id]!
+        let snapshot = try engine.calendarSeriesTextSnapshot(family)!
+        func change(_ record: IOSReminder, eventID: String) -> IOSCalendarSeriesInstanceChange {
+            let moved = record.eventStartMs + 3_600_000
+            return .init(eventID: eventID, nominalSlot: record.nominalSlot!, previouslyImported: false,
+                         title: "Google exception", notes: "Moved occurrence", eventStartMs: moved, eventEndMs: moved + 1_800_000,
+                         allDay: false, zoneID: "UTC")
+        }
+        let update = change(original, eventID: "google-moved")
+        RemiloIOSDelivery.alerting.insert(postponed.registration!.systemID)
+        let ringing = try await engine.applyCalendarSeriesInstance(operationKey: "first", snapshot: snapshot, change: update, authorize: { true })
+        RemiloIOSDelivery.alerting.remove(postponed.registration!.systemID)
+        let applied = try await engine.applyCalendarSeriesInstance(operationKey: "first", snapshot: snapshot, change: update, authorize: { true })
+        let ignored = try await engine.applyCalendarSeriesInstance(operationKey: "done", snapshot: snapshot,
+                                                                 change: change(terminal, eventID: "google-terminal"), authorize: { true })
+        let reopened = store.engine()
+        let replay = try await reopened.applyCalendarSeriesInstance(operationKey: "first", snapshot: snapshot, change: update, authorize: { true })
+        let after = try store.load()
+        let moved = after.reminders[original.id]!
+        precondition(ringing == .deferred && applied == .applied && replay == .applied && ignored == .ignored)
+        precondition(moved.calendarInstanceID == update.eventID && moved.nominalSlot == original.nominalSlot &&
+                     moved.eventStartMs == update.eventStartMs && moved.title == update.title && moved.alarmAtMs == update.eventStartMs)
+        precondition(moved.registration?.systemID == postponed.registration?.systemID && moved.nextAlertMs == postponement &&
+                     moved.revision == postponed.revision + 1 && after.reminders[terminal.id]?.completed == true)
+        _ = try await reopened.apply(["kind": "Reopen", "operationId": "instance-reopen", "occurrenceId": terminal.id,
+                                      "expectedRevision": after.reminders[terminal.id]!.revision])
+        let ignoredReplay = try await reopened.applyCalendarSeriesInstance(operationKey: "done", snapshot: snapshot,
+            change: change(terminal, eventID: "google-terminal"), authorize: { true })
+        let needsReview = try await reopened.applyCalendarSeriesInstance(operationKey: "new-version", snapshot: snapshot,
+            change: change(terminal, eventID: "google-terminal"), authorize: { true })
+        let final = try store.load().reminders[terminal.id]!
+        precondition(ignoredReplay == .ignored && needsReview == .needsReview && final.calendarInstanceID == nil)
     }
 
     private static func calendarSeriesAllowsAFutureMoveAfterItsLastOriginal() async throws {

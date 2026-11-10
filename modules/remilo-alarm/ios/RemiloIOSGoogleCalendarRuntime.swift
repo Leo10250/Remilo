@@ -31,6 +31,9 @@ final class RemiloIOSGoogleCalendarRuntime {
         var acknowledgeSchedule: (@MainActor @Sendable (
             IOSCalendarSeriesTextSnapshot, @escaping ImportJournal.Scheduler.Permit
         ) async throws -> Bool)? = nil
+        var applyInstance: (@MainActor @Sendable (
+            String, IOSCalendarSeriesTextSnapshot, IOSCalendarSeriesInstanceChange, @escaping ImportJournal.Scheduler.Permit
+        ) async throws -> IOSCalendarSeriesInstanceResult)? = nil
     }
 
     private let connection: Connection
@@ -235,13 +238,22 @@ final class RemiloIOSGoogleCalendarRuntime {
             let waitingExports = try seriesTextWriter?.unconfirmedImports(viewingAs: account) ?? []
             let recurring = try await importJournal.reconcileManagedSeries(scan, viewingAs: account, limit: 10 - attempted,
                                                                             allowTextTransfers: seriesText != nil,
+                                                                            allowInstanceTransfers: seriesText?.applyInstance != nil,
                                                                             waitingExports: waitingExports)
             try requireCurrentAccount(account)
             for match in recurring {
                 let permit = RemiloIOSGoogleCalendarManagedInbox.Permit(scope: scan.scope, observation: match.observation)
+                let disposition: SeriesTextDisposition?
                 if let work = match.textWork, let seriesText {
-                    let disposition = try await applyManagedSeriesText(work, authority: seriesText, setup: managedSetup,
+                    disposition = try await applyManagedSeriesText(work, authority: seriesText, setup: managedSetup,
+                                                                    account: account, budget: budget)
+                } else if let work = match.instanceWork, let seriesText {
+                    disposition = try await applyManagedSeriesInstance(work, authority: seriesText, setup: managedSetup,
                                                                         account: account, budget: budget)
+                } else {
+                    disposition = nil
+                }
+                if let disposition {
                     switch disposition {
                     case .updated: result.updatedSeries += 1
                     case .review: result.needsReview += 1
@@ -309,6 +321,54 @@ final class RemiloIOSGoogleCalendarRuntime {
     }
 
     private enum SeriesTextDisposition { case updated, unchanged, review, deferred }
+
+    private func applyManagedSeriesInstance(_ work: ImportJournal.SeriesInstanceWork, authority: SeriesTextAuthority,
+                                            setup: RemiloIOSGoogleCalendarManagedSetup, account: Import.Account,
+                                            budget: RemiloIOSGoogleCalendarHTTP.Budget) async throws -> SeriesTextDisposition {
+        let current: ImportJournal.Scheduler.Permit = { [canUseForeground] in
+            guard canUseForeground() else { return false }
+            return try setup.permitsIncomingInstance(work.permit, account: account)
+        }
+        guard let apply = authority.applyInstance, try current(), try await importJournal.permitsSeriesInstance(work) else {
+            return .deferred
+        }
+        let observation: (identity: Import.Event.InstanceIdentity, fields: Import.Event.Fields, masterTitle: String)
+        do {
+            observation = try await connection.observeManagedInstance(work, account: account, budget: budget,
+                                                                       canRead: { (try? current()) == true })
+        } catch let failure as Import.Failure {
+            guard try current() else { return .deferred }
+            try await importJournal.finishSeriesInstance(work, confirmed: nil, reason: failure.rawValue)
+            return .review
+        } catch let failure as Import.Event.Reason {
+            guard try current() else { return .deferred }
+            try await importJournal.finishSeriesInstance(work, confirmed: nil, reason: failure.rawValue)
+            return .review
+        }
+        guard try current(), try await importJournal.permitsSeriesInstance(work) else { return .deferred }
+        guard let familyID = work.receipt.local?.id, let snapshot = try authority.read(familyID) else {
+            try await importJournal.finishSeriesInstance(work, confirmed: nil, reason: Import.Failure.staleRemote.rawValue)
+            return .review
+        }
+        let fields = observation.fields
+        let schedule = fields.schedule
+        let change = IOSCalendarSeriesInstanceChange(eventID: observation.identity.eventID, nominalSlot: observation.identity.nominalSlot,
+            previouslyImported: work.known.contains { $0.identity == observation.identity },
+            title: fields.title.isEmpty ? observation.masterTitle : fields.title, notes: fields.notes,
+            eventStartMs: schedule.eventStartMs, eventEndMs: schedule.eventEndMs, allDay: schedule.allDay, zoneID: schedule.zoneId)
+        let result = try await apply(work.operationKey, snapshot, change, current)
+        guard try current() else { return .deferred }
+        switch result {
+        case .deferred: return .deferred
+        case .applied, .ignored:
+            try await importJournal.finishSeriesInstance(work, confirmed: observation.identity, reason: nil)
+            return result == .applied ? .updated : .unchanged
+        case .needsReview, .elapsedAlert:
+            let reason = result == .elapsedAlert ? Import.Failure.alertExpired.rawValue : Import.Failure.staleRemote.rawValue
+            try await importJournal.finishSeriesInstance(work, confirmed: nil, reason: reason)
+            return .review
+        }
+    }
 
     private func applyManagedSeriesText(_ work: ImportJournal.SeriesTextWork, authority: SeriesTextAuthority,
                                         setup: RemiloIOSGoogleCalendarManagedSetup, account: Import.Account,
@@ -732,6 +792,11 @@ final class RemiloIOSGoogleCalendarRuntime {
             }, readForExport: { try RemiloIOSEngine.shared.calendarSeriesExportSnapshot($0) },
             acknowledgeSchedule: { snapshot, permit in
                 try await RemiloIOSEngine.shared.acknowledgeCalendarSeriesExport(snapshot, authorize: permit)
+            }, applyInstance: { operation, snapshot, change, permit in
+                do {
+                    return try await RemiloIOSEngine.shared.applyCalendarSeriesInstance(operationKey: operation, snapshot: snapshot,
+                                                                                       change: change, authorize: permit)
+                } catch is RemiloIOSRecurrence.InvalidRule { return .needsReview }
             })
         let runtime = RemiloIOSGoogleCalendarRuntime(
             connection: connection, canUseForeground: canUseForeground,

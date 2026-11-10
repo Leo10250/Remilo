@@ -182,7 +182,7 @@ final class RemiloIOSEngine {
             let exceptions = state.reminders.values.contains { record in
                 guard record.active, record.independent == true, let segmentID = record.segmentID,
                       state.series[segmentID]?.familyID == familyID, record.eventEndMs > now || record.agendaAtMs > now else { return false }
-                return record.history.contains { $0.kind == "Edit" || $0.kind == "Create" }
+                return record.calendarInstanceID != nil || record.history.contains { $0.kind == "Edit" || $0.kind == "Create" }
             }
             edit = .init(baseline: baseline, current: segment.rule, hasFutureExceptions: exceptions)
         }
@@ -248,7 +248,8 @@ final class RemiloIOSEngine {
             (record.eventEndMs > now || record.agendaAtMs > now) {
             // Imported exceptions have Create history. Local authored overrides
             // have Edit history. A postponement alone still inherits series text.
-            if record.independent == true && record.history.contains(where: { $0.kind == "Create" || $0.kind == "Edit" }) { continue }
+            if record.independent == true && (record.calendarInstanceID != nil ||
+                record.history.contains(where: { $0.kind == "Create" || $0.kind == "Edit" })) { continue }
             if record.title == snapshot.title { record.title = title }
             if record.notes == snapshot.notes { record.notes = notes }
             guard record.title != state.reminders[id]?.title || record.notes != state.reminders[id]?.notes else { continue }
@@ -296,6 +297,38 @@ final class RemiloIOSEngine {
         try commit(state)
         try await drain()
         return .applied
+    }
+
+    func applyCalendarSeriesInstance(operationKey: String, snapshot: IOSCalendarSeriesTextSnapshot,
+                                     change: IOSCalendarSeriesInstanceChange,
+                                     authorize: @MainActor @Sendable () throws -> Bool) async throws -> IOSCalendarSeriesInstanceResult {
+        await acquire()
+        defer { release() }
+        let operationID = Self.calendarInboundPrefix + "series-instance:" + operationKey
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        let fingerprint = Data(SHA256.hash(data: try encoder.encode(change)))
+        var state = try read()
+        try Task.checkCancellation()
+        guard try authorize() else { return .deferred }
+        if let receipt = state.receipts[operationID] {
+            guard receipt.fingerprint == fingerprint, receipt.seriesSegmentID == snapshot.familyID else {
+                throw IOSInputFailure("OPERATION_REUSED")
+            }
+            let result = try JSONDecoder().decode(IOSCalendarSeriesInstanceResult.self, from: receipt.result)
+            if result == .applied { try await drain() }
+            return result
+        }
+        guard Self.calendarSeriesTextSnapshot(snapshot.familyID, in: state) == snapshot else { return .deferred }
+        let result = try reconcileCalendarSeriesInstance(snapshot, change: change, state: &state, now: iosMillis(Date()))
+        guard result == .applied || result == .ignored else { return result }
+        try Task.checkCancellation()
+        guard try authorize() else { return .deferred }
+        state.receipts[operationID] = IOSOperationReceipt(fingerprint: fingerprint, occurrenceID: nil, registrationID: nil,
+            seriesSegmentID: snapshot.familyID, result: try encoder.encode(result), finalized: true)
+        try commit(state, notify: result == .applied)
+        if result == .applied { try await drain() }
+        return result
     }
 
     func scheduleTestAlarm(operationId: String) async throws -> [String: Any] {

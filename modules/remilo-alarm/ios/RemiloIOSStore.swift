@@ -39,6 +39,7 @@ struct IOSReminder: Codable {
     var revision = 1
     // The last authored revision that changed one-time Calendar authority.
     var calendarLifecycleRevision: Int? = nil
+    var calendarInstanceID: String? = nil
     var calendarExportIntent: IOSCalendarExportIntent? = nil
     var generation = 0
     var deliveryState = "NoAlert"

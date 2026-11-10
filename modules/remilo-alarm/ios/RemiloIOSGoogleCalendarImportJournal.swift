@@ -65,6 +65,7 @@ actor RemiloIOSGoogleCalendarImportJournal {
         let observation: Inbox.Observation
         let recordedIssue: Bool
         var textWork: SeriesTextWork? = nil
+        var instanceWork: SeriesInstanceWork? = nil
     }
 
     struct RecurringInstanceVersion: Codable, Equatable, Sendable {
@@ -75,6 +76,30 @@ actor RemiloIOSGoogleCalendarImportJournal {
             guard identity.eventID == observation.eventID, identity.cancelled == observation.instanceCancelled else { return false }
             if identity.cancelled { return true }
             return etag != nil && etag == observation.etag
+        }
+    }
+
+    struct SeriesInstanceWork: Sendable {
+        let receipt: Receipt
+        let permit: Inbox.Permit
+        let masterETag: String
+        let known: [RecurringInstanceVersion]
+
+        var operationKey: String {
+            let id = permit.observation.eventID
+            let value = "\(id.utf8.count):\(id)\(permit.observation.etag ?? "")"
+            return receipt.operationID.uuidString.lowercased() + ":" + SeriesTextBaseline.digest(value).base64EncodedString()
+        }
+
+        func accepts(_ identity: Import.Event.InstanceIdentity) -> Bool {
+            guard identity.masterID == receipt.source.eventID, identity.eventID == permit.observation.eventID,
+                  !identity.cancelled else { return false }
+            return known.allSatisfy { item in
+                if item.identity.eventID == identity.eventID || item.identity.nominalSlot == identity.nominalSlot {
+                    return item.identity == identity
+                }
+                return true
+            }
         }
     }
 
@@ -334,6 +359,7 @@ actor RemiloIOSGoogleCalendarImportJournal {
     /// from the inbox. Replaying the same provider version is harmless.
     func reconcileManagedSeries(_ scan: Inbox.Progress, viewingAs account: Import.Account,
                                 limit: Int, allowTextTransfers: Bool = false,
+                                allowInstanceTransfers: Bool = false,
                                 waitingExports: Set<UUID> = []) throws -> [RecurringObservationResult] {
         guard limit > 0, scan.initialComplete, !scan.continuation, scan.scope.binding.belongs(to: account),
               scan.scope.binding.account.accountGeneration == account.accountGeneration,
@@ -353,7 +379,7 @@ actor RemiloIOSGoogleCalendarImportJournal {
             if case .changedInstance(let id) = observation.kind { masterID = id }
             else { masterID = observation.eventID }
             guard let id = masters[masterID], var entry = state.entries[id], let receipt = entry.receipt else { continue }
-            if waitingExports.contains(id), observation.kind == .recurringMaster { continue }
+            if waitingExports.contains(id), observation.kind != .removed { continue }
             let reviewedVersion = entry.seriesTextBaseline?.etag ?? receipt.reviewedETag
             let needsTextCheck = entry.seriesTextBaseline == nil ? observation.etag == reviewedVersion : observation.etag != reviewedVersion
             if allowTextTransfers, observation.kind == .recurringMaster, observation.etag != nil, entry.recurringIssue == nil,
@@ -374,17 +400,32 @@ actor RemiloIOSGoogleCalendarImportJournal {
             } else {
                 unchanged = observation.kind == .recurringMaster && reviewedVersion == observation.etag
             }
+            let canSaveInstance = Self.canSaveInstance(observation.eventID, in: entry)
+            if allowInstanceTransfers, !unchanged, case .changedInstance = observation.kind,
+               observation.instanceCancelled == false, observation.etag != nil, entry.recurringIssue == nil, canSaveInstance,
+               !scan.pending.contains(where: { item in
+                   item.eventID == masterID && (item.kind != .recurringMaster || item.etag != reviewedVersion)
+               }) {
+                results.append(.init(observation: observation, recordedIssue: false, instanceWork: .init(
+                    receipt: receipt, permit: .init(scope: scan.scope, observation: observation),
+                    masterETag: reviewedVersion, known: entry.recurringInstances ?? [])))
+                if results.count == limit { break }
+                continue
+            }
             var recorded = false
             if !unchanged {
                 let code: String
                 switch observation.kind {
                 case .removed: code = "REMOTE_REMOVED"
+                case .changedInstance where observation.instanceCancelled == true: code = "REMOTE_REMOVED"
+                case .changedInstance where !canSaveInstance: code = RemiloIOSGoogleCalendarRecurringReview.Failure.reviewLimit.rawValue
                 case .needsReview(let reason): code = reason
                 default: code = Failure.staleRemote.rawValue
                 }
                 // One review covers the family. Explicit removal supersedes a
                 // version change so it cannot be lost during an inbox replay.
-                if entry.recurringIssue == nil || (entry.recurringIssue?.code != code && code == "REMOTE_REMOVED") {
+                let masterRemoved = observation.kind == .removed && entry.recurringIssue?.eventID != receipt.source.eventID
+                if entry.recurringIssue == nil || masterRemoved || (entry.recurringIssue?.code != code && code == "REMOTE_REMOVED") {
                     entry.recurringIssue = RecurringIssue(eventID: observation.eventID, etag: observation.etag, code: code)
                     state.entries[id] = entry
                     recorded = true
@@ -395,6 +436,47 @@ actor RemiloIOSGoogleCalendarImportJournal {
         }
         if results.contains(where: \.recordedIssue) { try write(state) }
         return results
+    }
+
+    func permitsSeriesInstance(_ work: SeriesInstanceWork) throws -> Bool {
+        guard let entry = try read().entries[work.receipt.operationID] else { return false }
+        return Self.matchesSeriesInstance(work, entry: entry)
+    }
+
+    private static func matchesSeriesInstance(_ work: SeriesInstanceWork, entry: Entry) -> Bool {
+        let eventID = work.permit.observation.eventID
+        return entry.receipt == work.receipt && entry.managed?.scope.binding.linkLease == work.permit.scope.binding.linkLease &&
+            entry.recurringIssue == nil && (entry.seriesTextBaseline?.etag ?? work.receipt.reviewedETag) == work.masterETag &&
+            canSaveInstance(eventID, in: entry) &&
+            entry.recurringInstances?.first(where: { $0.identity.eventID == eventID }) ==
+                work.known.first(where: { $0.identity.eventID == eventID })
+    }
+
+    private static func canSaveInstance(_ id: String, in entry: Entry) -> Bool {
+        let saved = entry.recurringInstances ?? []
+        return saved.count < 500 || saved.contains { $0.identity.eventID == id }
+    }
+
+    func finishSeriesInstance(_ work: SeriesInstanceWork, confirmed identity: Import.Event.InstanceIdentity?, reason: String?) throws {
+        var state = try read()
+        let id = work.receipt.operationID
+        guard var entry = state.entries[id], Self.matchesSeriesInstance(work, entry: entry) else { throw Failure.stalePreview }
+        if let identity {
+            guard reason == nil, work.accepts(identity) else { throw Failure.staleRemote }
+            var instances = entry.recurringInstances ?? []
+            guard !instances.contains(where: { $0.identity.nominalSlot == identity.nominalSlot && $0.identity.eventID != identity.eventID }) else {
+                throw Failure.staleRemote
+            }
+            instances.removeAll { $0.identity.eventID == identity.eventID }
+            instances.append(.init(identity: identity, etag: work.permit.observation.etag))
+            entry.recurringInstances = instances
+        } else if let reason {
+            entry.recurringIssue = .init(eventID: work.permit.observation.eventID, etag: work.permit.observation.etag, code: reason)
+        } else {
+            throw Failure.invalidInput
+        }
+        state.entries[id] = entry
+        try write(state)
     }
 
     func finishSeriesText(_ work: SeriesTextWork, confirmed review: Import.Review?, reason: String?) throws {

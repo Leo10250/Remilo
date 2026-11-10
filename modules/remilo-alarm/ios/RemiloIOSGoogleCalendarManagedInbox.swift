@@ -122,10 +122,18 @@ final class RemiloIOSGoogleCalendarManagedInbox {
     }
 
     func permits(_ permit: Permit) throws -> Bool {
+        try contains(permit) && [.oneTime, .recurringMaster].contains(permit.observation.kind)
+    }
+
+    func permitsInstance(_ permit: Permit) throws -> Bool {
+        guard case .changedInstance = permit.observation.kind, permit.observation.instanceCancelled == false else { return false }
+        return try contains(permit)
+    }
+
+    private func contains(_ permit: Permit) throws -> Bool {
         let state = try read(permit.scope)
-        guard state.initialComplete, state.next == nil, state.since != nil, permit.observation.etag != nil,
-              state.observations[permit.observation.eventID] == permit.observation else { return false }
-        return [.oneTime, .recurringMaster].contains(permit.observation.kind)
+        return state.initialComplete && state.next == nil && state.since != nil && permit.observation.etag != nil &&
+            state.observations[permit.observation.eventID] == permit.observation
     }
 
     func finish(_ permit: Permit, reviewReason: String?) throws {

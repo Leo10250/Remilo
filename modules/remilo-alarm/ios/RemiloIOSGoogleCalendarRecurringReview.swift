@@ -201,7 +201,7 @@ enum RemiloIOSGoogleCalendarRecurringReview {
         return raw
     }
 
-    private static func instanceFields(_ event: Transport.Event, zoneID: String) throws -> Event.Fields {
+    static func instanceFields(_ event: Transport.Event, zoneID: String) throws -> Event.Fields {
         var raw = try object(event)
         raw.removeValue(forKey: "recurringEventId")
         return try Event.fields(raw, calendarZone: zoneID).fields

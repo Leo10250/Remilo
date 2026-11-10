@@ -24,3 +24,19 @@ struct IOSCalendarSeriesScheduleChange: Codable, Sendable {
 enum IOSCalendarSeriesScheduleResult: Equatable, Sendable {
     case applied, deferred, needsReview, elapsedAlert
 }
+
+struct IOSCalendarSeriesInstanceChange: Codable, Equatable, Sendable {
+    let eventID: String
+    let nominalSlot: String
+    let previouslyImported: Bool
+    let title: String
+    let notes: String
+    let eventStartMs: Int64
+    let eventEndMs: Int64
+    let allDay: Bool
+    let zoneID: String
+}
+
+enum IOSCalendarSeriesInstanceResult: String, Codable, Equatable, Sendable {
+    case applied, ignored, deferred, needsReview, elapsedAlert
+}

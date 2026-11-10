@@ -526,6 +526,40 @@ final class RemiloIOSGoogleCalendarConnection {
         catch Failure.needsAccess { return false }
     }
 
+    func observeManagedInstance(_ work: RemiloIOSGoogleCalendarImportJournal.SeriesInstanceWork, account: Import.Account,
+                                budget: RemiloIOSGoogleCalendarHTTP.Budget,
+                                canRead: @escaping @MainActor @Sendable () -> Bool) async throws
+        -> (identity: Event.InstanceIdentity, fields: Event.Fields, masterTitle: String) {
+        let live = try requireAccess(account.connectionRevision)
+        guard live.fence.importAccount == account, work.receipt.source.subject == account.subject else { throw Failure.staleConnection }
+        let beforeRead = importReadPermission(account, canRead: canRead)
+        let permit = work.permit
+        return try await read(live) { transport, access in
+            try await beforeRead()
+            let calendar = try await transport.ownedCalendar(access, id: work.receipt.source.calendarID, budget: budget)
+            try Self.verifyManagedImportCalendar(calendar, managed: permit, email: access.account.email)
+            try await beforeRead()
+            let masterLookup = try await transport.lookup(access, calendarID: calendar.id, eventID: work.receipt.source.eventID, budget: budget)
+            guard case .found(let master) = masterLookup, master.strongETag == work.masterETag else { throw Import.Failure.staleRemote }
+            let source = try Import.Source(account: account, calendar: calendar, event: master)
+            guard source.fields.schedule.recurrence != nil else { throw Import.Failure.staleRemote }
+            try await beforeRead()
+            let instanceLookup = try await transport.lookup(access, calendarID: calendar.id, eventID: permit.observation.eventID, budget: budget)
+            guard case .found(let instance) = instanceLookup, !instance.cancelled,
+                  instance.strongETag == permit.observation.etag else { throw Import.Failure.staleRemote }
+            let identity = try Event.originalInstance(instance, masterZoneID: source.fields.schedule.zoneId)
+            guard work.accepts(identity) else { throw Import.Failure.staleRemote }
+            let fields = try RemiloIOSGoogleCalendarRecurringReview.instanceFields(instance, zoneID: source.fields.schedule.zoneId)
+            guard fields.schedule.recurrence == nil else { throw Import.Failure.staleRemote }
+            try await beforeRead()
+            let latest = try await transport.lookup(access, calendarID: calendar.id, eventID: master.id, budget: budget)
+            guard case .found(let checked) = latest, !checked.cancelled, checked.strongETag == work.masterETag else {
+                throw Import.Failure.staleRemote
+            }
+            return (identity, fields, source.fields.title)
+        }
+    }
+
     func observeImport(_ review: Import.Review,
                        managed: RemiloIOSGoogleCalendarManagedInbox.Permit? = nil,
                        budget: RemiloIOSGoogleCalendarHTTP.Budget = .init(),

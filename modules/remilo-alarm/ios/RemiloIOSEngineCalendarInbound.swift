@@ -54,7 +54,8 @@ struct IOSCalendarInboundProjection {
                                  retainedAlertMs: retainedAlertMs)
     }
 
-    init(_ change: IOSCalendarInboundChange, from old: IOSReminder, state: IOSDatabase, now: Int64) throws {
+    init(_ change: IOSCalendarInboundChange, from old: IOSReminder, state: IOSDatabase, now: Int64,
+         linkedAlarmOverride: Int64? = nil, retainedOverride: Int64? = nil) throws {
         let title = change.title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty else { throw IOSInputFailure("TITLE_REQUIRED", field: "title") }
         guard title.utf16.count <= 200, change.notes.utf16.count <= 10_000 else { throw IOSInputFailure("CONTENT_LIMIT") }
@@ -80,10 +81,15 @@ struct IOSCalendarInboundProjection {
             updated.allDay = draft.allDay
             updated.zoneID = draft.zoneID
             updated.dueAtMs = draft.dueAtMs
-            updated.alarmAtMs = draft.allDay && old.alarmLinked
-                ? try Self.allDayAlert(from: old, on: draft.eventStartMs, zone: zone) : draft.alarmAtMs
+            if let linkedAlarmOverride, old.alarmLinked { updated.alarmAtMs = linkedAlarmOverride }
+            else {
+                updated.alarmAtMs = draft.allDay && old.alarmLinked
+                    ? try Self.allDayAlert(from: old, on: draft.eventStartMs, zone: zone) : draft.alarmAtMs
+            }
         }
-        if let target = old.registration?.targetMs, old.mode != "None", old.nextAlertMs == target, target > now,
+        if let retainedOverride, old.mode != "None", retainedOverride > now {
+            retainedAlertMs = retainedOverride
+        } else if let target = old.registration?.targetMs, old.mode != "None", old.nextAlertMs == target, target > now,
            old.adjustment == "Snoozed" || old.adjustment == "Postponed" || target != old.alarmAtMs {
             retainedAlertMs = target
         } else { retainedAlertMs = nil }

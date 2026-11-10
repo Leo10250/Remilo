@@ -111,11 +111,20 @@ final class RemiloIOSGoogleCalendarManagedSetup {
     }
 
     func permitsIncoming(_ permit: Inbox.Permit, account: Account) throws -> Bool {
+        try permitsObservation(permit, account: account, instance: false)
+    }
+
+    func permitsIncomingInstance(_ permit: Inbox.Permit, account: Account) throws -> Bool {
+        try permitsObservation(permit, account: account, instance: true)
+    }
+
+    private func permitsObservation(_ permit: Inbox.Permit, account: Account, instance: Bool) throws -> Bool {
         guard canUseForeground(), try connection.isCurrentAccount(account) else { return false }
         let scope: Inbox.Scope
         do { scope = try journal.incomingScope(account) }
         catch Failure.staleConnection { return false }
         guard scope == permit.scope else { return false }
+        if instance { return try inbox.permitsInstance(permit) }
         return try inbox.permits(permit)
     }
 

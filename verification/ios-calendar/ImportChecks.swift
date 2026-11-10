@@ -314,13 +314,28 @@ enum ImportChecks {
         precondition(canApplySchedule && !textOnly && scheduleChange?.eventEndMs == laterEnd && scheduleChange?.rule.endOffsetMs == 2_700_000)
         let providerUpdate = Inbox.Observation(eventID: moved.eventID, etag: #""moved-v2""#, kind: moved.kind,
                                                 importMode: .none, initialRecovery: false, instanceCancelled: false)
+        let instanceStage = try await reopened.reconcileManagedSeries(scan([providerUpdate]), viewingAs: account, limit: 10,
+                                                                       allowInstanceTransfers: true)
+        guard let instanceWork = instanceStage.first?.instanceWork else { preconditionFailure("An edited child gets its own work") }
+        let movedIdentity = oldProof.exceptions.first { $0.identity.eventID == moved.eventID }!.identity
+        let foreignSlot = Event.InstanceIdentity(eventID: movedIdentity.eventID, masterID: movedIdentity.masterID,
+                                                nominalSlot: "2027-03-18T09:00", cancelled: false)
+        let permits = try await restarted.permitsSeriesInstance(instanceWork)
+        precondition(permits && instanceWork.accepts(movedIdentity) && !instanceWork.accepts(foreignSlot))
+        try await restarted.finishSeriesInstance(instanceWork, confirmed: movedIdentity, reason: nil)
+        let acknowledged = try await reopened.reconcileManagedSeries(scan([providerUpdate]), viewingAs: account, limit: 10,
+                                                                      allowInstanceTransfers: true)
+        let oldPermit = try await reopened.permitsSeriesInstance(instanceWork)
+        precondition(acknowledged.first?.instanceWork == nil && acknowledged.first?.recordedIssue == false && !oldPermit)
+        let subsequentUpdate = Inbox.Observation(eventID: moved.eventID, etag: #""moved-v3""#, kind: moved.kind,
+                                                  importMode: .none, initialRecovery: false, instanceCancelled: false)
         let staleBinding = Inbox.Journal.Binding(operationID: UUID(), account: account, record: binding.record,
                                                  revision: 2, authEpoch: 2, initialImport: nil)
-        let fenced = try await reopened.reconcileManagedSeries(scan([providerUpdate], scope: .init(binding: staleBinding, policy: policy)),
+        let fenced = try await reopened.reconcileManagedSeries(scan([subsequentUpdate], scope: .init(binding: staleBinding, policy: policy)),
                                                               viewingAs: account, limit: 10)
         precondition(fenced.isEmpty, "A replacement binding cannot adopt the old imported family")
-        let changed = try await reopened.reconcileManagedSeries(scan([providerUpdate]), viewingAs: account, limit: 10)
-        let replay = try await restarted.reconcileManagedSeries(scan([providerUpdate]), viewingAs: account, limit: 10)
+        let changed = try await reopened.reconcileManagedSeries(scan([subsequentUpdate]), viewingAs: account, limit: 10)
+        let replay = try await restarted.reconcileManagedSeries(scan([subsequentUpdate]), viewingAs: account, limit: 10)
         let changedOperation = try await restarted.savedOperation(operation, viewingAs: account)
         precondition(changed.first?.recordedIssue == true && replay.first?.recordedIssue == false &&
                      changedOperation?.recurringIssue?.eventID == moved.eventID && changedOperation?.recurringIssue?.code == "STALE_REMOTE")

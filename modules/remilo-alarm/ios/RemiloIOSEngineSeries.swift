@@ -243,7 +243,8 @@ extension RemiloIOSEngine {
                   let nominal = record.nominalSlot else { continue }
             let retired = record.deliveryState == "Replaced" && record.skipped == true
             let held = record.active && record.adjustment != nil && (record.nextAlertMs ?? 0) > now
-            let authored = record.independent == true && record.history.contains { $0.kind == "Edit" || $0.kind == "Create" }
+            let authored = record.independent == true && (record.calendarInstanceID != nil ||
+                record.history.contains { $0.kind == "Edit" || $0.kind == "Create" })
             let terminal = !record.active && !retired
             if record.eventEndMs <= now && record.agendaAtMs <= now {
                 if let registration = record.registration, registration.mode == "Alarm",
@@ -305,6 +306,76 @@ extension RemiloIOSEngine {
         segment.revision += 1
         state.series[segment.id] = segment
         state.series[snapshot.familyID]?.calendarBaselineRule = new
+        _ = try replenishSeries(state: &state, now: now)
+        return .applied
+    }
+
+    func reconcileCalendarSeriesInstance(_ snapshot: IOSCalendarSeriesTextSnapshot, change: IOSCalendarSeriesInstanceChange,
+                                         state: inout IOSDatabase, now: Int64) throws -> IOSCalendarSeriesInstanceResult {
+        typealias Recurrence = RemiloIOSRecurrence
+        guard let segment = state.series[snapshot.segmentID], segment.familyID == snapshot.familyID,
+              let index = try Recurrence.index(change.nominalSlot, in: segment.rule),
+              let zone = TimeZone(identifier: change.zoneID) else { return .needsReview }
+        let familySegments = Set(state.series.values.filter { $0.familyID == snapshot.familyID }.map(\.id))
+        if (state.portableExclusions ?? [:]).values.contains(where: {
+            $0.nominalSlot == change.nominalSlot && familySegments.contains($0.segmentID)
+        }) { return .ignored }
+        let id = RemiloIOSSeries.occurrenceID(segment.id, change.nominalSlot)
+        if state.isPurgedOccurrence(id) { return .ignored }
+        for peer in state.reminders.values where peer.id != id && peer.nominalSlot == change.nominalSlot {
+            guard let segmentID = peer.segmentID, familySegments.contains(segmentID) else { continue }
+            if !peer.active && peer.deliveryState != "Replaced" { return .ignored }
+            if peer.active && peer.independent == true { return .needsReview }
+        }
+        let existing = state.reminders[id]
+        if existing?.active == false { return .ignored }
+        if existing == nil && change.eventEndMs <= now { return .ignored }
+        let slot = try Recurrence.resolve(segment.rule, nominal: change.nominalSlot, deviceZone: zone, index: index)
+        let old = existing ?? RemiloIOSSeries.makeOccurrence(segment, slot: slot)
+        guard old.calendarInstanceID.map({ $0 == change.eventID }) ?? true,
+              !old.history.contains(where: { ["Edit", "Reopen", "UndoDelete"].contains($0.kind) }),
+              change.previouslyImported || !old.history.contains(where: { $0.kind == "Create" }) else { return .needsReview }
+        let schedule = IOSCalendarInboundChange.Schedule(eventStartMs: change.eventStartMs, eventEndMs: change.eventEndMs,
+                                                          allDay: change.allDay, zoneID: change.zoneID)
+        if schedule != .init(old), let registration = old.registration, registration.mode == "Alarm",
+           try RemiloIOSDelivery.isAlarmAlerting(registration.systemID) { return .deferred }
+        let linkedAlarm: Int64?
+        if old.alarmLinked, schedule != .init(old), let oldZone = TimeZone(identifier: old.zoneID) {
+            let offset: Int64
+            if old.allDay == change.allDay {
+                offset = try Recurrence.civilOffset(old.alarmAtMs, fromNominal: RemiloIOSSeries.civil(old.eventStartMs, zone: oldZone), zone: oldZone)
+            } else if change.allDay {
+                let day = String(RemiloIOSSeries.civil(old.alarmAtMs, zone: oldZone).prefix(10))
+                offset = try Recurrence.civilOffset(old.alarmAtMs, fromNominal: day + "T00:00", zone: oldZone)
+            } else { offset = 0 }
+            let linked = try Recurrence.resolveOffset(RemiloIOSSeries.civil(change.eventStartMs, zone: zone), by: offset, in: zone)
+            guard RemiloIOSProjection.epoch.contains(linked) else { return .needsReview }
+            linkedAlarm = linked
+        } else { linkedAlarm = nil }
+        let held = old.adjustment != nil ? old.nextAlertMs : nil
+        let inbound = IOSCalendarInboundChange(title: change.title, notes: change.notes, schedule: schedule)
+        let projected: IOSCalendarInboundProjection
+        do {
+            projected = try IOSCalendarInboundProjection(inbound, from: old, state: state, now: now,
+                                                         linkedAlarmOverride: linkedAlarm, retainedOverride: held)
+        } catch let failure as IOSInputFailure {
+            return failure.code == "ELAPSED_ALERT" ? .elapsedAlert : .needsReview
+        }
+        if existing == nil, old.mode != "None", projected.record.alarmAtMs <= now { return .elapsedAlert }
+        var record = projected.record
+        record.independent = true
+        record.calendarInstanceID = change.eventID
+        if existing == nil { record.createdAtMs = now }
+        else { record.revision += 1 }
+        if projected.replacesRegistration {
+            record.adjustment = nil
+            replaceRegistration(&record, target: nil, state: &state, now: now)
+            record.deferSeriesOverride(target: record.alarmAtMs)
+        } else if record.mode != "None", projected.retainedAlertMs == nil, record.alarmAtMs > now {
+            if record.registration == nil { record.deferSeriesOverride(target: record.alarmAtMs) }
+            else { record.deferredSeriesOverride = true }
+        }
+        state.reminders[id] = record
         _ = try replenishSeries(state: &state, now: now)
         return .applied
     }
