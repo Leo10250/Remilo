@@ -8,7 +8,7 @@ enum SeriesTextWriterChecks {
 
     static func run(configuration: RemiloIOSGoogleCalendarConfiguration, access: RemiloIOSGoogleCalendarAccess,
                     readOnly: RemiloIOSGoogleCalendarAccess, now: @escaping @Sendable () -> Date,
-                    editsSchedule: Bool = false, editsInstance: Bool = false) async throws {
+                    editsSchedule: Bool = false, editsInstance: Bool = false, resumes: Bool = false) async throws {
         if editsSchedule { try recurrenceEncoding() }
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent("remilo-series-write-\(UUID())")
         defer { try? FileManager.default.removeItem(at: directory) }
@@ -24,9 +24,23 @@ enum SeriesTextWriterChecks {
                                                 from: JSONSerialization.data(withJSONObject: fixture.calendar))
         let binding = Inbox.Journal.Binding(operationID: UUID(), account: account, record: try .init(calendar),
                                             revision: 1, authEpoch: 1, initialImport: nil)
-        let lease = binding.linkLease
         let policy = Inbox.Journal.Policy(importMode: .none)
-        let scope = Inbox.Scope(binding: binding, policy: policy)
+        let managed = Inbox.Journal(directory: directory, now: clock)
+        let setup = RemiloIOSGoogleCalendarManagedSetup(connection: connection, journal: managed, canUseForeground: { true }, now: now) { _, _ in
+            preconditionFailure("An existing calendar uses the saved grant")
+        }
+        let scope: Inbox.Scope
+        if resumes {
+            let preview = try await setup.preview(expectedRevision: granted.revision, policy: policy, zoneID: "UTC")
+            guard let review = preview.review else { preconditionFailure("Adopt the owned calendar") }
+            let id = UUID()
+            _ = try setup.capture(id, reviewID: review.id, expectedRevision: granted.revision, selectedCalendarID: binding.record.id)
+            _ = try await setup.advance(id, expectedRevision: granted.revision)
+            scope = try managed.incomingScope(account)
+        } else {
+            scope = .init(binding: binding, policy: policy)
+        }
+        let lease = scope.binding.linkLease
         let review = try await connection.prepareImport(expectedRevision: granted.revision, calendarID: lease.calendarID,
             eventID: Fixture.master, recurringChoices: .init(mode: .none), managedLease: lease, canRead: { true })
         let permit = Inbox.Permit(scope: scope, observation: .init(eventID: Fixture.master, etag: review.source.etag,
@@ -40,6 +54,11 @@ enum SeriesTextWriterChecks {
                 return .acknowledged(local)
             }))
         precondition(imported.relationship == .automaticRequested)
+        if resumes {
+            try await resumeChecks(fixture, directory: directory, connection: connection, imports: imports, setup: setup,
+                                   managed: managed, account: account, receipt: imported, source: review.source, prior: scope)
+            return
+        }
         if editsInstance {
             try await instanceSync(fixture, directory: directory, connection: connection, imports: imports, account: account,
                                    scope: scope, master: review.source, importID: id, access: access, readOnly: readOnly)
@@ -107,6 +126,73 @@ enum SeriesTextWriterChecks {
             } catch Service.Import.Failure.staleRemote {}
             try await instanceWrite(fixture, account: account, lease: lease, access: access, readOnly: readOnly, now: now)
         }
+    }
+
+    private static func resumeChecks(_ fixture: Fixture, directory: URL, connection: Service.Runtime.Connection, imports: Service.Journal,
+                                     setup: RemiloIOSGoogleCalendarManagedSetup, managed: Inbox.Journal,
+                                     account: Service.Account, receipt: Service.Journal.Receipt, source: Service.Import.Source,
+                                     prior: Inbox.Scope) async throws {
+        let revision = account.connectionRevision
+        let family = receipt.local!.id
+        fixture.localSeries = .init(familyID: family, segmentID: family, revision: 1, title: source.fields.title, notes: source.fields.notes)
+        func runtime() -> Service.Runtime {
+            .init(connection: connection, canUseForeground: { true }, importJournal: .init(directory: directory),
+                  scheduler: .init(receipt: { _ in nil }, create: { _, _ in preconditionFailure("Resume never copies an imported series") }),
+                  managedSetupJournal: managed, seriesText: .init(
+                    read: { $0 == family ? fixture.localSeries : nil },
+                    apply: { _, snapshot, title, notes, allows in
+                        guard try allows(), fixture.localSeries == snapshot else { return false }
+                        fixture.localSeries = .init(familyID: family, segmentID: family, revision: snapshot.revision + 1,
+                                                    title: title, notes: notes)
+                        return true
+                    }, permit: { _, _ in preconditionFailure("Resume never sends a PATCH") },
+                    resumePermit: { snapshot, checkpoint in
+                        guard snapshot == fixture.localSeries else { return nil }
+                        return try await checkpoint()
+                    })) { _, _ in preconditionFailure("Resume uses the saved grant") }
+        }
+        func pause() throws {
+            let view = try setup.view(expectedRevision: revision)
+            _ = try setup.changeMode(.paused, operationID: UUID(), expectedRevision: view.bindingRevision, expectedConnectionRevision: revision)
+        }
+        func confirm(_ reviewID: UUID, items: [String], runtime: Service.Runtime) async throws {
+            _ = try await setup.confirmResume(UUID(), reviewID: reviewID, selectedItemIDs: items, expectedRevision: revision,
+                validateSeries: runtime.validateHeldSeries) { _, _, _ in }
+        }
+
+        _ = try await setup.scanIncoming(expectedRevision: revision)
+        try pause()
+        let first = runtime()
+        let skipped = try await setup.previewResume(expectedRevision: revision, series: first.reviewHeldSeries) { _, _ in [] }
+        precondition(skipped.series.count == 1 && skipped.series[0].approval != nil)
+        try await confirm(skipped.review.id, items: [], runtime: first)
+        let skippedPass = try await runtime().syncManagedIncoming(expectedRevision: revision)
+        let skippedScope = try managed.incomingScope(account)
+        let skippedExports = try await imports.seriesTextExports(viewingAs: account, lease: skippedScope.binding.linkLease)
+        precondition(skippedPass.resumedSeries == 0 && skippedExports.isEmpty, "An unselected series keeps its original lease")
+
+        try pause()
+        fixture.resumeTitle = "Changed in Google"
+        fixture.resumeETag = #""resume-v2""#
+        let current = runtime()
+        let reviewed = try await setup.previewResume(expectedRevision: revision, series: current.reviewHeldSeries) { _, _ in [] }
+        precondition(reviewed.series[0].inbound == ["title"] && reviewed.series[0].approval != nil)
+        fixture.resumeETag = #""resume-v3""#
+        do {
+            try await confirm(reviewed.review.id, items: [reviewed.series[0].itemID], runtime: current)
+            preconditionFailure("A changed master version must return to review")
+        } catch Service.Import.Failure.stalePreview {}
+        fixture.resumeETag = #""resume-v2""#
+        try await confirm(reviewed.review.id, items: [reviewed.series[0].itemID], runtime: current)
+        let resumed = try await runtime().syncManagedIncoming(expectedRevision: revision)
+        let active = try managed.incomingScope(account)
+        let exports = try await imports.seriesTextExports(viewingAs: account, lease: active.binding.linkLease)
+        let original = try await imports.seriesTextExports(viewingAs: account, lease: prior.binding.linkLease)
+        precondition(resumed.resumedSeries == 1 && resumed.updatedSeries == 1 && resumed.imported == 0 &&
+                     original.isEmpty && exports.first?.receipt == receipt && exports.first?.baseline.etag == fixture.resumeETag &&
+                     fixture.localSeries?.title == fixture.resumeTitle && fixture.writes == 0)
+        let repeated = try await runtime().syncManagedIncoming(expectedRevision: revision)
+        precondition(repeated.resumedSeries == 0 && repeated.updatedSeries == 0 && fixture.localSeries?.revision == 2)
     }
 
     private static func instanceSync(_ fixture: Fixture, directory: URL, connection: Service.Runtime.Connection,
@@ -286,6 +372,9 @@ enum SeriesTextWriterChecks {
         var seriesHeld = false
         var googleChildNotes: String?
         var googleChildTitle: String?
+        var localSeries: IOSCalendarSeriesTextSnapshot?
+        var resumeTitle: String?
+        var resumeETag: String?
         private(set) var childWrites = 0
         private(set) var revealedAuditCount = 0
         private(set) var writes = 0
@@ -306,8 +395,8 @@ enum SeriesTextWriterChecks {
             let start = ["dateTime": moved ? "2027-03-15T11:00:00Z" : "2027-03-15T10:00:00Z", "timeZone": "UTC"]
             let end = ["dateTime": moved ? "2027-03-15T11:45:00Z" : "2027-03-15T10:30:00Z", "timeZone": "UTC"]
             let updatedRule = "RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=MO;WKST=MO;COUNT=1"
-            let master: [String: Any] = ["id": Self.master, "etag": writes == 0 ? #""series-v1""# : (staleChildMaster ? #""series-v3""# : Self.updatedETag),
-                "summary": writes == 0 || editsSchedule ? "Original title" : "Remilo edit", "description": "Original notes",
+            let master: [String: Any] = ["id": Self.master, "etag": resumeETag ?? (writes == 0 ? #""series-v1""# : (staleChildMaster ? #""series-v3""# : Self.updatedETag)),
+                "summary": resumeTitle ?? (writes == 0 || editsSchedule ? "Original title" : "Remilo edit"), "description": "Original notes",
                 "start": start, "end": end, "recurrence": [moved ? updatedRule : "RRULE:FREQ=DAILY;COUNT=1"]]
             let childETag = googleChildTitle != nil ? #""child-v3""# : (staleChildVersion || revealChildWrite ? #""child-v2""# : #""child-v1""#)
             var child: [String: Any] = ["id": Self.child, "etag": childETag,
@@ -348,6 +437,7 @@ enum SeriesTextWriterChecks {
                 return try body([:], status: 503)
             }
             if url.path.contains("/calendarList/") { return try body(calendar) }
+            if url.lastPathComponent == "calendarList" { return try body(["items": [calendar]]) }
             if url.lastPathComponent == "instances" {
                 if resolveChild {
                     let original = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "originalStart" }?.value

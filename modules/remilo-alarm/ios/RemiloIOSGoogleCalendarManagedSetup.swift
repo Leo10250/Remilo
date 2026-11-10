@@ -21,6 +21,17 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         let reason: String?
     }
 
+    struct ResumeSeriesRow: Sendable {
+        let familyID: String
+        let title: String
+        let approval: Journal.ResumeSeries?
+        let reason: String?
+        var inbound: [String] = []
+        var outbound: [String] = []
+
+        var itemID: String { "association:" + familyID }
+    }
+
     struct Preview: Sendable {
         let discovery: Connection.ManagedDiscoveryResult
         let review: Journal.Review?
@@ -148,16 +159,19 @@ final class RemiloIOSGoogleCalendarManagedSetup {
     func previewResume(expectedRevision: Int,
                        incoming: (([Inbox.Observation], Inbox.Scope, Account) async throws -> [ResumeImportRow])? = nil,
                        manual: Manual? = nil,
+                       series: ((Inbox.Scope, Account) async throws -> [ResumeSeriesRow])? = nil,
                        exports: (Journal.Binding, Account) throws -> [RemiloIOSGoogleCalendarPublicationRuntime.ResumeRow])
         async throws -> (review: Journal.ResumeReview, rows: [RemiloIOSGoogleCalendarPublicationRuntime.ResumeRow],
-                         imports: [ResumeImportRow], links: [Manual.ResumeRow]) {
+                         imports: [ResumeImportRow], links: [Manual.ResumeRow], series: [ResumeSeriesRow]) {
         let account = try currentAccount(expectedRevision)
         let state = try journal.view(viewingAs: account)
         guard state.pendingOperationID == nil, let binding = try journal.heldBinding(account) else { throw Journal.Rejection.stalePreview }
         _ = try await verifyResumeDestination(binding, account: account)
         var imports: [ResumeImportRow] = []
-        if let incoming, let scope = try journal.heldIncomingScope(account) {
-            imports = try await incoming(journal.heldIncomingObservations(account), scope, account)
+        var recurring: [ResumeSeriesRow] = []
+        if let scope = try journal.heldIncomingScope(account) {
+            if let incoming { imports = try await incoming(journal.heldIncomingObservations(account), scope, account) }
+            if let series { recurring = try await series(scope, account) }
         }
         let links = try await manual?.reviewManagedResume(binding, policy: state.policy, account: account) { [self] in
             canUseForeground() && (try? journal.view(viewingAs: account)) == state
@@ -165,15 +179,17 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         guard try journal.view(viewingAs: account) == state else { throw Journal.Rejection.stalePreview }
         let rows = try exports(binding, account)
         let review = try journal.reviewResume(account: account, binding: binding, exports: rows.compactMap(\.export),
-                                              imports: imports.compactMap(\.approval), links: links.compactMap(\.approval))
+                                              imports: imports.compactMap(\.approval), links: links.compactMap(\.approval),
+                                              series: recurring.compactMap(\.approval))
         resumeReviews.removeAll { $0.account != account }
         if resumeReviews.count == 8 { resumeReviews.removeFirst() }
         resumeReviews.append(review)
-        return (review, rows, imports, links)
+        return (review, rows, imports, links, recurring)
     }
 
     func confirmResume(_ operationID: UUID, reviewID: UUID, selectedItemIDs: [String], expectedRevision: Int,
                        manual: Manual? = nil,
+                       validateSeries: ((Journal.ResumeSeries, Inbox.Scope, Account, RemiloIOSGoogleCalendarHTTP.Budget) async throws -> Void)? = nil,
                        validate: ([Journal.ResumeExport], Journal.Binding, Account) throws -> Void) async throws -> Journal.ModeReceipt {
         try requireForeground()
         let account = try connection.savedAccount(expectedRevision: expectedRevision)
@@ -188,8 +204,11 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         let selected = review.exports.filter { selections.contains($0.itemID) }
         let selectedImports = review.imports.filter { selections.contains($0.itemID) }
         let selectedLinks = review.links.filter { selections.contains($0.itemID) }
-        guard selected.count + selectedImports.count + selectedLinks.count == selections.count else { throw Failure.invalidInput }
-        if !selected.isEmpty || !selectedLinks.isEmpty || review.policy.exportNewReminders ||
+        let selectedSeries = review.series.filter { selections.contains($0.itemID) }
+        guard selected.count + selectedImports.count + selectedLinks.count + selectedSeries.count == selections.count else {
+            throw Failure.invalidInput
+        }
+        if !selected.isEmpty || !selectedLinks.isEmpty || !selectedSeries.isEmpty || review.policy.exportNewReminders ||
             (review.policy.automaticImport && review.policy.disableGoogleReminders) {
             try connection.requireManualLinkWrite(account: account)
         }
@@ -226,6 +245,14 @@ final class RemiloIOSGoogleCalendarManagedSetup {
             }
             try connection.requireManualLinkWrite(account: account)
         }
+        if !selectedSeries.isEmpty {
+            guard let validateSeries, let scope = try journal.heldIncomingScope(account), scope.binding == review.binding else {
+                throw Journal.Rejection.stalePreview
+            }
+            let budget = RemiloIOSGoogleCalendarHTTP.Budget()
+            for approval in selectedSeries { try await validateSeries(approval, scope, account, budget) }
+            try connection.requireManualLinkWrite(account: account)
+        }
         try validate(selected, review.binding, account)
         return try journal.resume(review, operationID: operationID, selections: selections, account: account, verified: verified)
     }
@@ -252,6 +279,21 @@ final class RemiloIOSGoogleCalendarManagedSetup {
             settled = true
         }
         return settled
+    }
+
+    func resumedSeries(_ account: Account) throws -> [Journal.ResumeSeries] {
+        try requireForeground()
+        return try journal.resumedSeries(account)
+    }
+
+    func permitsResumedSeries(_ approval: Journal.ResumeSeries, lease: Journal.Lease, account: Account) throws -> Bool {
+        guard try activeSeriesLease(account) == lease else { return false }
+        return try journal.resumedSeries(account).contains(approval)
+    }
+
+    func finishResumedSeries(_ approval: Journal.ResumeSeries, lease: Journal.Lease, account: Account) throws {
+        guard try permitsResumedSeries(approval, lease: lease, account: account) else { return }
+        try journal.finishResumedSeries(approval, lease: lease, account: account)
     }
 
     func permitsResumeRead(_ scope: Inbox.Scope, account: Account) throws -> Bool {

@@ -272,12 +272,12 @@ final class RemiloIOSEngine {
     }
 
     func withCalendarSeriesTextPermit<Value: Sendable>(for snapshot: IOSCalendarSeriesTextSnapshot,
-                                                       commit: @MainActor @Sendable () throws -> Value) async throws -> Value? {
+                                                       commit: @MainActor @Sendable () async throws -> Value) async throws -> Value? {
         await acquire()
         defer { release() }
         try Task.checkCancellation()
         guard try calendarSeriesExportSnapshot(snapshot.familyID) == snapshot else { return nil }
-        return try commit()
+        return try await commit()
     }
 
     func acknowledgeCalendarSeriesExport(_ snapshot: IOSCalendarSeriesTextSnapshot,

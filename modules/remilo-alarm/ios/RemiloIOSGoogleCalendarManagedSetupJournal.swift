@@ -158,6 +158,17 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         var itemID: String { "association:" + occurrenceID }
     }
 
+    struct ResumeSeries: Codable, Equatable, Sendable {
+        let importID: UUID
+        let familyID: String
+        let source: Import.SourceKey
+        let priorLease: Lease
+        let observation: Inbox.Observation
+        let digest: Data
+
+        var itemID: String { "association:" + familyID }
+    }
+
     struct ResumeReview: Sendable {
         let id: UUID
         let account: Account
@@ -168,6 +179,7 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         let exports: [ResumeExport]
         let imports: [ResumeImport]
         let links: [ResumeLink]
+        let series: [ResumeSeries]
         let expiresAtMs: Int64
     }
 
@@ -204,6 +216,7 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         var resumedIncomingIDs: Set<String>?
         var resumedImports: [ResumeImport]?
         var resumedLinkProofs: [ResumeLink]?
+        var resumedSeriesProofs: [ResumeSeries]?
         var resumeCheckpointScope: Inbox.Scope?
 
         var mode: Mode { savedMode ?? (binding == nil ? .disabled : .enabled) }
@@ -327,7 +340,8 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
             throw Failure.staleConnection
         }
         guard let prior = state.resumeCheckpointScope else { return }
-        try managedInbox().resumeCheckpoint(from: prior, to: scope, reviewed: (state.resumedImports ?? []).map(\.observation))
+        let reviewed = (state.resumedImports ?? []).map(\.observation) + (state.resumedSeriesProofs ?? []).map(\.observation)
+        try managedInbox().resumeCheckpoint(from: prior, to: scope, reviewed: reviewed)
     }
 
     func resumedImports(_ account: Account) throws -> [ResumeImport] {
@@ -345,7 +359,7 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         try write(state)
     }
 
-    static func sameDestination(_ lease: Lease, as binding: Binding) -> Bool {
+    nonisolated static func sameDestination(_ lease: Lease, as binding: Binding) -> Bool {
         lease.setupID == binding.operationID && lease.calendarID == binding.record.id && lease.zoneID == binding.record.zoneId
     }
 
@@ -365,6 +379,19 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         try write(state)
     }
 
+    func resumedSeries(_ account: Account) throws -> [ResumeSeries] {
+        let state = try read()
+        guard state.policy.automaticImport, (try? Self.activeBinding(in: state, account: account)) != nil else { return [] }
+        return state.resumedSeriesProofs ?? []
+    }
+
+    func finishResumedSeries(_ approval: ResumeSeries, lease: Lease, account: Account) throws {
+        guard try incomingScope(account).binding.linkLease == lease, try resumedSeries(account).contains(approval) else { return }
+        var state = try read()
+        state.resumedSeriesProofs?.removeAll { $0 == approval }
+        try write(state)
+    }
+
     func holdsExport(_ lease: Lease, account: Account) throws -> Bool {
         let state = try read()
         guard state.mode != .disabled, let binding = state.binding, binding.belongs(to: account),
@@ -379,10 +406,11 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
     }
 
     func reviewResume(account: Account, binding: Binding, exports: [ResumeExport], imports: [ResumeImport] = [],
-                      links: [ResumeLink] = []) throws -> ResumeReview {
+                      links: [ResumeLink] = [], series: [ResumeSeries] = []) throws -> ResumeReview {
         let state = try read()
+        let associationIDs = links.map(\.itemID) + series.map(\.itemID)
         guard state.pendingOperationID == nil, Self.heldBinding(in: state, account: account) == binding,
-              exports.count + imports.count + links.count <= 500, Set(exports.map(\.itemID)).count == exports.count,
+              exports.count + imports.count + associationIDs.count <= 500, Set(exports.map(\.itemID)).count == exports.count,
               Set(exports.map(\.operationID)).count == exports.count,
               exports.allSatisfy({ Self.sameDestination($0.originLease, as: binding) &&
                   ($0.waitingLease.map { Self.sameDestination($0, as: binding) } ?? true) }) else { throw Rejection.stalePreview }
@@ -395,14 +423,21 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
                     item.choices.allDayAlarmMinutes == state.policy.allDayAlarmMinutes &&
                     item.choices.automaticSync && !item.choices.disableGoogleReminders
               }) else { throw Rejection.stalePreview }
-        guard Set(links.map(\.itemID)).count == links.count, links.allSatisfy({ item in
+        guard Set(associationIDs).count == associationIDs.count, links.allSatisfy({ item in
             let lease = item.priorLease
             return item.source.belongs(to: account) && item.source.calendarID == lease.calendarID &&
                 item.reviewedDigest.count == 32 && Self.sameDestination(lease, as: binding) &&
                 lease.authEpoch <= binding.authEpoch && (lease.publication == true || state.policy.automaticImport)
         }) else { throw Rejection.stalePreview }
+        let incomingIDs = imports.map { $0.observation.eventID } + series.map { $0.observation.eventID }
+        guard Set(incomingIDs).count == incomingIDs.count, series.allSatisfy({ item in
+            state.policy.automaticImport && item.source.subject == account.subject && item.source.calendarID == binding.record.id &&
+                item.observation.eventID == item.source.eventID && item.observation.kind == .recurringMaster &&
+                item.observation.etag != nil && item.digest.count == 32 && item.priorLease.publication != true &&
+                Self.sameDestination(item.priorLease, as: binding) && item.priorLease.authEpoch <= binding.authEpoch
+        }) else { throw Rejection.stalePreview }
         return .init(id: UUID(), account: account, binding: binding, bindingRevision: state.bindingRevision,
-                     authEpoch: state.authEpoch, policy: state.policy, exports: exports, imports: imports, links: links,
+                     authEpoch: state.authEpoch, policy: state.policy, exports: exports, imports: imports, links: links, series: series,
                      expiresAtMs: now() + 600_000)
     }
 
@@ -429,8 +464,11 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         let approved = review.exports.filter { selections.contains($0.itemID) }
         let approvedImports = review.imports.filter { selections.contains($0.itemID) }
         let approvedLinks = review.links.filter { selections.contains($0.itemID) }
-        let approvedIDs = Set(approvedImports.map { $0.observation.eventID })
-        guard approved.count + approvedImports.count + approvedLinks.count == selections.count else { throw Failure.invalidInput }
+        let approvedSeries = review.series.filter { selections.contains($0.itemID) }
+        let approvedIDs = Set(approvedImports.map { $0.observation.eventID } + approvedSeries.map { $0.observation.eventID })
+        guard approved.count + approvedImports.count + approvedLinks.count + approvedSeries.count == selections.count else {
+            throw Failure.invalidInput
+        }
         var initialImport = review.binding.initialImport
         if state.policy.automaticImport {
             let old = Self.inboxScope(review.binding, in: state)
@@ -452,6 +490,7 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         state.resumedIncomingIDs = approvedIDs.isEmpty ? nil : approvedIDs
         state.resumedImports = approvedImports.isEmpty ? nil : approvedImports
         state.resumedLinkProofs = approvedLinks.isEmpty ? nil : approvedLinks
+        state.resumedSeriesProofs = approvedSeries.isEmpty ? nil : approvedSeries
         let receipt = ModeReceipt(account: account, expectedRevision: review.bindingRevision, revision: state.bindingRevision,
                                   mode: .enabled, reviewID: review.id, selections: selections)
         var receipts = state.modeReceipts ?? [:]
@@ -503,6 +542,7 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         state.authEpoch = try Self.advance(state.authEpoch)
         state.savedMode = mode
         state.resumedLinkProofs = nil
+        state.resumedSeriesProofs = nil
         if mode == .disabled { state.resumedImports = nil }
         let receipt = ModeReceipt(account: account, expectedRevision: expectedRevision, revision: state.bindingRevision, mode: mode)
         var receipts = state.modeReceipts ?? [:]
@@ -701,6 +741,7 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         state.resumedIncomingIDs = nil
         state.resumedImports = nil
         state.resumedLinkProofs = nil
+        state.resumedSeriesProofs = nil
         state.resumeCheckpointScope = nil
         state.pendingOperationID = nil
         state.operations[id] = entry

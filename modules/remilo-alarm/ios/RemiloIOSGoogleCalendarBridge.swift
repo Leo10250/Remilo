@@ -142,6 +142,9 @@ final class RemiloIOSGoogleCalendarBridge {
             } + result.links.map { row -> [String: Any] in
                 ["itemId": row.itemID, "occurrenceId": row.occurrenceID, "kind": "Transfer", "title": row.title,
                  "ready": row.approval != nil, "reason": row.reason ?? "", "inbound": row.inbound, "outbound": row.outbound]
+            } + result.series.map { row -> [String: Any] in
+                ["itemId": row.itemID, "kind": "Transfer", "title": row.title, "ready": row.approval != nil,
+                 "reason": row.reason ?? "", "inbound": row.inbound, "outbound": row.outbound]
             },
         ]
     }

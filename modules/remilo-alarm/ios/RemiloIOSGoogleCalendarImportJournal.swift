@@ -186,7 +186,7 @@ actor RemiloIOSGoogleCalendarImportJournal {
         }
     }
 
-    struct SeriesTextExport: Sendable {
+    struct SeriesTextExport: Codable, Equatable, Sendable {
         let receipt: Receipt
         let baseline: SeriesTextBaseline
         let exceptions: [RecurringInstanceVersion]
@@ -213,6 +213,17 @@ actor RemiloIOSGoogleCalendarImportJournal {
                 exceptions.contains { $0.identity == candidate.identity && ($0.identity.cancelled || $0.etag == candidate.etag) }
             }
         }
+    }
+
+    struct SeriesResumeCandidate: Equatable, Sendable {
+        let series: SeriesTextExport
+        let priorLease: Inbox.Journal.Lease
+        let issue: RecurringIssue?
+    }
+
+    private struct SeriesActivation: Codable {
+        let lease: Inbox.Journal.Lease
+        let digest: Data
     }
 
     struct SeriesInstanceExport: Codable, Equatable, Sendable {
@@ -290,6 +301,16 @@ actor RemiloIOSGoogleCalendarImportJournal {
         var recurringInstances: [RecurringInstanceVersion]?
         var recurringIssue: RecurringIssue?
         var seriesTextBaseline: SeriesTextBaseline?
+        var seriesActivation: SeriesActivation?
+
+        var seriesLease: Inbox.Journal.Lease? { seriesActivation?.lease ?? managed?.scope.binding.linkLease }
+
+        var resumeCandidate: SeriesResumeCandidate? {
+            guard let receipt, receipt.relationship == .automaticRequested, receipt.local?.kind == .series,
+                  let seriesLease, let seriesTextBaseline, let recurringInstances else { return nil }
+            return .init(series: .init(receipt: receipt, baseline: seriesTextBaseline, exceptions: recurringInstances),
+                         priorLease: seriesLease, issue: recurringIssue)
+        }
     }
 
     private struct State: Codable {
@@ -388,7 +409,7 @@ actor RemiloIOSGoogleCalendarImportJournal {
         var state = try read()
         var masters: [String: UUID] = [:]
         for (id, entry) in state.entries {
-            guard let origin = entry.managed, origin.scope.binding.linkLease == scan.scope.binding.linkLease,
+            guard entry.seriesLease == scan.scope.binding.linkLease,
                   let receipt = entry.receipt, receipt.local?.kind == .series, receipt.relationship == .automaticRequested,
                   receipt.account.subject == account.subject, receipt.account.clientID == account.clientID,
                   receipt.account.accountGeneration == account.accountGeneration else { continue }
@@ -466,7 +487,7 @@ actor RemiloIOSGoogleCalendarImportJournal {
 
     private static func matchesSeriesInstance(_ work: SeriesInstanceWork, entry: Entry) -> Bool {
         let eventID = work.permit.observation.eventID
-        return entry.receipt == work.receipt && entry.managed?.scope.binding.linkLease == work.permit.scope.binding.linkLease &&
+        return entry.receipt == work.receipt && entry.seriesLease == work.permit.scope.binding.linkLease &&
             entry.recurringIssue == nil && (entry.seriesTextBaseline?.etag ?? work.receipt.reviewedETag) == work.masterETag &&
             canSaveInstance(eventID, in: entry) &&
             entry.recurringInstances?.first(where: { $0.identity.eventID == eventID }) ==
@@ -504,7 +525,7 @@ actor RemiloIOSGoogleCalendarImportJournal {
         var state = try read()
         let id = work.receipt.operationID
         guard var entry = state.entries[id], entry.receipt == work.receipt, entry.seriesTextBaseline == work.baseline,
-              entry.recurringIssue == nil, entry.managed?.scope.binding.linkLease == work.permit.scope.binding.linkLease else {
+              entry.recurringIssue == nil, entry.seriesLease == work.permit.scope.binding.linkLease else {
             throw Failure.stalePreview
         }
         if let review {
@@ -528,17 +549,62 @@ actor RemiloIOSGoogleCalendarImportJournal {
         try read().entries.values.compactMap { entry in
             guard let receipt = entry.receipt, receipt.local?.kind == .series, receipt.relationship == .automaticRequested,
                   receipt.account.subject == account.subject, receipt.account.clientID == account.clientID,
-                  receipt.account.accountGeneration == account.accountGeneration, entry.managed?.scope.binding.linkLease == lease,
+                  receipt.account.accountGeneration == account.accountGeneration, entry.seriesLease == lease,
                   entry.recurringIssue == nil, let baseline = entry.seriesTextBaseline,
                   let exceptions = entry.recurringInstances else { return nil }
             return .init(receipt: receipt, baseline: baseline, exceptions: exceptions)
         }.sorted { $0.receipt.operationID.uuidString < $1.receipt.operationID.uuidString }
     }
 
+    func heldSeries(viewingAs account: Import.Account, binding: Inbox.Journal.Binding) throws -> [SeriesResumeCandidate] {
+        try read().entries.values.compactMap { entry in
+            guard let candidate = entry.resumeCandidate, Self.ownsSeries(candidate.series.receipt, account: account),
+                  Inbox.Journal.sameDestination(candidate.priorLease, as: binding),
+                  candidate.priorLease.authEpoch <= binding.authEpoch else { return nil }
+            return candidate
+        }.sorted { $0.series.receipt.operationID.uuidString < $1.series.receipt.operationID.uuidString }
+    }
+
+    func seriesForResume(_ proof: Inbox.Journal.ResumeSeries, account: Import.Account) throws -> SeriesResumeCandidate {
+        guard let candidate = try read().entries[proof.importID]?.resumeCandidate,
+              Self.ownsSeries(candidate.series.receipt, account: account), candidate.series.receipt.source == proof.source,
+              candidate.series.receipt.local?.id == proof.familyID, candidate.priorLease == proof.priorLease else {
+            throw Failure.staleRemote
+        }
+        return candidate
+    }
+
+    func didResumeSeries(_ proof: Inbox.Journal.ResumeSeries, lease: Inbox.Journal.Lease) throws -> Bool {
+        let activation = try read().entries[proof.importID]?.seriesActivation
+        return activation?.lease == lease && activation?.digest == proof.digest
+    }
+
+    func resumeSeries(_ candidate: SeriesResumeCandidate, proof: Inbox.Journal.ResumeSeries, lease: Inbox.Journal.Lease,
+                      authorize: Scheduler.Permit) async throws -> Bool {
+        try Task.checkCancellation()
+        guard try await authorize() else { return false }
+        var state = try read()
+        guard var entry = state.entries[proof.importID], entry.resumeCandidate == candidate, candidate.issue == nil,
+              candidate.series.receipt.operationID == proof.importID, candidate.series.receipt.source == proof.source,
+              candidate.series.receipt.local?.id == proof.familyID, candidate.priorLease == proof.priorLease,
+              proof.priorLease.setupID == lease.setupID, proof.priorLease.calendarID == lease.calendarID,
+              proof.priorLease.zoneID == lease.zoneID, proof.priorLease.authEpoch < lease.authEpoch,
+              proof.priorLease.bindingRevision < lease.bindingRevision, lease.publication != true else { throw Failure.staleRemote }
+        entry.seriesActivation = .init(lease: lease, digest: proof.digest)
+        state.entries[proof.importID] = entry
+        try write(state)
+        return true
+    }
+
+    private static func ownsSeries(_ receipt: Receipt, account: Import.Account) -> Bool {
+        receipt.account.subject == account.subject && receipt.account.clientID == account.clientID &&
+            receipt.account.accountGeneration == account.accountGeneration
+    }
+
     func finishSeriesTextExport(_ id: UUID, lease: RemiloIOSGoogleCalendarManualLink.ManagedLease, expectedBaseline: String,
                                 confirmed: SeriesTextBaseline?, reason: String?) throws {
         var state = try read()
-        guard var entry = state.entries[id], let receipt = entry.receipt, entry.managed?.scope.binding.linkLease == lease,
+        guard var entry = state.entries[id], let receipt = entry.receipt, entry.seriesLease == lease,
               entry.seriesTextBaseline?.etag == expectedBaseline, entry.recurringIssue == nil else { return }
         if let confirmed { entry.seriesTextBaseline = confirmed }
         else if let reason { entry.recurringIssue = .init(eventID: receipt.source.eventID, etag: expectedBaseline, code: reason) }
@@ -554,7 +620,7 @@ actor RemiloIOSGoogleCalendarImportJournal {
     }
 
     private static func matchesSeriesInstanceExport(_ work: SeriesInstanceExport, in entry: Entry) -> Bool {
-        entry.receipt == work.receipt && entry.managed?.scope.binding.linkLease == work.lease &&
+        entry.receipt == work.receipt && entry.seriesLease == work.lease &&
             entry.seriesTextBaseline?.etag == work.masterETag && entry.recurringIssue == nil &&
             canSaveInstance(work.identity.eventID, in: entry)
     }
