@@ -97,12 +97,16 @@ actor RemiloIOSGoogleCalendarImportJournal {
             schedule = Data(SHA256.hash(data: try encoder.encode(fields.schedule)))
         }
 
-        func accepts(local: IOSCalendarSeriesTextSnapshot, remote: Import.Source) throws -> Bool {
+        func accepts(local: IOSCalendarSeriesTextSnapshot, remote: Import.Source, allowSchedule: Bool) throws -> Bool {
             let next = try Self(remote)
             // Apply inbound text only when each group is already equal or
             // still has the last common value on the local side.
-            return schedule == next.schedule && (title == Self.digest(local.title) || next.title == Self.digest(local.title)) &&
+            return (allowSchedule || schedule == next.schedule) && (title == Self.digest(local.title) || next.title == Self.digest(local.title)) &&
                 (notes == Self.digest(local.notes) || next.notes == Self.digest(local.notes))
+        }
+
+        func scheduleDiffers(from source: Import.Source) throws -> Bool {
+            try Self(source).schedule != schedule
         }
 
         fileprivate static func digest(_ value: String) -> Data {
@@ -131,12 +135,12 @@ actor RemiloIOSGoogleCalendarImportJournal {
             receipt.operationID.uuidString.lowercased() + ":" + SeriesTextBaseline.digest(permit.observation.etag ?? "").base64EncodedString()
         }
 
-        func accepts(local: IOSCalendarSeriesTextSnapshot, review: Import.Review) throws -> Bool {
+        func accepts(local: IOSCalendarSeriesTextSnapshot, review: Import.Review, allowSchedule: Bool = false) throws -> Bool {
             let source = review.source
             guard source.key == receipt.source, source.etag == permit.observation.etag,
                   let proof = review.recurrenceEvidence, !source.fields.title.isEmpty else { return false }
             if let baseline {
-                guard try baseline.accepts(local: local, remote: source) else { return false }
+                guard try baseline.accepts(local: local, remote: source, allowSchedule: allowSchedule) else { return false }
                 // An exception can age out of this audit window. Any exception
                 // returned now must match the provider version we imported.
                 return proof.exceptions.allSatisfy { candidate in
@@ -146,6 +150,13 @@ actor RemiloIOSGoogleCalendarImportJournal {
                 }
             }
             return source.etag == receipt.reviewedETag && local.title == source.fields.title && local.notes == source.fields.notes
+        }
+
+        func scheduleChange(for review: Import.Review) throws -> IOSCalendarSeriesScheduleChange? {
+            guard try baseline?.scheduleDiffers(from: review.source) == true, let rule = try review.recurringRule() else { return nil }
+            let fields = review.source.fields
+            return .init(rule: rule, eventStartMs: fields.schedule.eventStartMs, eventEndMs: fields.schedule.eventEndMs,
+                         title: fields.title, notes: fields.notes)
         }
     }
 

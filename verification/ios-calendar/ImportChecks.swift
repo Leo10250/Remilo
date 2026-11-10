@@ -289,6 +289,29 @@ enum ImportChecks {
         try await reopened.finishSeriesText(text, confirmed: updatedReview, reason: nil)
         let settledText = try await restarted.reconcileManagedSeries(scan([textObservation]), viewingAs: account, limit: 10, allowTextTransfers: true)
         precondition(settledText.first?.textWork == nil && settledText.first?.recordedIssue == false)
+        let scheduleTag = #""master-schedule-v3""#
+        var scheduleJSON = updatedJSON
+        scheduleJSON["etag"] = scheduleTag
+        let oldSchedule = updatedReview.source.fields.schedule
+        let laterEnd = oldSchedule.eventEndMs + 900_000
+        scheduleJSON["end"] = ["dateTime": Event.nominal(laterEnd, zone: Event.utc) + "Z", "timeZone": oldSchedule.zoneId]
+        let scheduleMaster = Transport.Event(id: master.eventID, etag: scheduleTag, cancelled: false,
+                                             json: try JSONSerialization.data(withJSONObject: scheduleJSON))
+        let slots = oldProof.ordinarySlots.map { slot in
+            Import.AuditedSlot(identity: .init(eventID: slot.eventID, masterID: slot.masterID, nominalSlot: slot.nominalSlot,
+                                               cancelled: slot.cancelled), startMs: slot.startMs, endMs: slot.endMs + 900_000)
+        }
+        let scheduleProof = Import.RecurrenceEvidence(referenceMs: now, alertPolicy: oldProof.alertPolicy, masterETag: scheduleTag,
+                                                      exceptions: oldProof.exceptions, ordinarySlots: slots)
+        let scheduleReview = try Import.Review(account: account, calendar: calendar, event: scheduleMaster, now: now, recurrenceEvidence: scheduleProof)
+        let scheduleObservation = Inbox.Observation(eventID: master.eventID, etag: scheduleTag, kind: .recurringMaster,
+                                                     importMode: .none, initialRecovery: false)
+        let scheduleWork = try await reopened.reconcileManagedSeries(scan([scheduleObservation]), viewingAs: account, limit: 10,
+                                                                      allowTextTransfers: true).first!.textWork!
+        let canApplySchedule = try scheduleWork.accepts(local: after, review: scheduleReview, allowSchedule: true)
+        let textOnly = try scheduleWork.accepts(local: after, review: scheduleReview)
+        let scheduleChange = try scheduleWork.scheduleChange(for: scheduleReview)
+        precondition(canApplySchedule && !textOnly && scheduleChange?.eventEndMs == laterEnd && scheduleChange?.rule.endOffsetMs == 2_700_000)
         let providerUpdate = Inbox.Observation(eventID: moved.eventID, etag: #""moved-v2""#, kind: moved.kind,
                                                 importMode: .none, initialRecovery: false, instanceCancelled: false)
         let staleBinding = Inbox.Journal.Binding(operationID: UUID(), account: account, record: binding.record,

@@ -104,6 +104,7 @@ struct EngineChecks {
         try calendarInstallationOriginComesFromNativeStateCreation()
         try await calendarSeriesExceptionsAreAtomicAndBounded()
         try await calendarSeriesTextPreservesDelivery()
+        try await calendarSeriesSchedulePreservesLocalState()
         try await calendarSeriesAllowsAFutureMoveAfterItsLastOriginal()
         try await queuedCalendarCreateChecksAuthorityBeforeWriting()
         try await queuedCalendarReviewRechecksLocalVersion()
@@ -1018,6 +1019,89 @@ struct EngineChecks {
         ])
         let splitFamily = try restarted.calendarSeriesTextSnapshot(segment)
         precondition(splitFamily == nil, "A change to the event structure needs a series schedule reconciliation")
+    }
+
+    private static func calendarSeriesSchedulePreservesLocalState() async throws {
+        let zone = TimeZone(identifier: "UTC")!
+        let start = iosMillis(Date()) / 60_000 * 60_000 + 7_200_000
+        let anchor = try RemiloIOSRecurrence.canonicalNominal(RemiloIOSSeries.civil(start, zone: zone))
+        func create(_ engine: RemiloIOSEngine, exceptions: [[String: Any]]) async throws -> String {
+            let result = try await engine.applyCalendarCreate([
+                "kind": "CreateSeries", "operationId": "ios-calendar-import:" + UUID().uuidString,
+                "title": "Old schedule", "mode": "Alarm", "zoneId": "UTC",
+                "eventStartMs": start, "eventEndMs": start + 1_800_000, "dueAtMs": start, "alarmAtMs": start,
+                "nativeCalendarAnchor": anchor, "recurrence": ["frequency": "daily", "count": 6, "zoneMode": "pinned"],
+                "nativeCalendarExceptions": exceptions,
+            ], authorize: { true })
+            return result["localId"] as! String
+        }
+        func change(startMs: Int64, duration: Int64, count: Int) throws -> IOSCalendarSeriesScheduleChange {
+            let nominal = try RemiloIOSRecurrence.canonicalNominal(RemiloIOSSeries.civil(startMs, zone: zone))
+            let rule = try RemiloIOSRecurrence.Rule(anchor: nominal, frequency: "daily", count: count, zoneID: "UTC", endOffsetMs: duration)
+            return .init(rule: rule, eventStartMs: startMs, eventEndMs: startMs + duration, title: "Google schedule", notes: "Changed duration")
+        }
+        let store = FixtureStore()
+        let cleanStore = FixtureStore()
+        defer {
+            store.remove()
+            cleanStore.remove()
+            RemiloIOSDelivery.registrations = [:]
+            RemiloIOSDelivery.attempts = []
+            RemiloIOSDelivery.alerting = []
+        }
+        let engine = store.engine()
+        let family = try await create(engine, exceptions: [calendarOverride(nominal: anchor, actual: start + 3_600_000, title: "Authored move")])
+        let initial = try store.load()
+        let ordinary = initial.reminders.values.filter { $0.segmentID == family && $0.independent != true }
+            .sorted { $0.eventStartMs < $1.eventStartMs }
+        let held = ordinary[0]
+        let completed = ordinary[1]
+        let postponedAt = held.alarmAtMs + 600_000
+        _ = try await engine.apply(["kind": "Postpone", "operationId": "series-schedule-postpone", "occurrenceId": held.id,
+                                    "expectedGeneration": held.generation, "alarmAtMs": postponedAt])
+        _ = try await engine.apply(["kind": "Done", "operationId": "series-schedule-done", "occurrenceId": completed.id,
+                                    "expectedRevision": completed.revision])
+        let before = try store.load()
+        let current = before.reminders.values.first { $0.segmentID == family && $0.active && $0.independent != true && $0.registration != nil }!
+        let registration = current.registration!.systemID
+        let snapshot = try engine.calendarSeriesTextSnapshot(family)!
+        let durationChange = try change(startMs: start, duration: 2_700_000, count: 5)
+        RemiloIOSDelivery.alerting.insert(registration)
+        let ringing = try await engine.applyCalendarSeriesSchedule(operationKey: "duration", snapshot: snapshot, change: durationChange, authorize: { true })
+        let whileRinging = try engine.calendarSeriesTextSnapshot(family)
+        precondition(ringing == .deferred && whileRinging == snapshot)
+        RemiloIOSDelivery.alerting.remove(registration)
+        let applied = try await engine.applyCalendarSeriesSchedule(operationKey: "duration", snapshot: snapshot, change: durationChange, authorize: { true })
+        let reopened = store.engine()
+        let confirmed = try reopened.calendarSeriesTextSnapshot(family)!
+        let replay = try await reopened.applyCalendarSeriesSchedule(operationKey: "duration", snapshot: confirmed, change: durationChange, authorize: { true })
+        let after = try store.load()
+        let move = RemiloIOSSeries.occurrenceID(family, anchor)
+        precondition(applied == .applied && replay == .applied && confirmed.segmentID == family &&
+                     confirmed.revision == snapshot.revision + 1 && after.series[family]?.revision == confirmed.revision)
+        precondition(after.reminders[held.id]?.eventEndMs == held.eventStartMs + 2_700_000 &&
+                     after.reminders[held.id]?.registration?.targetMs == postponedAt &&
+                     after.reminders[held.id]?.registration?.systemID == before.reminders[held.id]?.registration?.systemID)
+        precondition(after.reminders[completed.id]?.completed == true && after.reminders[completed.id]?.eventEndMs == completed.eventEndMs &&
+                     after.reminders[move]?.title == "Authored move" && after.reminders[move]?.eventEndMs == before.reminders[move]?.eventEndMs)
+        let unsafe = try change(startMs: start + 1_800_000, duration: 2_700_000, count: 5)
+        let review = try await reopened.applyCalendarSeriesSchedule(operationKey: "shift-with-local-work", snapshot: confirmed,
+                                                                    change: unsafe, authorize: { true })
+        let afterReview = try reopened.calendarSeriesTextSnapshot(family)
+        precondition(review == .needsReview && afterReview == confirmed)
+
+        RemiloIOSDelivery.registrations = [:]
+        let clean = cleanStore.engine()
+        let cleanFamily = try await create(clean, exceptions: [])
+        let old = try cleanStore.load()
+        let cleanSnapshot = try clean.calendarSeriesTextSnapshot(cleanFamily)!
+        let shifted = try await clean.applyCalendarSeriesSchedule(operationKey: "shift", snapshot: cleanSnapshot, change: unsafe, authorize: { true })
+        let revised = try cleanStore.load()
+        let oldID = RemiloIOSSeries.occurrenceID(cleanFamily, anchor)
+        let newID = RemiloIOSSeries.occurrenceID(cleanFamily, unsafe.rule.anchor)
+        precondition(shifted == .applied && revised.reminders[oldID]?.deliveryState == "Replaced" &&
+                     revised.reminders[newID]?.registration?.targetMs == unsafe.eventStartMs)
+        precondition(RemiloIOSDelivery.registrations[old.reminders[oldID]!.registration!.systemID] == nil)
     }
 
     private static func calendarSeriesAllowsAFutureMoveAfterItsLastOriginal() async throws {

@@ -100,6 +100,7 @@ struct IOSSeriesSegment: Codable {
     var revision = 1
     var state = "Active"
     var materializedThrough: String?
+    var calendarBaselineRule: RemiloIOSRecurrence.Rule? = nil
 }
 
 struct IOSSettings: Codable {

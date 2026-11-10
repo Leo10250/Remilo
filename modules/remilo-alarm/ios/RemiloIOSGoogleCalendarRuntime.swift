@@ -24,6 +24,9 @@ final class RemiloIOSGoogleCalendarRuntime {
         ) async throws -> Bool
         let permit: @MainActor @Sendable (IOSCalendarSeriesTextSnapshot, @escaping SendCheckpoint) async throws
             -> RemiloIOSGoogleCalendarWriteTransport.Permission?
+        var applySchedule: (@MainActor @Sendable (
+            String, IOSCalendarSeriesTextSnapshot, IOSCalendarSeriesScheduleChange, @escaping ImportJournal.Scheduler.Permit
+        ) async throws -> IOSCalendarSeriesScheduleResult)? = nil
     }
 
     private let connection: Connection
@@ -335,11 +338,24 @@ final class RemiloIOSGoogleCalendarRuntime {
         }
         guard try current() else { return .deferred }
         guard let segmentID = work.receipt.local?.id, let local = try authority.read(segmentID),
-              try work.accepts(local: local, review: review) else {
+              try work.accepts(local: local, review: review, allowSchedule: authority.applySchedule != nil) else {
             try await importJournal.finishSeriesText(work, confirmed: nil, reason: Import.Failure.staleRemote.rawValue)
             return .review
         }
         let fields = review.source.fields
+        if let change = try work.scheduleChange(for: review), let apply = authority.applySchedule {
+            switch try await apply(work.operationKey, local, change, current) {
+            case .deferred: return .deferred
+            case .needsReview:
+                guard try current() else { return .deferred }
+                try await importJournal.finishSeriesText(work, confirmed: nil, reason: Import.Failure.staleRemote.rawValue)
+                return .review
+            case .applied:
+                guard try current() else { return .deferred }
+                try await importJournal.finishSeriesText(work, confirmed: review, reason: nil)
+                return .updated
+            }
+        }
         let changed = local.title != fields.title || local.notes != fields.notes
         guard try await authority.apply(work.operationKey, local, fields.title, fields.notes, current), try current() else {
             return .deferred
@@ -702,6 +718,11 @@ final class RemiloIOSGoogleCalendarRuntime {
                                                                        title: title, notes: notes, authorize: permit)
             }, permit: { snapshot, checkpoint in
                 try await RemiloIOSEngine.shared.withCalendarSeriesTextPermit(for: snapshot, commit: checkpoint)
+            }, applySchedule: { operation, snapshot, change, permit in
+                do {
+                    return try await RemiloIOSEngine.shared.applyCalendarSeriesSchedule(operationKey: operation, snapshot: snapshot,
+                                                                                       change: change, authorize: permit)
+                } catch is RemiloIOSRecurrence.InvalidRule { return .needsReview }
             })
         let runtime = RemiloIOSGoogleCalendarRuntime(
             connection: connection, canUseForeground: canUseForeground,

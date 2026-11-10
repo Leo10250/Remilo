@@ -167,7 +167,7 @@ final class RemiloIOSEngine {
               state.receipts.contains(where: { $0.key.hasPrefix(calendarCreatePrefix) && $0.value.seriesSegmentID == familyID }) else { return nil }
         let current = state.series.values.filter { $0.familyID == familyID && $0.state != "Archived" }
         guard current.count == 1, let segment = current.first, segment.state == "Active",
-              segment.rule.hasSameEventSchedule(as: root.rule) else { return nil }
+              segment.rule.hasSameEventSchedule(as: root.calendarBaselineRule ?? root.rule) else { return nil }
         return .init(familyID: familyID, segmentID: segment.id, revision: segment.revision,
                      title: segment.template.title, notes: segment.template.notes)
     }
@@ -222,6 +222,43 @@ final class RemiloIOSEngine {
             result: try JSONSerialization.data(withJSONObject: ["status": "Applied"]), finalized: true)
         try commit(state)
         return true
+    }
+
+    func applyCalendarSeriesSchedule(operationKey: String, snapshot: IOSCalendarSeriesTextSnapshot,
+                                     change: IOSCalendarSeriesScheduleChange,
+                                     authorize: @MainActor @Sendable () throws -> Bool) async throws -> IOSCalendarSeriesScheduleResult {
+        await acquire()
+        defer { release() }
+        let operationID = Self.calendarInboundPrefix + "series-schedule:" + operationKey
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        let fingerprint = Data(SHA256.hash(data: try encoder.encode(change)))
+        var state = try read()
+        try Task.checkCancellation()
+        guard try authorize() else { return .deferred }
+        let current = Self.calendarSeriesTextSnapshot(snapshot.familyID, in: state)
+        if let receipt = state.receipts[operationID] {
+            guard receipt.fingerprint == fingerprint, receipt.seriesSegmentID == snapshot.familyID else {
+                throw IOSInputFailure("OPERATION_REUSED")
+            }
+            guard current?.title == change.title, current?.notes == change.notes,
+                  state.series[snapshot.familyID]?.calendarBaselineRule?.hasSameEventSchedule(as: change.rule) == true else {
+                return .needsReview
+            }
+            try await drain()
+            return .applied
+        }
+        guard current == snapshot else { return .deferred }
+        let now = iosMillis(Date())
+        let result = try reconcileCalendarSeriesSchedule(snapshot, change: change, state: &state, now: now)
+        guard case .applied = result else { return result }
+        try Task.checkCancellation()
+        guard try authorize() else { return .deferred }
+        state.receipts[operationID] = IOSOperationReceipt(fingerprint: fingerprint, occurrenceID: nil, registrationID: nil,
+            seriesSegmentID: snapshot.familyID, result: try JSONSerialization.data(withJSONObject: ["status": "Applied"]), finalized: true)
+        try commit(state)
+        try await drain()
+        return .applied
     }
 
     func scheduleTestAlarm(operationId: String) async throws -> [String: Any] {

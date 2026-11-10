@@ -5,7 +5,7 @@ enum RemiloIOSRecurrence {
     static let maximumOffsetMs: Int64 = 366 * dayMs
     struct InvalidRule: Error, Equatable { let field: String }
 
-    struct Rule: Codable, Equatable {
+    struct Rule: Codable, Equatable, Sendable {
         let anchor: String
         let frequency: String
         let interval: Int
@@ -68,6 +68,13 @@ enum RemiloIOSRecurrence {
             case .yearly: return month == other.month && day == other.day
             case nil: return false
             }
+        }
+
+        func replacingDeliveryOffsets(due: Int64, alarm: Int64) throws -> Rule {
+            try Rule(anchor: anchor, frequency: frequency, interval: interval, weekdays: weekdays, day: day,
+                     ordinal: ordinal, weekday: weekday, month: month, count: count, until: until,
+                     zoneID: zoneID, endExclusive: endExclusive, allDay: allDay, endOffsetMs: endOffsetMs,
+                     dueOffsetMs: due, alarmOffsetMs: alarm)
         }
     }
 

@@ -141,7 +141,11 @@ enum RemiloIOSGoogleCalendarImport {
         }
 
         func recurrenceSpec() throws -> RuleSpec? {
-            try RemiloIOSGoogleCalendarImport.recurrence(source).map(RuleSpec.init)
+            try recurringRule().map(RuleSpec.init)
+        }
+
+        func recurringRule() throws -> RemiloIOSRecurrence.Rule? {
+            try RemiloIOSGoogleCalendarImport.recurrence(source)
         }
 
         func upcoming(_ choices: Choices, after now: Int64) throws -> [Upcoming] {

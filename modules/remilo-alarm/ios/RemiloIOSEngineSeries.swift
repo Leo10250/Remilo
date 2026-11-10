@@ -184,6 +184,113 @@ extension RemiloIOSEngine {
         }
     }
 
+    func reconcileCalendarSeriesSchedule(_ snapshot: IOSCalendarSeriesTextSnapshot, change: IOSCalendarSeriesScheduleChange,
+                                         state: inout IOSDatabase, now: Int64) throws -> IOSCalendarSeriesScheduleResult {
+        typealias Recurrence = RemiloIOSRecurrence
+        guard var segment = state.series[snapshot.segmentID], segment.familyID == snapshot.familyID,
+              let zoneID = change.rule.zoneID, let zone = TimeZone(identifier: zoneID),
+              (1...200).contains(change.title.utf16.count), change.notes.utf16.count <= 10_000 else { return .needsReview }
+        let old = segment.rule
+        let new = change.rule
+        let dueOffset = segment.template.dueLinked && old.allDay != new.allDay
+            ? (new.allDay ? Int64(86_400_000) : 0) : old.dueOffsetMs
+        var alarmOffset = old.alarmOffsetMs
+        if segment.template.alarmLinked, old.allDay != new.allDay {
+            alarmOffset = 0
+            if new.allDay, let oldZone = TimeZone(identifier: segment.template.zoneID) {
+                let previous = segment.template.alarmAtMs
+                let day = String(RemiloIOSSeries.civil(previous, zone: oldZone).prefix(10))
+                alarmOffset = try Recurrence.civilOffset(previous, fromNominal: day + "T00:00", zone: oldZone)
+            }
+        }
+        let rule = try new.replacingDeliveryOffsets(due: dueOffset, alarm: alarmOffset)
+        let anchor = try Recurrence.resolve(rule, nominal: rule.anchor, deviceZone: zone)
+        guard anchor.eventStartMs == change.eventStartMs, anchor.eventEndMs == change.eventEndMs,
+              try !Recurrence.future(rule, afterMs: now, deviceZone: zone, mode: segment.template.mode, limit: 1).isEmpty else {
+            return .needsReview
+        }
+
+        func replacementIsFuture(_ nominal: String) throws -> Bool {
+            let shifted = String(nominal.prefix(10)) + String(rule.anchor.dropFirst(10))
+            guard let index = try Recurrence.index(shifted, in: rule) else { return false }
+            let slot = try Recurrence.resolve(rule, nominal: shifted, deviceZone: zone, index: index)
+            return slot.eventEndMs > now || RemiloIOSSeries.deliveryTime(slot, mode: segment.template.mode) > now
+        }
+        for exclusion in (state.portableExclusions ?? [:]).values {
+            guard state.series[exclusion.segmentID]?.familyID == snapshot.familyID,
+                  try replacementIsFuture(exclusion.nominalSlot) else { continue }
+            guard exclusion.segmentID == segment.id, try Recurrence.index(exclusion.nominalSlot, in: rule) != nil else {
+                return .needsReview
+            }
+        }
+        for (id, var record) in state.reminders {
+            guard let recordSegment = record.segmentID, state.series[recordSegment]?.familyID == snapshot.familyID,
+                  let nominal = record.nominalSlot else { continue }
+            let retired = record.deliveryState == "Replaced" && record.skipped == true
+            let held = record.active && record.adjustment != nil && (record.nextAlertMs ?? 0) > now
+            let authored = record.independent == true && record.history.contains { $0.kind == "Edit" || $0.kind == "Create" }
+            let terminal = !record.active && !retired
+            if record.eventEndMs <= now && record.agendaAtMs <= now {
+                guard terminal, try replacementIsFuture(nominal) else { continue }
+            }
+            if recordSegment != segment.id {
+                if terminal || held || authored { return .needsReview }
+                continue
+            }
+            let index = try Recurrence.index(nominal, in: rule)
+            if terminal || authored {
+                // The original nominal slot is the only safe identity for
+                // authored exceptions and local completion/Skip decisions.
+                guard index != nil else { return .needsReview }
+                continue
+            }
+            if let registration = record.registration, registration.mode == "Alarm",
+               try RemiloIOSDelivery.isAlarmAlerting(registration.systemID) { return .deferred }
+            guard let index else {
+                if held { return .needsReview }
+                if !retired {
+                    record.skipped = true
+                    record.revision += 1
+                    replaceRegistration(&record, target: nil, state: &state, now: now)
+                    record.deliveryState = "Replaced"
+                    state.reminders[id] = record
+                }
+                continue
+            }
+            let slot = try Recurrence.resolve(rule, nominal: nominal, deviceZone: zone, index: index)
+            let priorAlarm = record.alarmAtMs
+            record.eventStartMs = slot.eventStartMs
+            record.eventEndMs = slot.eventEndMs
+            record.allDay = rule.allDay
+            record.zoneID = slot.zoneID
+            if record.dueLinked { record.dueAtMs = slot.dueAtMs }
+            if record.alarmLinked { record.alarmAtMs = slot.alarmAtMs }
+            if record.title == snapshot.title { record.title = change.title }
+            if record.notes == snapshot.notes { record.notes = change.notes }
+            record.revision += 1
+            if retired {
+                record.skipped = false
+                record.deliveryState = record.mode == "None" ? "NoAlert" : "Pending"
+            }
+            if !held, record.mode != "None", record.alarmAtMs != priorAlarm {
+                record.adjustment = nil
+                replaceRegistration(&record, target: record.alarmAtMs, state: &state, now: now)
+            }
+            state.reminders[id] = record
+        }
+        segment.rule = rule
+        segment.template = RemiloIOSSeries.applying(anchor, to: segment.template)
+        segment.template.allDay = rule.allDay
+        segment.template.title = change.title
+        segment.template.notes = change.notes
+        segment.materializedThrough = nil
+        segment.revision += 1
+        state.series[segment.id] = segment
+        state.series[snapshot.familyID]?.calendarBaselineRule = new
+        _ = try replenishSeries(state: &state, now: now)
+        return .applied
+    }
+
     func replenishSeries(state: inout IOSDatabase, now: Int64) throws -> Bool {
         var changed = false
         let segments = state.series.values.filter { $0.state == "Active" }.sorted { $0.id < $1.id }
