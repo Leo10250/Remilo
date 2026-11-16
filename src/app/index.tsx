@@ -304,11 +304,15 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
     queryFn: () => engine().queryLists(),
     enabled: nativeAvailable,
   });
-  const { links: calendarLinks } = useCalendarLinks();
+  const { links: calendarLinks, current: calendarConnection } = useCalendarLinks();
+  const calendarSummaryEnabled =
+    nativeAvailable && !scoped && (!iosReminders || calendarConnection?.connected === true);
   const calendarSummary = useQuery({
-    queryKey: ['calendar', 'sync-summary'],
+    queryKey: iosReminders
+      ? ['calendar', 'sync-summary', calendarConnection?.revision]
+      : ['calendar', 'sync-summary'],
     queryFn: () => engine().getCalendarSyncSummary(),
-    enabled: nativeAvailable && !iosReminders,
+    enabled: calendarSummaryEnabled,
   });
   const calendarByReminder = new Map(calendarLinks.data?.map((link) => [link.occurrenceId, link]));
   const calendarFor = (item: Occurrence) =>
@@ -825,21 +829,23 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
                           />
                         </Pressable>
                       )}
-                      {!scoped && !!calendarSummary.data?.reviewCount && (
-                        <View style={{ marginBottom: 12 }}>
-                          <CalendarAttentionCard
-                            count={calendarSummary.data.reviewCount}
-                            tone={calendarSummary.data.attention?.tone}
-                            disabled={guarded}
-                            onPress={() =>
-                              router.push({
-                                pathname: '/calendar-reviews',
-                                params: originParams(destination),
-                              })
-                            }
-                          />
-                        </View>
-                      )}
+                      {calendarSummaryEnabled &&
+                        !calendarSummary.error &&
+                        !!calendarSummary.data?.reviewCount && (
+                          <View style={{ marginBottom: 12 }}>
+                            <CalendarAttentionCard
+                              count={calendarSummary.data.reviewCount}
+                              tone={calendarSummary.data.attention?.tone}
+                              disabled={guarded}
+                              onPress={() =>
+                                router.push({
+                                  pathname: '/calendar-reviews',
+                                  params: originParams(destination),
+                                })
+                              }
+                            />
+                          </View>
+                        )}
                       {!!ringingScope?.members.length && (
                         <View style={{ marginTop: space.md, marginBottom: space.lg }}>
                           <ConnectedGroup title={t('ui_ringing_now')}>

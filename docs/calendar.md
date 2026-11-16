@@ -12,6 +12,8 @@ owned calendars and reviewed local copies of one-off events and supported
 recurring masters. A recurring copy retains verified cancellations as skips and
 changed instances at their authored times. The native scheduler checks the
 current account and grant immediately before saving a reminder or series.
+Manual import reviews one event at a time on iOS. The dedicated Remilo
+calendar can import eligible events automatically.
 One-time publication uses a separately granted write scope and an explicitly
 selected owned destination. Remilo confirms the exact local reminder and
 connection before sending. Recovery after a sent request reads the original
@@ -44,7 +46,8 @@ restoring either copy requires review before automatic work resumes.
 
 On iOS, Calendar settings can set up the dedicated Remilo calendar, change
 its import policy, pause sync, review what to resume, and turn sync off. The
-saved review list shows incoming events that need a decision. Import rechecks
+saved review list shows incoming events that need a decision. Agenda surfaces
+the same unresolved review count as Calendar settings. Import rechecks
 the reviewed Google event version before creating a reminder or series, and
 saves the automatic relationship when it can verify the link. Ignore records
 the choice locally so later checks of that calendar skip the event.
