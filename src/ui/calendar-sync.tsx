@@ -496,8 +496,8 @@ export function CalendarAttentionCard({
 export function useCalendarReviewTiming(id?: string) {
   const { detailSchedulePresentation } = useTimeFormatting();
   const context = useQuery({
-    queryKey: ['calendar', 'context', id],
-    queryFn: () => engine().getCalendarContext(id!),
+    queryKey: ['calendar', 'review-timing', id],
+    queryFn: () => (iosReminders ? engine().getOccurrence(id!) : engine().getCalendarContext(id!)),
     enabled: nativeAvailable && !!id,
   });
   const timing = context.data ? detailSchedulePresentation(context.data) : null;
