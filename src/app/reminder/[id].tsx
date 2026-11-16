@@ -622,7 +622,7 @@ export default function ReminderDetails() {
           </ConnectedGroup>
           <SchedulePrimary item={item}>
             {!item.deleted &&
-              (explanation || (active && item.mode !== 'None' && stateLabel(item))) && (
+              !!(explanation || (active && item.mode !== 'None' && stateLabel(item))) && (
                 <Status
                   icon={stateIcon(item)}
                   label={explanation || stateLabel(item)}
