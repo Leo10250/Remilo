@@ -420,10 +420,12 @@ enum ManagedSetupChecks {
         updated.exportNewReminders = true
         updated.importMode = .notification
         updated.allDayAlarmMinutes = 615
-        let stale = try setup.previewPolicy(before.policy, expectedRevision: revision)
-        let preview = try setup.previewPolicy(updated, expectedRevision: revision)
+        let editor = runtime()
+        guard let policySetup = editor.managedSetup else { preconditionFailure("The policy editor has a managed setup service") }
+        let stale = try policySetup.previewPolicy(before.policy, expectedRevision: revision)
+        let preview = try policySetup.previewPolicy(updated, expectedRevision: revision)
         let operation = UUID()
-        let applied = try runtime().confirmManagedPolicy(operation, reviewID: preview.id, expectedRevision: revision)
+        let applied = try editor.confirmManagedPolicy(operation, reviewID: preview.id, expectedRevision: revision)
         let off = try setup.view(expectedRevision: revision)
         let existingLinks = try await runtime().savedSyncSummary()
         precondition(off.policy == applied.policy && !off.policy.automaticImport && off.authEpoch == before.authEpoch &&
@@ -433,7 +435,7 @@ enum ManagedSetupChecks {
         let defaultExport = try setup.outgoingBinding(explicit: false)
         precondition(defaultExport == off.binding)
         do {
-            _ = try setup.confirmPolicy(UUID(), reviewID: stale.id, expectedRevision: revision)
+            _ = try editor.confirmManagedPolicy(UUID(), reviewID: stale.id, expectedRevision: revision)
             preconditionFailure("A policy preview cannot overwrite a newer edit")
         } catch Setup.Journal.Rejection.stalePreview {}
         fixture.policyEvents = ["policy-pending", "policy-off"]
@@ -452,8 +454,8 @@ enum ManagedSetupChecks {
             _ = try setup.previewPolicy(suppression, expectedRevision: revision)
             preconditionFailure("Unavailable Google reminder suppression cannot be saved")
         } catch Failure.invalidInput {}
-        let enable = try setup.previewPolicy(enabled, expectedRevision: revision)
-        _ = try runtime().confirmManagedPolicy(UUID(), reviewID: enable.id, expectedRevision: revision)
+        let enable = try policySetup.previewPolicy(enabled, expectedRevision: revision)
+        _ = try editor.confirmManagedPolicy(UUID(), reviewID: enable.id, expectedRevision: revision)
         let requests = fixture.policyTokens.count
         fixture.policyEvents = ["policy-new"]
         let first = try await runtime().syncManagedIncoming(expectedRevision: revision)
@@ -461,7 +463,7 @@ enum ManagedSetupChecks {
                      local.commands.last?.mode == .some(.notification) &&
                      fixture.policyTokens.count == requests + 1 && fixture.policyTokens[requests] == nil,
                      "Re-enabling imports starts a fresh Google scan with the new defaults")
-        let replayed = try setup.confirmPolicy(operation, reviewID: preview.id, expectedRevision: revision)
+        let replayed = try runtime().confirmManagedPolicy(operation, reviewID: preview.id, expectedRevision: revision)
         let current = try setup.view(expectedRevision: revision)
         let lease = try journal.incomingScope(account).binding.linkLease
         precondition(replayed == applied && current.policy.automaticImport && lease == staged.scope.binding.linkLease)
