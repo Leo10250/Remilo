@@ -2,6 +2,7 @@
 import type {
   AppSettings,
   CalendarCreationDisposition,
+  Capabilities,
   Command,
   CommandResult,
   ImportPreview,
@@ -45,6 +46,13 @@ if (review.get('reviewLanguage') === 'zh-Hans' || review.get('reviewLanguage') =
 const reviewScene = review.get('reviewScene'),
   reviewBrightness = review.get('reviewBrightness');
 let capabilityReads = 0;
+const permissionFixture = review.get('reviewPermissions');
+const iosNotificationFixtures: Record<string, Capabilities['notificationAuthorization']> = {
+  'ios-allowed': 'authorized',
+  'ios-denied': 'denied',
+  'ios-not-requested': 'notDetermined',
+};
+let notificationAuthorization = iosNotificationFixtures[permissionFixture ?? ''];
 if (
   reviewScene === 'automatic' ||
   reviewScene === 'sunrise' ||
@@ -1358,7 +1366,6 @@ const preview = {
   },
   getSettings: async () => clone(settings),
   getCapabilities: async () => {
-    const permissionFixture = review.get('reviewPermissions');
     capabilityReads++;
     if (
       permissionFixture === 'error' ||
@@ -1366,20 +1373,36 @@ const preview = {
     )
       throw new Error('Synthetic preview: permissions could not be checked.');
     const activeSessionActions = sessionActions();
+    const common = {
+      unlocked: true,
+      observedAtMs: Date.now(),
+      activeSessionId: activeSessionActions?.sessionId ?? '',
+      activeSessionActions,
+    };
+    if (notificationAuthorization !== undefined) {
+      const notifications = notificationAuthorization === 'authorized';
+      return {
+        ...common,
+        alarmAuthorization: 'authorized' as const,
+        notificationAuthorization,
+        exactAlarms: true,
+        notifications,
+        channelEnabled: true,
+        notificationChannelEnabled: notifications,
+        fullScreen: true,
+      };
+    }
     const allowed = permissionFixture !== 'blocked';
     return {
+      ...common,
       exactAlarms: allowed && permissionFixture !== 'exact' && permissionFixture !== 'mixed',
       notifications: allowed && permissionFixture !== 'app',
       channelEnabled: allowed && permissionFixture !== 'alarm-channel',
       notificationChannelEnabled:
         allowed && permissionFixture !== 'reminder-channel' && permissionFixture !== 'mixed',
-      routineChannelEnabled: allowed,
+      routineChannelEnabled: allowed && permissionFixture !== 'routine-channel',
       routineChannelQuiet: true,
       fullScreen: allowed && permissionFixture !== 'full-screen' && permissionFixture !== 'mixed',
-      unlocked: true,
-      observedAtMs: Date.now(),
-      activeSessionId: activeSessionActions?.sessionId ?? '',
-      activeSessionActions,
     };
   },
   getTimeZones: async (atMs: number) => zones(atMs),
@@ -1460,7 +1483,10 @@ const preview = {
     return result;
   },
   reconcile: async () => {},
-  openSettings: async () => {},
+  openSettings: async (kind: string) => {
+    if (kind === 'notifications' && notificationAuthorization === 'notDetermined')
+      notificationAuthorization = 'authorized';
+  },
   scheduleTestAlarm: async (operationId: string): Promise<CommandResult> => {
     const result = apply({
       kind: 'Create',

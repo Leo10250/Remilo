@@ -31,11 +31,11 @@ import { useAppearanceConfirmation } from '../ui/confirmation';
 import { useExerciseImageLeases } from '../ui/exercise-images';
 import { notify } from '../ui/feedback';
 import { CommandRecovery, ListPicker, returnToOrigin, useCapturedCommand } from '../ui/navigation';
-import { engine, nativeAvailable, useCapabilities } from '../ui/native';
+import { engine, nativeAvailable } from '../ui/native';
 import { RoutineActions } from '../ui/routine-actions';
 import { RoutineBuilderFields, RoutinePresetField } from '../ui/routine-builder';
 import { RoutineChangeReview } from '../ui/routine-editor';
-import { RoutineTimingField } from '../ui/routine-timing';
+import { RoutineNotificationAccess, RoutineTimingField } from '../ui/routine-timing';
 import { useAppearanceHold } from '../ui/theme';
 import { useTimeFormatting } from '../ui/time-display';
 
@@ -101,7 +101,6 @@ function RoutineEditorForm({
   const t = useTranslation(),
     confirm = useAppearanceConfirmation(),
     navigation = useNavigation(),
-    caps = useCapabilities(),
     { formatTime } = useTimeFormatting();
   useAppearanceHold(true);
   // Background queries may refresh, but only explicit Reload may replace a draft's revision.
@@ -421,11 +420,7 @@ function RoutineEditorForm({
           </Copy>
         )}
         {!!preview.error && <ActionFeedback tone="warning" message={t('routine_load_error')} />}
-        {draft.mode === 'Notification' &&
-          caps.data &&
-          (!caps.data.notifications || !caps.data.routineChannelEnabled) && (
-            <ActionFeedback tone="warning" message={t('routine_notification_warning')} />
-          )}
+        {draft.mode === 'Notification' && <RoutineNotificationAccess disabled={frozen} />}
       </View>
       <RoutineActions
         target={menu && existing ? { id: existing.id } : null}

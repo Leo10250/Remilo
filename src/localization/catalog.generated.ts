@@ -2526,6 +2526,7 @@ export const catalogs = {
     "ios_alarm_permission_usage": "Remilo uses alarms to ring for the reminders you choose.",
     "ios_picker_continue": "Continue",
     "ios_permission_not_requested": "Not requested",
+    "ios_allow_notifications": "Allow notifications",
     "ios_notification_mode_description": "Shows a notification.",
     "ios_calendar_settings_description": "Import one-time or repeating events from Google Calendar.",
     "ios_calendar_browse_intro": "Choose an event to review and import. Events with a completed or pending import are hidden.",
@@ -5055,6 +5056,7 @@ export const catalogs = {
     "ios_alarm_permission_usage": "Remilo 需要使用闹钟为你选定的提醒响铃。",
     "ios_picker_continue": "继续",
     "ios_permission_not_requested": "尚未请求",
+    "ios_allow_notifications": "允许通知",
     "ios_notification_mode_description": "显示一条通知。",
     "ios_calendar_settings_description": "从 Google 日历导入单次或重复日程。",
     "ios_calendar_browse_intro": "选择一项日程，核对详情后导入。已导入或导入结果待确认的日程不会显示。",
@@ -7534,6 +7536,7 @@ export interface MessageArguments {
   ios_alarm_permission_usage: Record<string, never>;
   ios_picker_continue: Record<string, never>;
   ios_permission_not_requested: Record<string, never>;
+  ios_allow_notifications: Record<string, never>;
   ios_notification_mode_description: Record<string, never>;
   ios_calendar_settings_description: Record<string, never>;
   ios_calendar_browse_intro: Record<string, never>;

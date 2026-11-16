@@ -37,6 +37,19 @@ export type PermissionSummary = {
   stale: boolean;
 };
 
+export function routineNotificationsUnavailable(
+  access?: Pick<
+    Capabilities,
+    'notifications' | 'notificationAuthorization' | 'routineChannelEnabled'
+  >,
+) {
+  return (
+    !!access &&
+    (!access.notifications ||
+      (access.notificationAuthorization === undefined && access.routineChannelEnabled === false))
+  );
+}
+
 /** Summarizes observed access, never alarm audibility or device reliability. */
 export function permissionSummary(access?: PermissionAccess, failed = false): PermissionSummary {
   if (!access)

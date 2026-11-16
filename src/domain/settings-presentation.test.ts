@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { permissionSummary, preferenceRecoveryOwner } from './settings-presentation';
+import {
+  permissionSummary,
+  preferenceRecoveryOwner,
+  routineNotificationsUnavailable,
+} from './settings-presentation';
 
 const allowed = {
   exactAlarms: true,
@@ -8,6 +12,35 @@ const allowed = {
   notificationChannelEnabled: true,
   fullScreen: true,
 };
+
+describe('routine notification access', () => {
+  it('uses iOS authorization without requiring an Android routine channel', () => {
+    expect(
+      routineNotificationsUnavailable({
+        notifications: true,
+        notificationAuthorization: 'authorized',
+      }),
+    ).toBe(false);
+    for (const notificationAuthorization of ['notDetermined', 'denied'] as const)
+      expect(
+        routineNotificationsUnavailable({ notifications: false, notificationAuthorization }),
+      ).toBe(true);
+  });
+
+  it('distinguishes a blocked Android routine channel from an unobserved capability', () => {
+    expect(routineNotificationsUnavailable(undefined)).toBe(false);
+    expect(
+      routineNotificationsUnavailable({ notifications: true, routineChannelEnabled: true }),
+    ).toBe(false);
+    expect(
+      routineNotificationsUnavailable({ notifications: true, routineChannelEnabled: false }),
+    ).toBe(true);
+    expect(
+      routineNotificationsUnavailable({ notifications: false, routineChannelEnabled: true }),
+    ).toBe(true);
+  });
+});
+
 describe('observed permission summaries', () => {
   it('does not claim working alarms from allowed permissions', () => {
     expect(permissionSummary(allowed)).toEqual({

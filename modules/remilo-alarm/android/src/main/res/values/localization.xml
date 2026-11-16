@@ -2534,6 +2534,7 @@ A previously sent Google update may still finish.</string>
   <string name="l10n_ios_alarm_permission_usage">Remilo uses alarms to ring for the reminders you choose.</string>
   <string name="l10n_ios_picker_continue">Continue</string>
   <string name="l10n_ios_permission_not_requested">Not requested</string>
+  <string name="l10n_ios_allow_notifications">Allow notifications</string>
   <string name="l10n_ios_notification_mode_description">Shows a notification.</string>
   <string name="l10n_ios_calendar_settings_description">Import one-time or repeating events from Google Calendar.</string>
   <string name="l10n_ios_calendar_browse_intro">Choose an event to review and import. Events with a completed or pending import are hidden.</string>

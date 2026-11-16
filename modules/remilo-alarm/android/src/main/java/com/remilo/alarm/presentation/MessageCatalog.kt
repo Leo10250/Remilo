@@ -2514,6 +2514,7 @@ object MessageCatalog {
     "ios_alarm_permission_usage" to Entry(R.string.l10n_ios_alarm_permission_usage, false, listOf(), "Remilo uses alarms to ring for the reminders you choose.", false),
     "ios_picker_continue" to Entry(R.string.l10n_ios_picker_continue, false, listOf(), "Continue", false),
     "ios_permission_not_requested" to Entry(R.string.l10n_ios_permission_not_requested, false, listOf(), "Not requested", false),
+    "ios_allow_notifications" to Entry(R.string.l10n_ios_allow_notifications, false, listOf(), "Allow notifications", false),
     "ios_notification_mode_description" to Entry(R.string.l10n_ios_notification_mode_description, false, listOf(), "Shows a notification.", false),
     "ios_calendar_settings_description" to Entry(R.string.l10n_ios_calendar_settings_description, false, listOf(), "Import one-time or repeating events from Google Calendar.", false),
     "ios_calendar_browse_intro" to Entry(R.string.l10n_ios_calendar_browse_intro, false, listOf(), "Choose an event to review and import. Events with a completed or pending import are hidden.", false),

@@ -69,6 +69,7 @@ import {
 import { RoutineActions } from '../ui/routine-actions';
 import { useExerciseImageLeases } from '../ui/exercise-images';
 import { RoutineChangeReview, RoutineWeekFields, routineDayKeys } from '../ui/routine-editor';
+import { RoutineNotificationAccess } from '../ui/routine-timing';
 import {
   changeRoutineClock,
   routinePayload,
@@ -1262,19 +1263,7 @@ function EditorForm({
                 <Copy muted size={14}>
                   {t('routine_no_catchup')}
                 </Copy>
-                {caps.data && (!caps.data.notifications || !caps.data.routineChannelEnabled) && (
-                  <ActionFeedback tone="warning" message={t('routine_notification_warning')} />
-                )}
-                {caps.data?.routineChannelQuiet === false && (
-                  <Copy muted size={14}>
-                    {t('routine_channel_changed')}
-                  </Copy>
-                )}
-                <Button
-                  label={t('routine_channel_settings')}
-                  variant="neutral"
-                  onPress={() => void engine().openSettings('routineChannel')}
-                />
+                <RoutineNotificationAccess disabled={frozen} showChannelSettings />
               </>
             )}
           </>

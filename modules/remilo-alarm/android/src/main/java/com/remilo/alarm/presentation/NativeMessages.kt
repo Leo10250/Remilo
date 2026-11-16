@@ -2450,6 +2450,7 @@ object NativeMessages {
   fun ios_alarm_permission_usage(): L10n.Message = L10n.Message("ios_alarm_permission_usage")
   fun ios_picker_continue(): L10n.Message = L10n.Message("ios_picker_continue")
   fun ios_permission_not_requested(): L10n.Message = L10n.Message("ios_permission_not_requested")
+  fun ios_allow_notifications(): L10n.Message = L10n.Message("ios_allow_notifications")
   fun ios_notification_mode_description(): L10n.Message = L10n.Message("ios_notification_mode_description")
   fun ios_calendar_settings_description(): L10n.Message = L10n.Message("ios_calendar_settings_description")
   fun ios_calendar_browse_intro(): L10n.Message = L10n.Message("ios_calendar_browse_intro")

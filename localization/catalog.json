@@ -16978,6 +16978,13 @@
       "context": "Alarm Check permission status before Remilo has asked iOS to show the system prompt.",
       "calendarStatus": false
     },
+    "ios_allow_notifications": {
+      "en": "Allow notifications",
+      "zh-Hans": "允许通知",
+      "args": {},
+      "context": "Button in the routine editor or Alert sheet that asks iOS to show the first notification permission prompt. The OS still asks the user to choose and the routine draft stays open.",
+      "calendarStatus": false
+    },
     "ios_notification_mode_description": {
       "en": "Shows a notification.",
       "zh-Hans": "显示一条通知。",

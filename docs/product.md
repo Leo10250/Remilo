@@ -268,7 +268,9 @@ One owning recurring reminder supplies a shared clock and Alarm / Notification /
 No alert. Dedicated Date and time/Alert sheets change only their own draft fields.
 Routine Alarm offers Start routine, Snooze and Dismiss alarm. Start dismisses the
 captured alert before opening its date; none of these checks a step. Routine
-Notification uses a separate quiet-by-default, Android-controlled channel. No alert
+Notification uses a quiet-by-default Android channel and silent local iOS
+notifications. The iOS routine editor offers the notification permission request
+or a link to notification settings when delivery access is unavailable. No alert
 retains dated availability without delivery. Alarm never silently becomes Notification.
 
 A scheduled routine is available throughout its device-local date, including before

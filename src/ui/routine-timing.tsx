@@ -1,8 +1,10 @@
+import { useMutation } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
 import { Keyboard, View } from 'react-native';
 import type { EditorDraft } from '../domain/editor-draft';
 import { civilAt, deviceZone } from '../domain/time';
 import { modeLabel } from '../domain/presentation';
+import { routineNotificationsUnavailable } from '../domain/settings-presentation';
 import { useTranslation } from '../localization/react';
 import {
   ActionFeedback,
@@ -17,13 +19,59 @@ import {
 import { AlertModeSelector } from './alert-mode-selector';
 import { DateTimeFields } from './date-time-fields';
 import { useAppearanceConfirmation } from './confirmation';
-import { useCapabilities, engine, iosReminders } from './native';
+import { useCapabilities, engine, iosReminders, nativeAvailable } from './native';
 import { SoundPicker } from './sound-picker';
 import { useTimeFormatting } from './time-display';
 
 export type RoutineTiming = Pick<EditorDraft, 'alarmAtMs' | 'mode' | 'sound' | 'vibration'> & {
   startsOn: string;
 };
+
+export function RoutineNotificationAccess({
+  disabled,
+  showChannelSettings = false,
+}: {
+  disabled: boolean;
+  showChannelSettings?: boolean;
+}) {
+  const t = useTranslation();
+  const caps = useCapabilities();
+  const authorization = caps.data?.notificationAuthorization;
+  const unavailable = routineNotificationsUnavailable(caps.data);
+  const showChannel = showChannelSettings && !iosReminders && authorization === undefined;
+  const showNotificationSettings = authorization !== undefined && unavailable;
+  const settings = useMutation({
+    mutationFn: () => engine().openSettings(showChannel ? 'routineChannel' : 'notifications'),
+    onSuccess: () => caps.refetch(),
+  });
+  return (
+    <>
+      {unavailable && <ActionFeedback tone="warning" message={t('routine_notification_warning')} />}
+      {showChannel && caps.data?.routineChannelQuiet === false && (
+        <Copy muted size={14}>
+          {t('routine_channel_changed')}
+        </Copy>
+      )}
+      {(showChannel || showNotificationSettings) && (
+        <Button
+          label={t(
+            showChannel
+              ? 'routine_channel_settings'
+              : authorization === 'notDetermined'
+                ? 'ios_allow_notifications'
+                : 'm_c6885c8ebcb2',
+          )}
+          variant="neutral"
+          busy={settings.isPending}
+          disabled={disabled || !nativeAvailable}
+          onPress={() => settings.mutate()}
+        />
+      )}
+      {settings.isError && <ActionFeedback tone="danger" message={t('m_eaf8e694f3fe')} />}
+    </>
+  );
+}
+
 export function RoutineTimingField({
   value,
   onChange,
@@ -37,7 +85,6 @@ export function RoutineTimingField({
 }) {
   const t = useTranslation(),
     confirm = useAppearanceConfirmation(),
-    caps = useCapabilities(),
     { shortTime, formatDate } = useTimeFormatting();
   const [draft, setDraft] = useState<RoutineTiming | null>(null),
     [baseline, setBaseline] = useState(''),
@@ -189,23 +236,7 @@ export function RoutineTimingField({
                 <Copy muted size={14}>
                   {t('routine_no_catchup')}
                 </Copy>
-                {!iosReminders &&
-                  caps.data &&
-                  (!caps.data.notifications || !caps.data.routineChannelEnabled) && (
-                    <ActionFeedback tone="warning" message={t('routine_notification_warning')} />
-                  )}
-                {!iosReminders && caps.data?.routineChannelQuiet === false && (
-                  <Copy muted size={14}>
-                    {t('routine_channel_changed')}
-                  </Copy>
-                )}
-                {!iosReminders && (
-                  <Button
-                    label={t('routine_channel_settings')}
-                    variant="neutral"
-                    onPress={() => void engine().openSettings('routineChannel')}
-                  />
-                )}
+                <RoutineNotificationAccess disabled={disabled} showChannelSettings />
               </>
             )}
             {draft.mode === 'Alarm' && (

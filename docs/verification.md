@@ -132,6 +132,10 @@ Select relevant scenarios from this reusable release smoke menu:
 - On iPhone or iPad, separate AlarmKit/Notification authorization, delivery while
   locked or the app is closed, system Done/Postpone, and replenishment of repeats
   after reopening. Check both supported languages and system-owned control labels.
+- With iOS notification access unrequested or denied, open a routine's Alert
+  sheet with Notification selected. Check the prompt or the notification
+  settings link, grant access, and verify the warning clears without resetting
+  the draft. On Android, check the warning with only the routine channel off.
 
 This is a menu, not a full matrix required for every feature. A reported failure
 remains actionable; absence of old paperwork alone is not a failure. Describe the
