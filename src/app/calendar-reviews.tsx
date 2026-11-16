@@ -21,7 +21,7 @@ import {
   SettingRow,
   Status,
 } from '../ui/components';
-import { engine, nativeAvailable } from '../ui/native';
+import { engine, iosReminders, nativeAvailable } from '../ui/native';
 import { RootNotice } from '../ui/navigation';
 import { useCalendarReviewTiming } from '../ui/calendar-sync';
 import type { CalendarReviewIssue } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
@@ -83,7 +83,18 @@ export default function CalendarReviews() {
               key={issue.issueId}
               issue={issue}
               onPress={() => {
+                if (iosReminders && issue.kind === 'Setup' && issue.operationId) {
+                  router.push({
+                    pathname: '/calendar-managed',
+                    params: { ...origin, mode: 'progress', operationId: issue.operationId },
+                  });
+                  return;
+                }
                 const route = calendarReviewRoute(issue);
+                if (route.pathname === '/series/[id]') {
+                  router.push({ ...route, params: { ...origin, ...route.params } });
+                  return;
+                }
                 router.push({
                   ...route,
                   params: {
@@ -114,7 +125,7 @@ function CalendarIssueRow({ issue, onPress }: { issue: CalendarReviewIssue; onPr
   'use no memo';
   const t = useTranslation();
   const timing = useCalendarReviewTiming(
-    issue.kind === 'Association' ? issue.occurrenceId : undefined,
+    issue.kind === 'Association' && !issue.seriesSegmentId ? issue.occurrenceId : undefined,
   );
   const title = issue.title || (issue.kind === 'Setup' ? t('m_eb79753ab339') : t('m_f6e8452bebf4'));
   const scope = calendarReviewIssueText(issue);
@@ -139,7 +150,7 @@ function CalendarIssueRow({ issue, onPress }: { issue: CalendarReviewIssue; onPr
       }
       accessibilityLabel={[title, timing, scope, reason].filter(Boolean).join('. ')}
       minHeight={56}
-      onPress={onPress}
+      onPress={iosReminders && issue.kind === 'Candidate' ? undefined : onPress}
     />
   );
 }

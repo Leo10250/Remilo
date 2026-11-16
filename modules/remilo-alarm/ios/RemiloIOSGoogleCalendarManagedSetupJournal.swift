@@ -74,7 +74,7 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
         let initialImport: InitialImport?
         let bindingRevision: Int
         fileprivate let authEpoch: Int
-        fileprivate let checkedAtMs: Int64
+        let checkedAtMs: Int64
 
         var expiresAtMs: Int64 { checkedAtMs + 600_000 }
     }
@@ -478,7 +478,8 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
                 byID[observation.eventID] = .init(eventID: observation.eventID, etag: observation.etag, kind: observation.kind,
                     importMode: prior.importMode, initialRecovery: prior.initialRecovery, instanceCancelled: observation.instanceCancelled,
                     initialCohort: prior.initialCohort ?? observation.initialCohort,
-                    allDayAlarmMinutes: prior.allDayAlarmMinutes ?? observation.allDayAlarmMinutes)
+                    allDayAlarmMinutes: prior.allDayAlarmMinutes ?? observation.allDayAlarmMinutes,
+                    title: observation.title ?? prior.title, observedAtMs: prior.observedAtMs ?? observation.observedAtMs)
             } else {
                 byID[observation.eventID] = observation
             }
@@ -488,6 +489,18 @@ final class RemiloIOSGoogleCalendarManagedSetupJournal {
 
     private func savedIncomingScope(_ current: Inbox.Scope, in state: State) throws -> Inbox.Scope? {
         try managedInbox().savedScope(matching: [current] + (state.resumeCheckpointScope.map { [$0] } ?? []))
+    }
+
+    func savedIncomingProgress(_ account: Account) throws -> Inbox.Progress {
+        let state = try read()
+        let binding: Binding
+        if let held = Self.heldBinding(in: state, account: account) { binding = held }
+        else { binding = try Self.activeBinding(in: state, account: account) }
+        let scope = Self.inboxScope(binding, in: state)
+        let saved = try savedIncomingScope(scope, in: state) ?? scope
+        let progress = try managedInbox().progress(saved, pages: 0, continuation: false)
+        return .init(scope: scope, pages: 0, initialComplete: progress.initialComplete, continuation: false,
+                     pending: progress.pending.filter { scope.heldEventIDs?.contains($0.eventID) != true }, revision: progress.revision)
     }
 
     func resumeInboxCheckpoint(_ scope: Inbox.Scope, account: Account) throws {

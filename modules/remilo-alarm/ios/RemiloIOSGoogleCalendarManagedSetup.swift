@@ -485,10 +485,7 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         try requireForeground()
         do {
             let account = try connection.savedAccount(expectedRevision: expectedRevision)
-            if let held = try journal.heldIncomingScope(account) {
-                return try inbox.progress(held, pages: 0, continuation: false)
-            }
-            return try inbox.progress(journal.incomingScope(account), pages: 0, continuation: false)
+            return try journal.savedIncomingProgress(account)
         } catch Failure.needsAccess { return nil }
         catch Failure.staleConnection { return nil }
     }

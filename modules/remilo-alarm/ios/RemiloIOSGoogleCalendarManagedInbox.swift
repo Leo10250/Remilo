@@ -35,6 +35,8 @@ final class RemiloIOSGoogleCalendarManagedInbox {
         var instanceCancelled: Bool? = nil
         var initialCohort: Bool? = nil
         var allDayAlarmMinutes: Int? = nil
+        var title: String? = nil
+        var observedAtMs: Int64? = nil
     }
 
     struct Request: Sendable {
@@ -50,6 +52,7 @@ final class RemiloIOSGoogleCalendarManagedInbox {
         let initialComplete: Bool
         let continuation: Bool
         let pending: [Observation]
+        var revision = 0
     }
 
     struct Permit: Codable, Equatable, Sendable {
@@ -92,7 +95,8 @@ final class RemiloIOSGoogleCalendarManagedInbox {
         for event in page.items {
             let existing = state.observations[event.id]
             if request.scope.resumedEventIDs?.contains(event.id) == true, case .needsReview? = existing?.kind { continue }
-            let kind = Self.classify(event, zoneID: request.scope.binding.record.zoneId, now: now)
+            let row = Event.row(event, calendarZone: request.scope.binding.record.zoneId)
+            let kind = Self.classify(event, row: row, now: now)
             if let tracking {
                 let master: String
                 if case .changedInstance(let id)? = kind { master = id } else { master = event.id }
@@ -105,11 +109,14 @@ final class RemiloIOSGoogleCalendarManagedInbox {
                 state.observations[event.id] = Observation(eventID: event.id, etag: event.strongETag, kind: kind,
                     importMode: existing?.importMode ?? mode, initialRecovery: existing?.initialRecovery ?? recovery,
                     instanceCancelled: instanceCancelled, initialCohort: existing?.initialCohort ?? !state.initialComplete,
-                    allDayAlarmMinutes: existing?.allDayAlarmMinutes ?? minutes)
+                    allDayAlarmMinutes: existing?.allDayAlarmMinutes ?? minutes,
+                    title: row.flatMap { $0.title.utf8.count <= 4_096 ? $0.title : nil },
+                    observedAtMs: existing?.observedAtMs ?? now)
             } else if let existing {
                 state.observations[event.id] = Observation(eventID: event.id, etag: event.strongETag,
                     kind: .needsReview(reason: "ELAPSED_EVENT"), importMode: existing.importMode, initialRecovery: existing.initialRecovery,
-                    initialCohort: existing.initialCohort, allDayAlarmMinutes: existing.allDayAlarmMinutes)
+                    initialCohort: existing.initialCohort, allDayAlarmMinutes: existing.allDayAlarmMinutes,
+                    title: existing.title, observedAtMs: existing.observedAtMs)
             }
         }
         guard state.observations.count <= 10_000 else { throw Failure.discoveryLimit }
@@ -136,7 +143,7 @@ final class RemiloIOSGoogleCalendarManagedInbox {
         return Progress(scope: scope, pages: pages, initialComplete: state.initialComplete,
                         continuation: continuation, pending: state.observations.values
                             .filter { scope.heldEventIDs?.contains($0.eventID) != true }
-                            .sorted { $0.eventID < $1.eventID })
+                            .sorted { $0.eventID < $1.eventID }, revision: state.version)
     }
 
     func staged(_ scope: Scope) throws -> [Observation] {
@@ -208,7 +215,8 @@ final class RemiloIOSGoogleCalendarManagedInbox {
         guard current?.kind == reviewed.kind, current?.etag == reviewed.etag else {
             state.observations[reviewed.eventID] = .init(eventID: reviewed.eventID, etag: current?.etag,
                 kind: .needsReview(reason: "STALE_REMOTE"), importMode: reviewed.importMode, initialRecovery: reviewed.initialRecovery,
-                initialCohort: reviewed.initialCohort, allDayAlarmMinutes: reviewed.allDayAlarmMinutes)
+                initialCohort: reviewed.initialCohort, allDayAlarmMinutes: reviewed.allDayAlarmMinutes,
+                title: current?.title ?? reviewed.title, observedAtMs: current?.observedAtMs ?? reviewed.observedAtMs)
             try advance(&state)
             return nil
         }
@@ -242,20 +250,21 @@ final class RemiloIOSGoogleCalendarManagedInbox {
         if let reviewReason {
             state.observations[event.eventID] = Observation(eventID: event.eventID, etag: event.etag,
                 kind: .needsReview(reason: reviewReason), importMode: event.importMode, initialRecovery: event.initialRecovery,
-                initialCohort: event.initialCohort, allDayAlarmMinutes: event.allDayAlarmMinutes)
+                initialCohort: event.initialCohort, allDayAlarmMinutes: event.allDayAlarmMinutes,
+                title: event.title, observedAtMs: event.observedAtMs)
         } else {
             state.observations.removeValue(forKey: event.eventID)
         }
         try advance(&state)
     }
 
-    private static func classify(_ event: Transport.Event, zoneID: String, now: Int64) -> Observation.Kind? {
+    private static func classify(_ event: Transport.Event, row: Event.Row?, now: Int64) -> Observation.Kind? {
         if let object = (try? JSONSerialization.jsonObject(with: event.json)) as? [String: Any],
            let masterID = object["recurringEventId"] as? String, Transport.validIdentity(masterID), masterID != event.id {
             return .changedInstance(masterID: masterID)
         }
         if event.cancelled { return .removed }
-        guard let row = Event.row(event, calendarZone: zoneID) else { return .needsReview(reason: "INVALID_EVENT") }
+        guard let row else { return .needsReview(reason: "INVALID_EVENT") }
         if let reason = row.unsupportedReason { return .needsReview(reason: reason.rawValue) }
         guard let schedule = row.fields?.schedule else { return .needsReview(reason: "INVALID_EVENT") }
         if schedule.recurrence != nil { return .recurringMaster }

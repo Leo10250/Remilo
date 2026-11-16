@@ -697,6 +697,7 @@ export type CalendarReviewIssue =
       issueId: string;
       occurrenceId: string;
       seriesId: string | null;
+      seriesSegmentId?: string;
       revision?: number;
       fingerprint?: string;
       title: string;

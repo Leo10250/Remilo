@@ -337,6 +337,16 @@ enum ManagedSetupChecks {
                          globalStatus?.request.children?.count == 2 && globalStatus?.request.startedAtMs == waiting?.request.startedAtMs &&
                          globalSummary.request?.id == syncID && fixture.posts == 0,
                          "Resume one global request, reuse native link checks, and preserve a known review issue")
+            let beforeReviewReads = fixture.requests
+            let reviewPage = try await afterRestart.savedReviewPage(nil)
+            precondition(reviewPage.summary.review == globalSummary.review && reviewPage.items.count == globalSummary.review &&
+                         reviewPage.items.contains { $0.kind == .candidate && $0.targetID == "resume-changed" && $0.title == "resume-changed" } &&
+                         reviewPage.next == nil && fixture.requests == beforeReviewReads,
+                         "The review page and summary share saved issues without contacting Google")
+            do {
+                _ = try await afterRestart.savedReviewPage("previous-snapshot:1")
+                preconditionFailure("A cursor cannot page through a different issue snapshot")
+            } catch Failure.staleCursor {}
             let beforeDisable = try await policyChecks(fixture: fixture, setup: reopened, journal: journal, connection: connection,
                 account: authorized.account, imports: .init(directory: directory, now: nowMs), runtime: { runtime().0 }, local: local)
             let retiredSync = UUID()
@@ -428,6 +438,8 @@ enum ManagedSetupChecks {
         let applied = try editor.confirmManagedPolicy(operation, reviewID: preview.id, expectedRevision: revision)
         let off = try setup.view(expectedRevision: revision)
         let existingLinks = try await runtime().savedSyncSummary()
+        let savedProgress = try setup.savedIncomingProgress(expectedRevision: revision)
+        precondition(savedProgress?.initialComplete == true && savedProgress?.pending.contains { $0.eventID == "policy-pending" } == true)
         precondition(off.policy == applied.policy && !off.policy.automaticImport && off.authEpoch == before.authEpoch &&
                      off.binding == before.binding && off.bindingRevision == before.bindingRevision + 1 &&
                      existingLinks.automatic == 2,

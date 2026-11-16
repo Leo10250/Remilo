@@ -78,19 +78,40 @@ final class RemiloIOSGoogleCalendarRuntime {
         var continuation = false
     }
 
+    struct ReviewIssue: Encodable, Sendable {
+        enum Kind: String, Encodable, Sendable {
+            case association = "Association", candidate = "Candidate", setup = "Setup"
+        }
+
+        let kind: Kind
+        let targetID: String
+        let revision: Int
+        let title: String
+        let reason: String
+        let discoveredAtMs: Int64
+        var calendarName: String?
+        var seriesID: String?
+        var seriesSegmentID: String?
+
+        var id: String { kind.rawValue.lowercased() + ":" + targetID }
+    }
+
     struct SyncSummary: Sendable {
         var connected = false
+        var connectionRevision = 0
+        var bindingRevision = 0
         var automatic = 0
         var pending = 0
-        var reminderReview = 0
-        var candidateReview = 0
-        var setupReview = 0
+        var issues: [ReviewIssue] = []
         var blocking = 0
         var unconfirmed = false
         var accessRequired = false
         var request: SyncRequest?
 
-        var review: Int { reminderReview + candidateReview + setupReview }
+        var reminderReview: Int { issues.lazy.filter { $0.kind == .association }.count }
+        var candidateReview: Int { issues.lazy.filter { $0.kind == .candidate }.count }
+        var setupReview: Int { issues.lazy.filter { $0.kind == .setup }.count }
+        var review: Int { issues.count }
     }
 
     init(connection: Connection, canUseForeground: @escaping @MainActor @Sendable () -> Bool,
@@ -134,25 +155,38 @@ final class RemiloIOSGoogleCalendarRuntime {
         let links = try manualLink?.savedSyncStatuses(view) ?? [:]
         var automatic = Set(links.compactMap { $0.value.automatic ? $0.key : nil })
         var pending = Set(links.compactMap { [.pending, .deferred].contains($0.value.state) ? $0.key : nil })
-        var review = Set(links.compactMap { $0.value.needsReview ? $0.key : nil })
+        var review = Dictionary(uniqueKeysWithValues: links.values.compactMap { status in
+            status.reviewIssue.map { ($0.id, $0) }
+        })
         var blocking = Set(links.compactMap { ["UnconfirmedWrite", "AccessRequired"].contains($0.value.reason) ? $0.key : nil })
 
-        var summary = SyncSummary(connected: true)
+        var summary = SyncSummary(connected: true, connectionRevision: view.revision,
+                                  bindingRevision: binding?.bindingRevision ?? 0)
         summary.unconfirmed = links.values.contains { $0.state == .unconfirmed }
         summary.accessRequired = links.values.contains { $0.reason == "AccessRequired" }
         if let setup = managedSetup, let binding,
            let id = binding.pendingOperationID ?? binding.retiredCreationOperationID,
            let operation = try setup.operation(id, expectedRevision: view.revision) {
             let status = try setup.status(operation, connection: view, advancing: isAdvancingManagedSetup(id))
-            if ["NeedsReview", "Unconfirmed", "NeedsAccess"].contains(status.stage) { summary.setupReview = 1 }
+            if ["NeedsReview", "Unconfirmed", "NeedsAccess"].contains(status.stage) {
+                let issue = ReviewIssue(kind: .setup, targetID: id.uuidString.lowercased(), revision: binding.bindingRevision,
+                    title: "", reason: status.stage == "NeedsAccess" ? "AccessRequired" : status.reason,
+                    discoveredAtMs: operation.review.checkedAtMs)
+                review[issue.id] = issue
+            }
             if ["Unconfirmed", "NeedsAccess"].contains(status.stage) { summary.blocking += 1 }
             summary.unconfirmed = summary.unconfirmed || status.stage == "Unconfirmed"
             summary.accessRequired = summary.accessRequired || status.stage == "NeedsAccess"
         }
         let observations = progress?.pending ?? []
-        summary.candidateReview = observations.filter { if case .needsReview = $0.kind { return true }; return false }.count
+        let candidates: [ReviewIssue] = observations.compactMap { item in
+            guard case .needsReview(let reason) = item.kind else { return nil }
+            return .init(kind: .candidate, targetID: item.eventID, revision: progress?.revision ?? 0, title: item.title ?? "",
+                reason: reason == "ELAPSED_EVENT" || reason == Import.Failure.alertExpired.rawValue ? "ElapsedAlert" : "ReviewRequired",
+                discoveredAtMs: item.observedAtMs ?? 0, calendarName: binding?.binding?.record.name)
+        }
         if binding?.mode == .enabled && binding?.policy.automaticImport == true {
-            summary.pending = observations.count - summary.candidateReview
+            summary.pending = observations.count - candidates.count
         }
 
         let outgoingLease = binding?.mode == .enabled && binding?.pendingOperationID == nil ? binding?.binding?.exportLease : nil
@@ -163,19 +197,26 @@ final class RemiloIOSGoogleCalendarRuntime {
             let id = entry.identity.local.occurrenceID
             guard entry.identity.account.accountGeneration == view.accountGeneration else { continue }
             let latest = seenPublications.insert(id).inserted
+            let reason: String
             if entry.phase == .sent {
-                review.insert(id)
+                reason = "UnconfirmedWrite"
                 blocking.insert(id)
                 summary.unconfirmed = true
             } else if !latest {
                 continue
             } else if entry.phase == .waiting, entry.managedLease == nil || entry.managedLease == outgoingLease {
                 pending.insert(id)
+                continue
             } else if entry.phase == .conflict || entry.phase == .failed {
-                review.insert(id)
+                reason = "ReviewRequired"
             } else if case .needsReview? = entry.managedLink {
-                review.insert(id)
+                reason = "ChangesNeedReview"
+            } else {
+                continue
             }
+            let issue = ReviewIssue(kind: .association, targetID: id, revision: entry.identity.local.revision,
+                title: status.localTitle, reason: reason, discoveredAtMs: entry.capturedAtMs)
+            if review[issue.id] == nil || entry.phase == .sent { review[issue.id] = issue }
         }
         #if os(iOS)
         if publication != nil {
@@ -192,13 +233,17 @@ final class RemiloIOSGoogleCalendarRuntime {
             for item in try await importJournal.heldSeries(viewingAs: account, binding: saved) {
                 let series = item.series
                 guard let id = series.receipt.local?.id, let local = try (seriesText.readForExport ?? seriesText.read)(id) else { continue }
-                if unconfirmed.contains(series.receipt.operationID) {
-                    review.insert(id)
+                let sent = unconfirmed.contains(series.receipt.operationID)
+                if sent || item.issue != nil {
+                    let issue = ReviewIssue(kind: .association, targetID: id, revision: local.revision,
+                        title: local.title, reason: sent ? "UnconfirmedWrite" : "ChangesNeedReview", discoveredAtMs: 0,
+                        seriesID: id, seriesSegmentID: local.segmentID)
+                    review[issue.id] = issue
+                }
+                if sent {
                     blocking.insert(id)
                     summary.unconfirmed = true
-                } else if item.issue != nil {
-                    review.insert(id)
-                } else if item.priorLease == lease, view.canWriteOwnedEvents {
+                } else if item.issue == nil, item.priorLease == lease, view.canWriteOwnedEvents {
                     automatic.insert(id)
                     if try series.baseline.differs(from: local) || local.scheduleEdit != nil ||
                         seriesText.instanceExport?.read(id, 1).isEmpty == false { pending.insert(id) }
@@ -210,10 +255,30 @@ final class RemiloIOSGoogleCalendarRuntime {
         }
         summary.automatic = automatic.count
         summary.pending += pending.count
-        summary.reminderReview = review.count
+        summary.issues = (Array(review.values) + candidates).sorted {
+            ($0.discoveredAtMs, $0.id) < ($1.discoveredAtMs, $1.id)
+        }
         summary.blocking += blocking.count
         summary.request = try managedSetupJournal?.latestSyncRequest(account: account)
         return summary
+    }
+
+    func savedReviewPage(_ cursor: String?) async throws -> (summary: SyncSummary, items: [ReviewIssue], next: String?) {
+        let summary = try await savedSyncSummary()
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        var content = Data("\(summary.connectionRevision):\(summary.bindingRevision):".utf8)
+        content.append(try encoder.encode(summary.issues))
+        let version = Data(SHA256.hash(data: content)).base64EncodedString()
+        let start: Int
+        if let cursor {
+            let parts = cursor.split(separator: ":", omittingEmptySubsequences: false)
+            guard parts.count == 2, parts[0] == version, let offset = Int(parts[1]),
+                  (0...summary.issues.count).contains(offset) else { throw Failure.staleCursor }
+            start = offset
+        } else { start = 0 }
+        let end = min(start + 50, summary.issues.count)
+        return (summary, Array(summary.issues[start..<end]), end < summary.issues.count ? "\(version):\(end)" : nil)
     }
 
     func confirmManagedPolicy(_ id: UUID, reviewID: UUID, expectedRevision: Int) throws -> Inbox.Journal.PolicyReceipt {
@@ -811,7 +876,8 @@ final class RemiloIOSGoogleCalendarRuntime {
                 let preflight = try Import.Capture(operationID: UUID(), review: review, choices: choices, now: review.checkedAtMs)
                 let observation = RemiloIOSGoogleCalendarManagedInbox.Observation(eventID: candidate.eventID, etag: review.source.etag,
                     kind: recurring ? .recurringMaster : .oneTime, importMode: candidate.importMode, initialRecovery: candidate.initialRecovery,
-                    initialCohort: candidate.initialCohort, allDayAlarmMinutes: choices.allDayAlarmMinutes)
+                    initialCohort: candidate.initialCohort, allDayAlarmMinutes: choices.allDayAlarmMinutes,
+                    title: title.utf8.count <= 4_096 ? title : nil, observedAtMs: candidate.observedAtMs)
                 rows.append(.init(itemID: itemID, title: title, importMode: candidate.importMode,
                     alertAtMs: recurring || choices.mode == .none ? nil : preflight.command.alarmAtMs,
                     approval: .init(observation: observation, review: review, choices: choices), reason: nil))

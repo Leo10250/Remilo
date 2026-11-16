@@ -59,6 +59,7 @@ final class RemiloIOSGoogleCalendarPublicationRuntime {
         let readOnly: Bool
         let differs: Bool
         let canReviewAgain: Bool
+        var localTitle = ""
 
         var canRetry: Bool { entry.phase == .sent || (entry.phase == .waiting && !readOnly) }
     }
@@ -144,7 +145,8 @@ final class RemiloIOSGoogleCalendarPublicationRuntime {
         let localDiffers = try snapshot.map { try entry.identity.matches($0.fields) == false } ?? false
         return Status(entry: entry, readOnly: entry.retired || snapshot == nil,
                       differs: localDiffers || entry.confirmation?.remoteDiffers == true,
-                      canReviewAgain: snapshot != nil && (entry.phase == .failed || entry.phase == .cancelled))
+                      canReviewAgain: snapshot != nil && (entry.phase == .failed || entry.phase == .cancelled),
+                      localTitle: snapshot?.fields.title ?? "")
     }
 
     func reservedEvents(viewingAs account: Publication.Account, calendarID: String) throws -> Set<String> {

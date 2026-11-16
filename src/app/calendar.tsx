@@ -101,6 +101,12 @@ function LocalCalendarSettings() {
     queryFn: () => engine().getCalendarOperations(revision!),
     enabled: available && (ready || (manual && !!current?.connected)),
   });
+  const summary = useQuery({
+    queryKey: ['calendar', 'sync-summary', revision],
+    queryFn: () => engine().getCalendarSyncSummary(),
+    enabled: available && !!current?.connected,
+  });
+  const reviewCount = summary.error ? 0 : (summary.data?.reviewCount ?? 0);
   useFocusEffect(
     useCallback(() => {
       if (available) void client.invalidateQueries({ queryKey: ['calendar'] });
@@ -260,6 +266,15 @@ function LocalCalendarSettings() {
       )}
       {available && current?.available && current.connected && (
         <ConnectedGroup>
+          {reviewCount > 0 && (
+            <SettingRow
+              intent="navigation"
+              icon="event"
+              label={t('m_4e680674ef4c')}
+              value={t('item_count', { count: reviewCount })}
+              onPress={() => router.push({ pathname: '/calendar-reviews', params: origin })}
+            />
+          )}
           {publishing && (
             <SettingRow
               intent="picker"

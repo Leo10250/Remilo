@@ -73,6 +73,11 @@ export function calendarReviewRoute(issue: CalendarReviewIssue) {
   if (issue.kind === 'Candidate')
     return { pathname: '/calendar-review' as const, params: { candidateId: issue.candidateId } };
   if (issue.kind === 'Setup') return { pathname: '/calendar' as const };
+  if (issue.seriesId && issue.seriesSegmentId)
+    return {
+      pathname: '/series/[id]' as const,
+      params: { id: issue.seriesSegmentId, seriesId: issue.seriesId },
+    };
   return { pathname: '/calendar-manage' as const, params: { id: issue.occurrenceId } };
 }
 export function calendarReviewIssueText(issue: CalendarReviewIssue) {

@@ -42,6 +42,7 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
         let state: State
         var reason = ""
         var needsReview = false
+        var reviewIssue: RemiloIOSGoogleCalendarRuntime.ReviewIssue?
 
         var automatic: Bool {
             mode == "Automatic" && [.confirmed, .pending, .deferred].contains(state)
@@ -789,7 +790,14 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
         let byID = Dictionary(grouping: pending, by: \.occurrenceID)
         return try Dictionary(uniqueKeysWithValues: store.links(viewingAs: account).map { record in
             let id = record.occurrenceID
-            let status = try savedSyncStatus(record, pending: byID[id]?.first, view: view, snapshot: local.read(id))
+            let snapshot = try local.read(id)
+            let transfer = byID[id]?.first
+            var status = try savedSyncStatus(record, pending: transfer, view: view, snapshot: snapshot)
+            if status.needsReview {
+                status.reviewIssue = .init(kind: .association, targetID: id, revision: record.revision,
+                    title: snapshot?.fields.title ?? "", reason: status.reason,
+                    discoveredAtMs: transfer?.checkedAtMs ?? record.check?.attemptedAtMs ?? record.observedAtMs ?? 0)
+            }
             return (id, status)
         })
     }

@@ -55,12 +55,43 @@ final class RemiloIOSGoogleCalendarBridge {
         return [
             "connected": summary.connected, "automaticCount": summary.automatic, "pendingCount": summary.pending,
             "reviewCount": summary.review,
-            "reviewCounts": ["reminders": summary.reminderReview, "candidates": summary.candidateReview,
-                             "setup": summary.setupReview, "total": summary.review],
+            "reviewCounts": Self.reviewCounts(summary),
             "attention": ["blocking": summary.blocking, "tone": summary.blocking > 0 ? "danger" : "warning"],
             "syncRequestId": iosBridgeValue(request?.id.uuidString.lowercased()), "lastRun": iosBridgeValue(lastRun),
             "notifications": ["enabled": false, "revision": 1],
         ]
+    }
+
+    func reviewIssues(_ cursor: String?) async throws -> [String: Any] {
+        guard let runtime = try Runtime.configuredForegroundRuntime() else {
+            return ["items": [[String: Any]](), "count": 0, "counts": Self.reviewCounts(.init()), "nextCursor": NSNull()]
+        }
+        let page = try await runtime.savedReviewPage(cursor)
+        let items = page.items.map { issue -> [String: Any] in
+            var value: [String: Any] = [
+                "kind": issue.kind.rawValue, "issueId": issue.id, "revision": issue.revision,
+                "title": issue.title, "reason": issue.reason, "discoveredAtMs": issue.discoveredAtMs,
+            ]
+            switch issue.kind {
+            case .association:
+                value["occurrenceId"] = issue.targetID
+                value["seriesId"] = iosBridgeValue(issue.seriesID)
+                if let segment = issue.seriesSegmentID { value["seriesSegmentId"] = segment }
+            case .candidate:
+                value["candidateId"] = issue.targetID
+                value["calendarName"] = Self.providerLabel(issue.calendarName ?? "")
+            case .setup:
+                value["operationId"] = issue.targetID
+            }
+            return value
+        }
+        return ["items": items, "count": page.summary.review, "counts": Self.reviewCounts(page.summary),
+                "nextCursor": iosBridgeValue(page.next)]
+    }
+
+    private static func reviewCounts(_ summary: Runtime.SyncSummary) -> [String: Int] {
+        ["reminders": summary.reminderReview, "candidates": summary.candidateReview,
+         "setup": summary.setupReview, "total": summary.review]
     }
 
     func managedState() async throws -> [String: Any] {
