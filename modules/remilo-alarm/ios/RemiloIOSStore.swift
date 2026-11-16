@@ -42,6 +42,7 @@ struct IOSReminder: Codable {
     var calendarInstanceID: String? = nil
     var calendarInstanceEditBaseline: IOSCalendarSeriesInstanceEdit.Fields? = nil
     var calendarExportIntent: IOSCalendarExportIntent? = nil
+    var calendarLocalOnly: Bool? = nil
     var generation = 0
     var deliveryState = "NoAlert"
     var nextAlertMs: Int64?

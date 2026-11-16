@@ -17,7 +17,7 @@ import {
   calendarSummary,
 } from '../domain/calendar-presentation';
 import { calendarDispositionLabel } from '../domain/calendar-managed';
-import { engine, iosReminders, nativeAvailable } from './native';
+import { engine, iosReminders, nativeAvailable, useIOSCalendarPublish } from './native';
 import { Button, ConnectedGroup, Copy, SettingRow } from './components';
 import { useTimeFormatting } from './time-display';
 import { useCalendarPublications } from './calendar-publication';
@@ -30,6 +30,14 @@ export function useCalendarAssociation(ids: readonly string[], enabled = true) {
     (links.data || []).some((link) => ids.includes(link.occurrenceId)) ||
     (publications.data || []).some((pub) => ids.includes(pub.occurrenceId))
   );
+}
+export function useCalendarDisposition(id: string, enabled = true) {
+  const iosPublish = useIOSCalendarPublish();
+  return useQuery({
+    queryKey: ['calendar', 'disposition', id],
+    queryFn: () => engine().getCalendarReminderDisposition(id),
+    enabled: enabled && nativeAvailable && (!iosReminders || iosPublish),
+  });
 }
 export function CalendarSummaryRow({
   id,
@@ -49,11 +57,7 @@ export function CalendarSummaryRow({
   'use no memo';
   const t = useTranslation();
   const { scheduleDateTime } = useTimeFormatting();
-  const disposition = useQuery({
-    queryKey: ['calendar', 'disposition', id],
-    queryFn: () => engine().getCalendarReminderDisposition(id),
-    enabled: nativeAvailable && !iosReminders,
-  });
+  const disposition = useCalendarDisposition(id);
   if (!link && !publication && !jobs.length && !disposition.data) return null;
   const summary =
     (!link || link.state === 'Detached') && disposition.data
@@ -77,7 +81,9 @@ export function CalendarSummaryRow({
         onPress={() =>
           router.push({
             pathname:
-              iosReminders && !link && !jobs.length ? '/calendar-publish' : '/calendar-manage',
+              iosReminders && !link && !jobs.length && !disposition.data
+                ? '/calendar-publish'
+                : '/calendar-manage',
             params: { id: link?.occurrenceId ?? id, ...origin, originReminderId: id },
           } as Href)
         }

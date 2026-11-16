@@ -101,6 +101,7 @@ struct EngineChecks {
         try routineAlarmActionsKeepDatedProgress()
         try await calendarCreateUsesExactLocalReceiptAndBounds()
         try await calendarExportIntentSurvivesInterruptedAcknowledgement()
+        try await keepingCalendarReminderLocalPreservesDelivery()
         try calendarInstallationOriginComesFromNativeStateCreation()
         try await calendarSeriesExceptionsAreAtomicAndBounded()
         try await calendarSeriesTextPreservesDelivery()
@@ -319,6 +320,57 @@ struct EngineChecks {
         precondition(afterRestore.reminders[exported.id]?.active == true &&
                      afterRestore.reminders[exported.id]?.calendarExportIntent == nil,
                      "Restoring local work must not restart a retired publication")
+    }
+
+    private static func keepingCalendarReminderLocalPreservesDelivery() async throws {
+        let store = FixtureStore()
+        defer {
+            store.remove()
+            RemiloIOSDelivery.registrations = [:]
+            RemiloIOSDelivery.attempts = []
+        }
+        let engine = store.engine()
+        let scope = IOSCalendarExportIntent.Scope(setupID: UUID(), bindingRevision: 3, authEpoch: 2, accountGeneration: 1)
+        let created = try await engine.apply(createCommand(id: "queue-local-reminder"), managedExportScope: { _ in scope })
+        let id = created["occurrenceId"] as! String
+        let original = try store.load().reminders[id]!
+        let intent = original.calendarExportIntent!
+        let command: [String: Any] = [
+            "kind": "SetCalendarReminderDisposition", "operationId": "make-local", "occurrenceId": id,
+            "expectedRevision": original.revision, "disposition": "LocalOnly",
+        ]
+        do {
+            _ = try await engine.keepCalendarReminderLocal(command, unlinked: { false })
+            preconditionFailure("An association attached after preview must use Unlink")
+        } catch let failure as IOSInputFailure {
+            precondition(failure.code == "STALE_PREVIEW")
+        }
+        let stillQueued = try store.load().reminders[id]
+        precondition(stillQueued?.calendarExportIntent == intent)
+
+        let registrations = RemiloIOSDelivery.attempts.count
+        let saved = try await engine.keepCalendarReminderLocal(command, unlinked: { true })
+        let restarted = store.engine()
+        let replay = try await restarted.keepCalendarReminderLocal(command, unlinked: {
+            preconditionFailure("A committed stop replays its exact receipt")
+        })
+        precondition(saved["retiredPublicationId"] as? String == intent.operationID.uuidString &&
+                     replay["retiredPublicationId"] as? String == intent.operationID.uuidString)
+        let current = try store.load().reminders[id]!
+        precondition(current.calendarExportIntent == nil && current.calendarLocalOnly == true &&
+                     current.revision == original.revision + 1 && current.generation == original.generation &&
+                     current.registration?.systemID == original.registration?.systemID &&
+                     current.alarmAtMs == original.alarmAtMs && current.history.count == original.history.count &&
+                     RemiloIOSDelivery.attempts.count == registrations,
+                     "Stopping publication must preserve local delivery")
+        var stale = command
+        stale["operationId"] = "stale-local-request"
+        do {
+            _ = try await restarted.keepCalendarReminderLocal(stale, unlinked: { true })
+            preconditionFailure("A stale Calendar choice cannot mutate the reminder again")
+        } catch let failure as IOSInputFailure {
+            precondition(failure.code == "STALE_PREVIEW")
+        }
     }
 
     private static func recurringPauseAndSplitPreserveIndependentOccurrences() async throws {

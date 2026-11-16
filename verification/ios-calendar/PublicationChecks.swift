@@ -89,6 +89,8 @@ enum PublicationChecks {
         try await managedPublicationChecks(configuration: configuration, request: request, access: access, readOnly: readOnly, now: now)
         try await managedPublicationChecks(configuration: configuration, request: request, access: access,
                                            readOnly: readOnly, now: now, retireBeforeReadback: true)
+        try await managedPublicationChecks(configuration: configuration, request: request, access: access,
+                                           readOnly: readOnly, now: now, keepLocalBeforeReadback: true)
         try await manualTransferChecks(configuration: configuration, request: request, access: access, readOnly: readOnly, now: now)
         try await manualTransferChecks(configuration: configuration, request: request, access: access, readOnly: readOnly,
                                        now: now, superseding: true)
@@ -373,7 +375,7 @@ enum PublicationChecks {
     private static func managedPublicationChecks(
         configuration: RemiloIOSGoogleCalendarConfiguration, request: Publication.Request,
         access: RemiloIOSGoogleCalendarAccess, readOnly: RemiloIOSGoogleCalendarAccess, now: @escaping @Sendable () -> Date,
-        retireBeforeReadback: Bool = false
+        retireBeforeReadback: Bool = false, keepLocalBeforeReadback: Bool = false
     ) async throws {
         typealias Runtime = RemiloIOSGoogleCalendarPublicationRuntime
         typealias Manual = RemiloIOSGoogleCalendarManualLinkRuntime
@@ -411,6 +413,8 @@ enum PublicationChecks {
                 operation == candidate.operationID && actual == active && account.accountGeneration == granted.accountGeneration
         }, holdsManagedExport: { actual, account in
             (local.managedHeld || local.managedResumed) && actual == lease && account.accountGeneration == granted.accountGeneration
+        }, stoppedManagedExport: { id in
+            local.managedStopped && id == candidate.occurrenceID
         })
         func runtime() -> Runtime {
             Runtime(connection: connection, journal: .init(directory: path, now: clock), local: authority,
@@ -464,6 +468,9 @@ enum PublicationChecks {
         if retireBeforeReadback {
             local.snapshot = nil
             local.managedAllowed = false
+        } else if keepLocalBeforeReadback {
+            local.managedStopped = true
+            local.managedAllowed = false
         } else {
             local.snapshot = .init(
                 version: .init(occurrenceID: request.local.occurrenceID, revision: 3, generation: request.local.generation),
@@ -478,6 +485,11 @@ enum PublicationChecks {
                      recovered[0].identity == sent[0].identity && writes == 1,
                      "Read-back always uses the original Google event")
         let pending = try reopened.pendingManagedLinks(expectedConnectionRevision: renewed.revision)
+        if keepLocalBeforeReadback {
+            precondition(recovered[0].retired && pending.isEmpty && local.snapshot != nil,
+                         "A committed local stop survives interruption, preserves read-back, and prevents automatic linking")
+            return
+        }
         precondition(pending == recovered, "Restart can resume link attachment separately from the POST")
         let manual = Manual(connection: connection, publication: reopened, imports: .init(directory: path),
             store: .init(directory: path), local: .init(read: { _ in local.snapshot }, permit: { expected, commit in
@@ -608,6 +620,7 @@ enum PublicationChecks {
         var managedAllowed = true
         var managedHeld = false
         var managedResumed = false
+        var managedStopped = false
         var lifecycleRevision = 0
         var manualReceipts: [UUID: RemiloIOSGoogleCalendarManualLinkRuntime.LocalResult] = [:]
 
@@ -660,6 +673,9 @@ enum PublicationChecks {
         } catch Journal.Rejection.operationPending {}
         let refreshed = Publication.Account(subject: request.account.subject, clientID: request.account.clientID,
                                             connectionRevision: 2, accountGeneration: 1)
+        try reopened.retireManaged(request.operationID, occurrenceID: request.local.occurrenceID)
+        let manual = try reopened.operation(request.operationID, viewingAs: refreshed)
+        precondition(manual?.retired == false, "Stopping a managed queue must not retire a manual publication")
         let retired = try reopened.retire(request.operationID, viewingAs: refreshed)
         precondition(retired.retired && retired.phase == .sent)
         let fixture = Fixture(.existingEdited, request: request)
@@ -673,12 +689,26 @@ enum PublicationChecks {
         let otherLocal = Publication.Local(occurrenceID: "another-local", revision: 1, generation: 0)
         let unsent = try Publication.Request(operationID: UUID(), account: request.account, local: otherLocal,
                                              calendarID: request.calendarID, reviewed: request.fields, source: .localOneOff)
-        _ = try reopened.capture(unsent, reviewFingerprint: reviewFingerprint, calendarName: "Personal")
-        let cancelled = try reopened.retire(unsent.operationID, viewingAs: refreshed)
+        let lease = Journal.ManagedLease(setupID: UUID(), bindingRevision: 1, authEpoch: 1,
+                                         calendarID: request.calendarID, zoneID: zone, publication: true)
+        _ = try reopened.capture(unsent, reviewFingerprint: reviewFingerprint, calendarName: "Personal", managedLease: lease)
+        try reopened.retireManaged(unsent.operationID, occurrenceID: request.local.occurrenceID)
+        let stillWaiting = try reopened.operation(unsent.operationID, viewingAs: refreshed)
+        precondition(stillWaiting?.retired == false)
+        try reopened.retireManaged(unsent.operationID, occurrenceID: otherLocal.occurrenceID)
+        let cancelled = try reopened.operation(unsent.operationID, viewingAs: refreshed)!
         precondition(cancelled.retired && cancelled.phase == .cancelled)
         guard case .denied(.cancelled) = try reopened.beginSend(unsent) else {
             preconditionFailure("A retired unsent operation cannot authorize a POST")
         }
+        let managedLocal = Publication.Local(occurrenceID: "managed-sent", revision: 1, generation: 0)
+        let sent = try Publication.Request(operationID: UUID(), account: request.account, local: managedLocal,
+                                           calendarID: request.calendarID, reviewed: request.fields, source: .localOneOff)
+        let sentEntry = try reopened.capture(sent, reviewFingerprint: reviewFingerprint, calendarName: "Personal", managedLease: lease)
+        guard case .granted = try reopened.beginSend(sent) else { preconditionFailure("Capture the exact send before opting out") }
+        try reopened.retireManaged(sent.operationID, occurrenceID: managedLocal.occurrenceID)
+        let readback = try reopened.operation(sent.operationID, viewingAs: refreshed)
+        precondition(readback?.phase == .sent && readback?.retired == true && readback?.identity == sentEntry.identity)
     }
 
     private static func patchChecks(request: Publication.Request, access: RemiloIOSGoogleCalendarAccess,

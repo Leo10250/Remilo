@@ -199,6 +199,17 @@ final class RemiloIOSGoogleCalendarPublicationJournal {
         return entry
     }
 
+    func managedOperation(_ id: UUID, occurrenceID: String) throws -> Entry? {
+        guard let entry = try read().operations[id], entry.managedLease != nil,
+              entry.identity.local.occurrenceID == occurrenceID else { return nil }
+        return entry
+    }
+
+    func retireManaged(_ id: UUID, occurrenceID: String) throws {
+        guard let entry = try managedOperation(id, occurrenceID: occurrenceID) else { return }
+        _ = try retire(id, viewingAs: entry.identity.account)
+    }
+
     private static func sameOwner(_ lhs: Publication.Account, _ rhs: Publication.Account) -> Bool {
         lhs.subject == rhs.subject && lhs.clientID == rhs.clientID
     }

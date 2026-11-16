@@ -15,6 +15,7 @@ import {
   resolvedCalendarFields,
 } from '../domain/calendar-link';
 import { calendarCheckFailure, currentCalendarOperations } from '../domain/calendar-presentation';
+import { calendarDispositionLabel } from '../domain/calendar-managed';
 import { calendarLinkStatus } from '../domain/calendar-ux';
 import { secondaryOriginRoute, type OriginParams } from '../domain/navigation';
 import { useLocalizedState, useTranslation } from '../localization/react';
@@ -24,6 +25,8 @@ import {
   isUnconfirmedManualCalendarSend,
 } from './calendar-linked';
 import { useCalendarLinks, useIOSCalendarLinkCandidate } from './calendar-links';
+import { useCalendarDisposition } from './calendar-association';
+import { useCalendarPublications } from './calendar-publication';
 import {
   calendarAuthorizationError,
   calendarReadAccess,
@@ -79,6 +82,10 @@ export function IOSCalendarManualLink({
   const ready = calendarReadAccess(current);
   const link = links.data?.find((entry) => entry.occurrenceId === id);
   const linked = !!link && link.state !== 'Detached';
+  const disposition = useCalendarDisposition(id, !review && !linked);
+  const preference = !review && !linked && !disposition.error ? disposition.data : undefined;
+  const { publications } = useCalendarPublications(!!preference);
+  const publication = publications.data?.find((entry) => entry.occurrenceId === id);
   const automaticConsent =
     automatic && linked && (link.syncMode === 'Automatic' || link.syncMode === 'Pending');
   const activationSource =
@@ -137,6 +144,7 @@ export function IOSCalendarManualLink({
   const running = useRef(false);
   const unlink = useCalendarAction();
   const disableAutomatic = useCalendarAction('disable-automatic');
+  const keepLocal = useCalendarAction('keep-local');
   const syncScope =
     automatic && !review && link && revision !== undefined
       ? {
@@ -245,8 +253,8 @@ export function IOSCalendarManualLink({
           : {}),
       },
     });
-  const relationshipBusy = unlink.busy || disableAutomatic.busy;
-  const relationshipUnknown = unlink.unknown || disableAutomatic.unknown;
+  const relationshipBusy = unlink.busy || disableAutomatic.busy || keepLocal.busy;
+  const relationshipUnknown = unlink.unknown || disableAutomatic.unknown || keepLocal.unknown;
   const actionUnknown = relationshipUnknown || syncRequest.unknown;
   const working = !!busy || relationshipBusy || syncRequest.busy;
   const guarded =
@@ -481,6 +489,27 @@ export function IOSCalendarManualLink({
       ? pending
       : linkJobs.slice(0, 1);
 
+  const confirmKeepLocal = () => {
+    if (!preference || working || actionUnknown) return;
+    confirm(t('m_96bbe7ba6390'), t('keep_local_reminder'), [
+      { text: t('m_19766ed6ccb2'), style: 'cancel' },
+      {
+        text: t('m_c905013aab29'),
+        onPress: () =>
+          void keepLocal.run(
+            {
+              kind: 'SetCalendarReminderDisposition',
+              operationId: engine().createOperationId(),
+              occurrenceId: id,
+              expectedRevision: preference.revision,
+              disposition: 'LocalOnly',
+            },
+            t('m_748fafa64678'),
+          ),
+      },
+    ]);
+  };
+
   return (
     <Page
       compact={review}
@@ -547,7 +576,14 @@ export function IOSCalendarManualLink({
             onPress={() => authorize(false)}
           />
         )}
-      {!!(error || unlink.error || disableAutomatic.error || syncRequest.error || problem) && (
+      {!!(
+        error ||
+        unlink.error ||
+        disableAutomatic.error ||
+        syncRequest.error ||
+        keepLocal.error ||
+        problem
+      ) && (
         <ActionFeedback
           tone="warning"
           message={
@@ -555,6 +591,7 @@ export function IOSCalendarManualLink({
             unlink.error ||
             disableAutomatic.error ||
             syncRequest.error ||
+            keepLocal.error ||
             iosManualCalendarError(problem)
           }
         />
@@ -566,13 +603,48 @@ export function IOSCalendarManualLink({
         !candidate.eligible &&
         (review || !link) &&
         !problem &&
-        !shown && <Copy muted>{t('ios_calendar_manual_unavailable')}</Copy>}
+        !shown &&
+        !preference && <Copy muted>{t('ios_calendar_manual_unavailable')}</Copy>}
       {activating &&
         manual &&
         !loading &&
         !shown &&
         !captured &&
         (!automatic || (ready && !activationSource)) && <Copy muted>{t('m_2f283f72b9c9')}</Copy>}
+      {(preference || keepLocal.unknown) && (
+        <ConnectedGroup title={t('m_dd9b05869601')}>
+          {preference && (
+            <ReadOnlyRow
+              label={calendarDispositionLabel(preference)}
+              value={preference.calendarName}
+            />
+          )}
+          {!!keepLocal.feedback && <ActionFeedback message={keepLocal.feedback} />}
+          {(keepLocal.unknown || preference?.disposition === 'Managed') && (
+            <Button
+              label={t(keepLocal.unknown ? 'm_16003a1a9190' : 'm_0b15f0956330')}
+              variant="outlined"
+              disabled={
+                working || unlink.unknown || disableAutomatic.unknown || syncRequest.unknown
+              }
+              onPress={keepLocal.unknown ? () => void keepLocal.retry() : confirmKeepLocal}
+            />
+          )}
+          {preference && (publication || preference.disposition === 'LocalOnly') && (
+            <Button
+              label={t('m_6f6b42de13f4')}
+              variant="secondary"
+              disabled={working || actionUnknown}
+              onPress={() =>
+                router.push({
+                  pathname: '/calendar-publish',
+                  params: { ...origin, id, originReminderId: id },
+                })
+              }
+            />
+          )}
+        </ConnectedGroup>
+      )}
       {!review && link && (
         <ConnectedGroup
           title={t('m_0e570ca6fabe')}

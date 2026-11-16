@@ -1586,6 +1586,27 @@ final class RemiloIOSGoogleCalendarRuntime {
         return receipt
     }
 
+    func savedExportDestination(_ reminder: IOSReminder) throws -> (name: String, canSend: Bool)? {
+        let view = try connection.view()
+        guard view.connected, let managedSetup, let intent = reminder.calendarExportIntent else { return nil }
+        let state = try managedSetup.view(expectedRevision: view.revision)
+        guard let binding = state.binding, Self.heldExport(reminder, binding: binding) != nil else { return nil }
+        guard state.mode == .enabled, let outgoing = try? managedSetup.outgoingBinding(explicit: true) else {
+            return (binding.record.name, false)
+        }
+        let account = try connection.savedAccount(expectedRevision: view.revision)
+        let reviewed = try managedSetup.resumedExports(account).contains {
+            Self.matchesResumedExport($0, reminder: reminder, intent: intent, account: account)
+        }
+        return (binding.record.name, Self.exportScope(outgoing) == intent.scope || reviewed)
+    }
+
+    private static func matchesResumedExport(_ approval: RemiloIOSGoogleCalendarManagedSetupJournal.ResumeExport,
+                                             reminder: IOSReminder, intent: IOSCalendarExportIntent, account: Import.Account) -> Bool {
+        approval.operationID == intent.operationID && approval.local.occurrenceID == reminder.id &&
+            exportScope(approval.originLease, accountGeneration: account.accountGeneration) == intent.scope
+    }
+
     private func managedOutgoingCandidates(expectedRevision: Int) throws -> [RemiloIOSGoogleCalendarPublicationRuntime.ManagedCandidate] {
         var candidates: [RemiloIOSGoogleCalendarPublicationRuntime.ManagedCandidate] = []
         if let binding = try? managedSetup?.outgoingBinding(explicit: true) {
@@ -1596,8 +1617,9 @@ final class RemiloIOSGoogleCalendarRuntime {
             for reminder in try RemiloIOSEngine.shared.read().reminders.values where reminder.active {
                 guard let intent = reminder.calendarExportIntent else { continue }
                 let previous = approved[intent.operationID]
-                let wasReviewed = previous?.local.occurrenceID == reminder.id &&
-                    previous.map { Self.exportScope($0.originLease, accountGeneration: account.accountGeneration) } == intent.scope
+                let wasReviewed = previous.map {
+                    Self.matchesResumedExport($0, reminder: reminder, intent: intent, account: account)
+                } == true
                 guard intent.scope == scope || wasReviewed else { continue }
                 candidates.append(.init(occurrenceID: reminder.id, operationID: intent.operationID,
                                         lease: binding.exportLease, calendarName: binding.record.name,
@@ -1662,6 +1684,9 @@ final class RemiloIOSGoogleCalendarRuntime {
         let managed = try RemiloIOSGoogleCalendarManagedSetupJournal.local()
         var publicationAuthority = RemiloIOSGoogleCalendarPublicationRuntime.LocalAuthority.localEngine(.shared)
         publicationAuthority.holdsManagedExport = { lease, account in try managed.holdsExport(lease, account: account) }
+        publicationAuthority.stoppedManagedExport = { id in
+            try RemiloIOSEngine.shared.read().reminders[id]?.calendarLocalOnly == true
+        }
         publicationAuthority.permitsManagedExport = { id, operationID, lease, account in
             guard let reminder = try RemiloIOSEngine.shared.read().reminders[id], reminder.active,
                   let intent = reminder.calendarExportIntent, intent.operationID == operationID else { return false }
@@ -1669,8 +1694,7 @@ final class RemiloIOSGoogleCalendarRuntime {
                 guard let binding = try managed.outgoingBinding(account, explicit: true), binding.exportLease == lease else { return false }
                 if Self.exportScope(binding) == intent.scope { return true }
                 return try managed.resumedExports(account).contains {
-                    $0.operationID == operationID && $0.local.occurrenceID == id &&
-                        Self.exportScope($0.originLease, accountGeneration: account.accountGeneration) == intent.scope
+                    Self.matchesResumedExport($0, reminder: reminder, intent: intent, account: account)
                 }
             } catch Failure.staleConnection { return false }
         }

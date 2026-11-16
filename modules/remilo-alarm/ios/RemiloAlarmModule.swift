@@ -265,6 +265,9 @@ public final class RemiloAlarmModule: Module {
     AsyncFunction("getManagedCalendarState") { (promise: Promise) in
       resolveCalendar(promise) { try await RemiloIOSGoogleCalendarBridge.shared.managedState() }
     }
+    AsyncFunction("getCalendarReminderDisposition") { (id: String, promise: Promise) in
+      resolveCalendar(promise) { try RemiloIOSGoogleCalendarBridge.shared.reminderDisposition(id) }
+    }
     AsyncFunction("getCalendarSyncSummary") { (promise: Promise) in
       resolveCalendar(promise) { try await RemiloIOSGoogleCalendarBridge.shared.syncSummary() }
     }

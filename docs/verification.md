@@ -325,6 +325,10 @@ new one-time reminder and confirm it saves locally. With automatic publication
 off, turn on the reminder's toggle and verify it publishes to the selected
 Remilo calendar. Turn on the toggle in another draft, add a repeat, and verify
 the repeating reminder saves locally without creating a Google event.
+While Calendar sync is paused, queue a one-time reminder and check that its
+Calendar row shows it is held. Use Keep Local only, reopen the reminder, and
+verify it remains local after resuming Calendar sync. Check that its local
+alert retains the same time and delivery mode.
 
 Keep the configured test IPA local.
 [AltServer connection requirements](https://faq.altstore.io/altstore-classic/altserver)

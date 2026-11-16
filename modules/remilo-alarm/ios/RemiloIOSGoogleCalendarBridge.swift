@@ -331,6 +331,39 @@ final class RemiloIOSGoogleCalendarBridge {
         ]
     }
 
+    func reminderDisposition(_ id: String) throws -> [String: Any]? {
+        try Self.validateOccurrenceID(id)
+        guard let reminder = try RemiloIOSEngine.shared.read().reminders[id],
+              reminder.isCalendarOneTime, reminder.active, try Self.isUnlinked(id) else { return nil }
+        var result: [String: Any] = ["occurrenceId": id, "revision": reminder.revision, "calendarName": "", "message": ""]
+        if reminder.calendarLocalOnly == true {
+            result["disposition"] = "LocalOnly"
+            result["state"] = "LocalOnly"
+            return result
+        }
+        guard let intent = reminder.calendarExportIntent else { return nil }
+        let entry = try PublicationRuntime.Journal.local().managedOperation(intent.operationID, occurrenceID: id)
+        if entry?.managedLink == .attached { return nil }
+        let destination = try Runtime.configuredForegroundRuntime()?.savedExportDestination(reminder)
+        result["disposition"] = "Managed"
+        result["calendarName"] = Self.providerLabel(destination?.name ?? "")
+        switch entry?.phase {
+        case .sent, .published:
+            if case .needsReview? = entry?.managedLink { result["state"] = "Ineligible" }
+            else { result["state"] = "Publishing" }
+        case .failed, .conflict, .cancelled:
+            result["state"] = "Ineligible"
+        default:
+            result["state"] = destination?.canSend == true ? "WaitingToPublish" : "Held"
+        }
+        return result
+    }
+
+    private static func isUnlinked(_ id: String) throws -> Bool {
+        guard let link = try LinkStore.local().link(id) else { return true }
+        return link.state == .detached
+    }
+
     func publications(expectedRevision: Double?) async throws -> [[String: Any]] {
         let revision = try Self.revision(expectedRevision)
         let runtime = try runtime()
@@ -472,6 +505,18 @@ final class RemiloIOSGoogleCalendarBridge {
         let input = IOSInput(values: command)
         let kind = try input.text("kind", maximum: 60)
         let operation = try Self.uuid(input, "operationId")
+        if kind == "SetCalendarReminderDisposition" {
+            let id = try input.text("occurrenceId", maximum: 200)
+            try Self.validateOccurrenceID(id)
+            var result = try await RemiloIOSEngine.shared.keepCalendarReminderLocal(command) {
+                try Self.isUnlinked(id)
+            }
+            if let text = result.removeValue(forKey: "retiredPublicationId") as? String,
+               let publicationID = UUID(uuidString: text) {
+                try PublicationRuntime.Journal.local().retireManaged(publicationID, occurrenceID: id)
+            }
+            return result
+        }
         let runtime = try runtime()
         defer { NotificationCenter.default.post(name: .remiloIOSChange, object: nil, userInfo: [Runtime.automaticStatusChangeKey: true]) }
         if kind == "ImportManagedCalendarCandidate" {

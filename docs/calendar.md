@@ -55,6 +55,11 @@ calendar's publication default for that reminder. Choosing sync queues
 publication alongside the local save so a retry keeps the original destination.
 New repeating reminders created on iOS stay local. Supported repeats imported
 from Google keep their existing Calendar relationship.
+
+A queued or held one-time reminder on iOS shows its Calendar status in
+Details. Keep Local only stops unsent automatic publication and preserves the
+local reminder and its alert. An already-sent request keeps its original
+readback identity. A reminder with an established link uses Unlink.
 [The signed iOS test workflow](verification.md#google-calendar-on-a-sideloaded-iphone-or-ipad)
 covers setup and device checks.
 [Google Calendar authorization scopes](https://developers.google.com/workspace/calendar/api/auth)

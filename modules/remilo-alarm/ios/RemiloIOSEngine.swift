@@ -51,6 +51,16 @@ final class RemiloIOSEngine {
         }
     }
 
+    func keepCalendarReminderLocal(_ payload: [String: Any],
+                                   unlinked: @escaping @MainActor @Sendable () throws -> Bool) async throws -> [String: Any] {
+        await acquire()
+        defer { release() }
+        return try await execute(IOSInput(values: payload), kind: "SetCalendarReminderDisposition", calendarPermit: {
+            guard try unlinked() else { throw IOSInputFailure("STALE_PREVIEW") }
+            return true
+        })
+    }
+
     /// Native Calendar capture only. The ordinary Expo command entry never
     /// supplies these exact source-derived recurrence bounds and exceptions.
     func applyCalendarCreate(_ payload: [String: Any], authorize: @escaping @MainActor @Sendable () throws -> Bool) async throws -> [String: Any] {
@@ -591,6 +601,7 @@ final class RemiloIOSEngine {
         }
 
         let now = iosMillis(Date())
+        let touchesDelivery = kind != "SetCalendarReminderDisposition"
         let applied: [String: Any]
         var occurrenceID: String?
         var registrationID: UUID?
@@ -617,6 +628,7 @@ final class RemiloIOSEngine {
             if choice == "Managed", scope == nil { throw IOSInputFailure("UNSUPPORTED", field: "calendarDisposition") }
             // Commit the intent alongside the reminder, before delivery awaits.
             record.calendarExportIntent = scope.map { .init(operationID: UUID(), scope: $0) }
+            if choice == "LocalOnly" { record.calendarLocalOnly = true }
             record.history.append(IOSHistory(kind: "Create", atMs: now, targetMs: nil))
             replaceRegistration(&record, target: record.alarmAtMs, state: &state, now: now)
             state.reminders[id] = record
@@ -701,6 +713,22 @@ final class RemiloIOSEngine {
             applied = result(for: record, state: state, now: now, scheduling: registrationID != nil)
         case "CreateList", "RenameList", "RemoveList":
             applied = try mutateList(kind, input: input, state: &state, now: now)
+        case "SetCalendarReminderDisposition":
+            guard calendarPermit != nil, input.values["disposition"] as? String == "LocalOnly" else {
+                throw IOSInputFailure("INVALID_INPUT")
+            }
+            let id = try input.text("occurrenceId", maximum: 200)
+            let expected = try input.integer("expectedRevision", range: 1...Int64.max)
+            guard var record = state.reminders[id] else { throw IOSInputFailure("NOT_FOUND") }
+            guard record.revision == expected, record.active, record.isCalendarOneTime,
+                  let intent = record.calendarExportIntent else { throw IOSInputFailure("STALE_PREVIEW") }
+            record.calendarExportIntent = nil
+            record.calendarLocalOnly = true
+            record.revision += 1
+            state.reminders[id] = record
+            occurrenceID = id
+            applied = ["status": "Applied", "occurrenceId": id, "revision": record.revision,
+                       "retiredPublicationId": intent.operationID.uuidString]
         case "Settings":
             try mutateSettings(input, state: &state)
             applied = ["status": "Applied"]
@@ -726,7 +754,7 @@ final class RemiloIOSEngine {
             throw IOSInputFailure("UNSUPPORTED")
         }
 
-        if calendarInbound == nil {
+        if touchesDelivery && calendarInbound == nil {
             _ = try replenishSeries(state: &state, now: now)
             _ = try replenishRoutines(state: &state, now: now)
         }
@@ -752,7 +780,7 @@ final class RemiloIOSEngine {
             guard try calendarPermit() else { throw IOSInputFailure("STALE_CONNECTION") }
         }
         try commit(state)
-        if calendarInbound == nil || needsDeliveryResult { try await drain() }
+        if (touchesDelivery && calendarInbound == nil) || needsDeliveryResult { try await drain() }
         if needsDeliveryResult { return try finalize(operationID) }
         return applied
     }

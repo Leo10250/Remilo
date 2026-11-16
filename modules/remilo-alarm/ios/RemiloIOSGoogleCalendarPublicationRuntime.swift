@@ -27,6 +27,7 @@ final class RemiloIOSGoogleCalendarPublicationRuntime {
         let permit: @MainActor @Sendable (LocalSnapshot, @escaping Checkpoint) async throws -> Writer.Permission
         var permitsManagedExport: @MainActor @Sendable (String, UUID, ManagedLease, Publication.Account) throws -> Bool = { _, _, _, _ in false }
         var holdsManagedExport: @MainActor @Sendable (ManagedLease, Publication.Account) throws -> Bool = { _, _ in false }
+        var stoppedManagedExport: @MainActor @Sendable (String) throws -> Bool = { _ in false }
     }
 
     struct ManagedCandidate: Sendable {
@@ -224,8 +225,16 @@ final class RemiloIOSGoogleCalendarPublicationRuntime {
     /// get a read-back opportunity after the originating intent is retired.
     func syncManaged(_ candidates: [ManagedCandidate], expectedConnectionRevision: Int) async throws -> [Journal.Entry] {
         let viewer = try viewingAccount(expectedConnectionRevision)
-        let saved = Dictionary(uniqueKeysWithValues: try journal.operations(viewingAs: viewer)
-            .filter { $0.managedLease != nil }.map { ($0.identity.operationID, $0) })
+        var saved: [UUID: Journal.Entry] = [:]
+        for entry in try journal.operations(viewingAs: viewer) where entry.managedLease != nil {
+            let id = entry.identity.operationID
+            // Recover a local stop committed before the publication journal was updated.
+            if !entry.retired, try local.stoppedManagedExport(entry.identity.local.occurrenceID) {
+                saved[id] = try journal.retire(id, viewingAs: viewer)
+            } else {
+                saved[id] = entry
+            }
+        }
         let candidateByID = Dictionary(candidates.map { ($0.operationID, $0) }, uniquingKeysWith: { first, _ in first })
         let eligible = try saved.values.filter { entry in
             if entry.phase == .sent { return true }
