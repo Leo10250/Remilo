@@ -1022,6 +1022,8 @@ final class RemiloIOSGoogleCalendarBridge {
         else { state = "Linked" }
         let availability = check?.availability
         let availabilityReason = check?.availabilityReason
+        let htmlLink = !detached && (availability == nil || availability == .available)
+            ? Link.Publication.calendarLink(record.htmlLink) : nil
         let sync = try manual.savedSyncStatus(record, pending: pending, view: view, snapshot: local)
         return [
             "occurrenceId": record.occurrenceID, "revision": record.revision, "calendarName": record.calendarName,
@@ -1031,7 +1033,7 @@ final class RemiloIOSGoogleCalendarBridge {
             "successfulAtMs": iosBridgeValue(record.automatic?.phase == .active ? record.observedAtMs : nil),
             "attemptedAtMs": iosBridgeValue(pending?.transfer?.automatic == nil ? nil : pending?.checkedAtMs),
             "accountEmail": view.email, "checkedAtMs": iosBridgeValue(check?.attemptedAtMs ?? record.observedAtMs),
-            "message": "", "htmlLink": "", "availability": availability?.rawValue ?? (detached ? "Unknown" : "Available"),
+            "message": "", "htmlLink": htmlLink ?? "", "availability": availability?.rawValue ?? (detached ? "Unknown" : "Available"),
             "availabilityReason": availabilityReason.map(bridgeErrorCode) ?? "", "readOnly": local == nil, "differs": differs,
             "observedAtMs": iosBridgeValue(check?.observedAtMs ?? record.observedAtMs),
             "lastCheckAttemptAtMs": iosBridgeValue(check?.attemptedAtMs), "lastCheckErrorCode": errorCode,

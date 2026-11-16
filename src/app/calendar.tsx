@@ -44,6 +44,7 @@ import {
   CalendarStatusCard,
   useCalendarAuthorization,
   useCalendarSync,
+  useCalendarSyncSummary,
   useCalendarAction,
 } from '../ui/calendar-sync';
 import {
@@ -102,11 +103,7 @@ function LocalCalendarSettings() {
     queryFn: () => engine().getCalendarOperations(revision!),
     enabled: available && (ready || (manual && !!current?.connected)),
   });
-  const summary = useQuery({
-    queryKey: ['calendar', 'sync-summary', revision],
-    queryFn: () => engine().getCalendarSyncSummary(),
-    enabled: available && !!current?.connected,
-  });
+  const summary = useCalendarSyncSummary(available, current);
   const managed = useQuery({
     queryKey: ['calendar', 'managed', revision],
     queryFn: () => engine().getManagedCalendarState(),
@@ -538,11 +535,7 @@ function ManagedCalendarSettings() {
     queryFn: () => engine().getCalendarLinks(),
     enabled: nativeAvailable,
   });
-  const sync = useQuery({
-    queryKey: ['calendar', 'sync-summary'],
-    queryFn: () => engine().getCalendarSyncSummary(),
-    enabled: nativeAvailable,
-  });
+  const sync = useCalendarSyncSummary();
   const managed = useQuery({
     queryKey: ['calendar', 'managed'],
     queryFn: () => engine().getManagedCalendarState(),

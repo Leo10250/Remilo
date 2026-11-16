@@ -28,7 +28,8 @@ recovery checks the original event without repeating the write. If the
 outcome stays unconfirmed and Google has a different event version, an
 explicitly confirmed fresh review can replace the outstanding operation.
 Check for changes reads the linked event and saves its availability and
-whether it differs from the baseline. An interrupted check preserves the
+whether it differs from the baseline. Open in Google Calendar appears when
+Google supplies a verified event URL. An interrupted check preserves the
 last observation. If Google confirms the event was removed or the source
 becomes unavailable, the link stays suspended until an explicit review.
 Unlinking ends the relationship and leaves the reminder and Google event
@@ -58,7 +59,9 @@ calendar's publication default for that reminder. Choosing sync queues
 publication alongside the local save so a retry keeps the original destination.
 New repeating reminders created on iOS stay local. For linked repeats imported
 from Google, Repeat Details shows the saved sync status and opens Calendar
-settings for sync controls.
+settings for sync controls. Agenda and list views show notices for repeats
+with pending changes, paused sync, or work that needs review. iOS uses regular
+reminder Activity and the saved Calendar sync views.
 
 A queued or held one-time reminder on iOS shows its Calendar status in
 Details. Keep Local only stops unsent automatic publication and preserves the

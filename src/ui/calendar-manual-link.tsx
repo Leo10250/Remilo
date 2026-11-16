@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { useEffect, useRef, useState } from 'react';
+import { Linking } from 'react-native';
 import type {
   CalendarCommand,
   CalendarLinkedOperation,
@@ -672,6 +673,16 @@ export function IOSCalendarManualLink({
                   variant="secondary"
                   disabled={working || actionUnknown || syncRequest.working}
                   onPress={() => void syncRequest.start()}
+                />
+              )}
+              {links.isSuccess && linked && !!link.htmlLink && (
+                <Button
+                  label={t('m_8cdec4f3126a')}
+                  icon="open_in_new"
+                  variant="secondary"
+                  onPress={() => {
+                    void Linking.openURL(link.htmlLink).catch(() => setError(t('m_459ac1963e28')));
+                  }}
                 />
               )}
             </>

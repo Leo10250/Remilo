@@ -94,9 +94,13 @@ import { RoutineActions, type RoutineActionTarget } from '../ui/routine-actions'
 import { CreationMenu } from '../ui/creation-menu';
 import { TrashConfirmation } from '../ui/trash-confirmation';
 import { WindowGeometryRegion } from '../ui/form-viewport';
-import { calendarCancellation, calendarRowNotice } from '../domain/calendar-presentation';
+import {
+  calendarCancellation,
+  calendarRowNotice,
+  calendarSyncNotice,
+} from '../domain/calendar-presentation';
 import { useCalendarLinks } from '../ui/calendar-links';
-import { CalendarAttentionCard } from '../ui/calendar-sync';
+import { CalendarAttentionCard, useCalendarSyncSummary } from '../ui/calendar-sync';
 import {
   ScrollChromeProvider,
   ScrollReadingPlane,
@@ -305,15 +309,13 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
     enabled: nativeAvailable,
   });
   const { links: calendarLinks, current: calendarConnection } = useCalendarLinks();
-  const calendarSummaryEnabled =
-    nativeAvailable && !scoped && (!iosReminders || calendarConnection?.connected === true);
-  const calendarSummary = useQuery({
-    queryKey: iosReminders
-      ? ['calendar', 'sync-summary', calendarConnection?.revision]
-      : ['calendar', 'sync-summary'],
-    queryFn: () => engine().getCalendarSyncSummary(),
-    enabled: calendarSummaryEnabled,
-  });
+  const calendarSummary = useCalendarSyncSummary(!scoped || iosReminders, calendarConnection);
+  const showCalendarAttention =
+    !scoped && (!iosReminders || calendarConnection?.connected === true);
+  const repeatCalendarStates =
+    iosReminders && calendarConnection?.connected && !calendarSummary.error
+      ? calendarSummary.data?.seriesStates
+      : undefined;
   const calendarByReminder = new Map(calendarLinks.data?.map((link) => [link.occurrenceId, link]));
   const calendarFor = (item: Occurrence) =>
     calendarByReminder.get(item.id) ??
@@ -829,7 +831,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
                           />
                         </Pressable>
                       )}
-                      {calendarSummaryEnabled &&
+                      {showCalendarAttention &&
                         !calendarSummary.error &&
                         !!calendarSummary.data?.reviewCount && (
                           <View style={{ marginBottom: 12 }}>
@@ -983,6 +985,8 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
                       calendarNotice={
                         calendarCancellation(item, calendarFor(item))?.row ||
                         calendarRowNotice(calendarFor(item)) ||
+                        (item.seriesId &&
+                          calendarSyncNotice(repeatCalendarStates?.[item.seriesId])) ||
                         undefined
                       }
                       context={{ groupKey: section.key }}

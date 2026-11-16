@@ -33,6 +33,7 @@ import {
   Status,
 } from '../../ui/components';
 import { engine, iosReminders, nativeAvailable, useIOSCalendarImport } from '../../ui/native';
+import { useCalendarSyncSummary } from '../../ui/calendar-sync';
 
 import { repeatLabel } from '../../ui/recurrence';
 import { ReminderRow } from '../../ui/reminder-row';
@@ -84,11 +85,7 @@ export default function SeriesDetails() {
     enabled: iosCalendar,
   });
   const current = connection.error ? undefined : connection.data;
-  const syncSummary = useQuery({
-    queryKey: ['calendar', 'sync-summary', current?.revision],
-    queryFn: () => engine().getCalendarSyncSummary(),
-    enabled: iosCalendar && !!current?.connected && !!seriesId,
-  });
+  const syncSummary = useCalendarSyncSummary(iosCalendar && !!seriesId, current);
   const seriesCalendarState =
     iosCalendar && current?.connected && seriesId && !syncSummary.error
       ? syncSummary.data?.seriesStates?.[seriesId]

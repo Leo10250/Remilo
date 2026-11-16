@@ -66,6 +66,12 @@ enum RemiloIOSGoogleCalendarManualLink {
         let calendarName: String
         let calendarZone: String
         let fields: Event.Fields
+        private(set) var htmlLink: String? = nil
+
+        // Display metadata is saved on the link, outside the frozen transfer.
+        private enum CodingKeys: String, CodingKey {
+            case source, etag, calendarName, calendarZone, fields
+        }
 
         init(evidence: Evidence, calendar: Transport.OwnedCalendar, lookup: Transport.EventLookup) throws {
             let source = evidence.source
@@ -87,6 +93,7 @@ enum RemiloIOSGoogleCalendarManualLink {
             self.calendarName = try RemiloIOSCalendarOwnedRecord(calendar).name
             self.calendarZone = calendar.timeZone ?? ""
             self.fields = fields
+            self.htmlLink = Publication.calendarLink(object["htmlLink"] as? String)
         }
 
         func matches(_ observed: Observation) -> Bool {

@@ -310,7 +310,8 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
             return .agreement(try store.attach(operationID: operationID, fingerprint: fingerprint, viewingAs: account,
                                     occurrenceID: review.local.version.occurrenceID, source: observed.source,
                                     origin: review.evidence.origin, expectedRevision: review.linkRevision ?? 0,
-                                    calendarName: observed.calendarName, baseline: baseline, observedAtMs: now()))
+                                    calendarName: observed.calendarName, baseline: baseline, observedAtMs: now(),
+                                    htmlLink: observed.htmlLink))
         }
         guard case .agreement(let receipt) = checkpoint else { throw Failure.invalidResponse }
         return receipt

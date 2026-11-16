@@ -37,6 +37,16 @@ import { engine, iosReminders, nativeAvailable } from './native';
 import { useTheme } from './theme';
 import { useTimeFormatting } from './time-display';
 
+export function useCalendarSyncSummary(enabled = true, connection?: CalendarConnection) {
+  return useQuery({
+    queryKey: iosReminders
+      ? ['calendar', 'sync-summary', connection?.revision]
+      : ['calendar', 'sync-summary'],
+    queryFn: () => engine().getCalendarSyncSummary(),
+    enabled: nativeAvailable && enabled && (!iosReminders || connection?.connected === true),
+  });
+}
+
 export function CalendarStatusCard({
   title,
   description,

@@ -357,9 +357,14 @@ enum ManualLinkStoreChecks {
         let other = account("other")
         let source = source(owner, event: "checked-event")
         let evidence = Store.Link.Evidence.imported(source)
-        let agreed = try observation(evidence, title: "Attached title", notes: "Attached notes")
+        let agreed = try observation(evidence, title: "Attached title", notes: "Attached notes",
+                                     htmlLink: "https://calendar.google.com.example.test/calendar/event")
+        precondition(agreed.htmlLink == nil)
         let foreign = try observation(.imported(Self.source(other, event: source.eventID)), title: agreed.fields.title, notes: "")
-        let differing = try observation(evidence, title: "Private observed title", notes: "Private observed notes")
+        let htmlLink = "https://www.google.com/calendar/event?eid=fixture"
+        let differing = try observation(evidence, title: "Private observed title", notes: "Private observed notes", htmlLink: htmlLink)
+        let frozen = try JSONDecoder().decode(Store.Link.Observation.self, from: JSONEncoder().encode(differing))
+        precondition(frozen.htmlLink == nil && frozen.matches(differing))
         let baseline = Store.Baseline(title: agreed.fields.title, notes: agreed.fields.notes, schedule: agreed.fields.schedule)
         let localID = "checked-reminder"
         let fingerprint = Data(repeating: 66, count: 32)
@@ -367,7 +372,7 @@ enum ManualLinkStoreChecks {
                              source: source, origin: .imported, expectedRevision: 0, calendarName: "Owned",
                              baseline: baseline, observedAtMs: time)
         let original = try store.link(localID)!
-        precondition(original.check == nil)
+        precondition(original.check == nil && original.htmlLink == nil)
         try rejects(Failure.accountChanged) {
             _ = try store.observe(original, viewingAs: other, result: .available(agreed), at: time + 1)
         }
@@ -377,6 +382,7 @@ enum ManualLinkStoreChecks {
         let checked = try store.observe(original, viewingAs: owner, result: .available(differing), at: time + 2)
         precondition(checked.revision == 1 && checked.baseline == baseline && checked.check?.remoteDiffers == true)
         precondition(checked.check?.availability == .available && checked.check?.observedAtMs == time + 2)
+        precondition(checked.htmlLink == htmlLink)
         let sameTime = try store.observe(checked, viewingAs: owner, result: .failed("RETRY"), at: time + 2)
         precondition(sameTime.check?.attemptedAtMs == time + 2 && sameTime.check?.errorCode == "RETRY")
         try rejects(Rejection.stalePreview) {
@@ -385,6 +391,7 @@ enum ManualLinkStoreChecks {
         let failed = try Store(directory: path).observe(sameTime, viewingAs: owner, result: .failed("NETWORK"), at: time + 3)
         precondition(failed.check?.attemptedAtMs == time + 3 && failed.check?.errorCode == "NETWORK")
         precondition(failed.check?.observedAtMs == time + 2 && failed.check?.remoteDiffers == true && failed.check?.availability == .available)
+        precondition(failed.htmlLink == htmlLink)
         let text = try String(contentsOf: path.appendingPathComponent("manual-links.json"), encoding: .utf8)
         precondition(!text.contains("Private observed"))
         try rejects(Rejection.stalePreview) {
@@ -403,7 +410,7 @@ enum ManualLinkStoreChecks {
         guard case .granted = try store.beginSend(sent, after: snapshot) else { preconditionFailure("Original send") }
 
         let unavailable = try store.observe(clockCorrected, viewingAs: owner, result: .unavailable("NOT_FOUND"), at: time + 4)
-        precondition(unavailable.revision == 2 && unavailable.check?.availability == .unavailable)
+        precondition(unavailable.revision == 2 && unavailable.check?.availability == .unavailable && unavailable.htmlLink == nil)
         precondition(unavailable.check?.availabilityReason == "NOT_FOUND" && unavailable.check?.requiresReview == true)
         let deleted = try store.observe(unavailable, viewingAs: owner, result: .deleted("untrusted provider detail"), at: time + 5)
         precondition(deleted.revision == 2 && deleted.check?.availability == .deleted && deleted.check?.errorCode == "")
@@ -592,16 +599,19 @@ enum ManualLinkStoreChecks {
         precondition(final.revision == 8 && final.automatic == nil && final.check == nil)
     }
 
-    private static func observation(_ evidence: Store.Link.Evidence, title: String, notes: String, etag: String = #""reviewed""#)
+    private static func observation(_ evidence: Store.Link.Evidence, title: String, notes: String, etag: String = #""reviewed""#,
+                                    htmlLink: String? = nil)
         throws -> Store.Link.Observation {
         let source = evidence.source
         let calendar = try JSONSerialization.data(withJSONObject: [
             "id": source.calendarID, "summary": "Owned", "accessRole": "owner", "timeZone": "UTC",
         ])
-        let event = try JSONSerialization.data(withJSONObject: [
+        var object: [String: Any] = [
             "id": source.eventID, "summary": title, "description": notes,
             "start": ["date": "2027-03-15"], "end": ["date": "2027-03-16"],
-        ])
+        ]
+        object["htmlLink"] = htmlLink
+        let event = try JSONSerialization.data(withJSONObject: object)
         return try Store.Link.Observation(
             evidence: evidence, calendar: JSONDecoder().decode(Store.Link.Transport.OwnedCalendar.self, from: calendar),
             lookup: .found(.init(id: source.eventID, etag: etag, cancelled: false, json: event))

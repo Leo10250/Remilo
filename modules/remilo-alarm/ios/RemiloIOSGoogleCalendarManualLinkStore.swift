@@ -69,6 +69,7 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         let baseline: Baseline?
         let calendarName: String
         let observedAtMs: Int64?
+        fileprivate(set) var htmlLink: String? = nil
         fileprivate(set) var check: Check? = nil
         fileprivate(set) var automatic: AutomaticConsent? = nil
     }
@@ -298,9 +299,11 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         let previous = current.check
         let requiresReview = previous?.requiresReview == true
         let check: Check
+        var htmlLink = current.htmlLink
         switch result {
         case .available(let observed):
             guard observed.source == current.source else { throw Link.Failure.staleRemote }
+            htmlLink = observed.htmlLink
             check = Check(attemptedAtMs: time, observedAtMs: time, availability: .available, availabilityReason: "",
                           remoteDiffers: Self.remoteDiffers(observed.fields, baseline: current.baseline), errorCode: "",
                           requiresReview: requiresReview)
@@ -328,6 +331,7 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         updated.check = check
         if fence { updated.revision += 1 }
         if lostSource { updated.automatic = nil }
+        updated.htmlLink = lostSource ? nil : htmlLink
         if updated != current {
             state.links[current.occurrenceID] = updated
             try write(state)
@@ -381,7 +385,7 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
     /// Only the runtime's confirmed common groups may be supplied as a baseline.
     func attach(operationID: UUID, fingerprint: Data, viewingAs account: Account, occurrenceID: String,
                 source: Source, origin: Origin, expectedRevision: Int, calendarName: String,
-                baseline: Baseline?, observedAtMs: Int64) throws -> Receipt {
+                baseline: Baseline?, observedAtMs: Int64, htmlLink: String? = nil) throws -> Receipt {
         guard Self.belongs(source, to: account) else { throw Failure.accountChanged }
         guard Self.valid(source), Self.validID(occurrenceID, maximum: 200), Self.valid(baseline),
               fingerprint.count == 32, (0..<Self.maximumRevision).contains(expectedRevision),
@@ -394,7 +398,8 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         try requireLink(occurrenceID, source: source, origin: origin, revision: expectedRevision, in: state)
         try requireUnreserved(occurrenceID, source: source, in: state)
         let record = Record(occurrenceID: occurrenceID, source: source, origin: origin, revision: expectedRevision + 1,
-                            state: .linked, baseline: baseline, calendarName: calendarName, observedAtMs: observedAtMs)
+                            state: .linked, baseline: baseline, calendarName: calendarName, observedAtMs: observedAtMs,
+                            htmlLink: Link.Publication.calendarLink(htmlLink))
         return try commit(record, operationID: operationID, fingerprint: fingerprint, digest: digest, account: account, state: &state)
     }
 
@@ -421,7 +426,8 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
         // Revision one is the activation checkpoint. An active link always
         // has a newer record revision than the consent that established it.
         let record = Record(occurrenceID: occurrenceID, source: source, origin: origin, revision: 2, state: .linked,
-                            baseline: baseline, calendarName: remote.calendarName, observedAtMs: observedAtMs, automatic: consent)
+                            baseline: baseline, calendarName: remote.calendarName, observedAtMs: observedAtMs,
+                            htmlLink: remote.htmlLink, automatic: consent)
         state.links[occurrenceID] = record
         try write(state)
         return record
@@ -670,7 +676,7 @@ final class RemiloIOSGoogleCalendarManualLinkStore {
             state.links[transfer.occurrenceID] = Record(
                 occurrenceID: transfer.occurrenceID, source: transfer.evidence.source, origin: transfer.evidence.origin,
                 revision: revision, state: .linked, baseline: baseline, calendarName: observedRemote.calendarName,
-                observedAtMs: observedAtMs, automatic: automatic
+                observedAtMs: observedAtMs, htmlLink: observedRemote.htmlLink, automatic: automatic
             )
             saved.operation.resultLinkRevision = revision
         } else if saved.operation.phase != .sent {

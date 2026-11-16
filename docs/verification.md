@@ -297,11 +297,12 @@ the new result reflects the reviewed event.
 
 Use Check for changes on a manual link after editing the Google event. Verify
 the saved check reports the difference while the Remilo reminder keeps its
-title and alert. Turn off network access and check again to verify the last
-observation stays visible. Delete the Google event and check that a confirmed
-deletion appears on Agenda and Details. If the same event is restored, check
-that the link still requires review. Unlink and verify that the reminder and
-restored Google event remain.
+title and alert. Use Open in Google Calendar and verify it opens the linked
+event. Turn off network access and check again to verify the last observation
+stays visible. Delete the Google event and check that a confirmed deletion
+appears on Agenda and Details and the open action disappears. If the same event
+is restored, check that the link still requires review. Unlink and verify that
+the reminder and restored Google event remain.
 
 On a healthy one-time link, turn on automatic sync after reviewing the two
 copies and granting write access. Change the Remilo title and Google notes,
@@ -328,6 +329,7 @@ the repeating reminder saves locally without creating a Google event.
 Open Repeat Details for that reminder and for an imported, linked repeat.
 Only the linked repeat shows Calendar sync status. Pause Calendar sync and
 confirm the linked repeat's row reflects the saved pause.
+Check the same notice on that repeat's reminders in Agenda and inside its list.
 While Calendar sync is paused, queue a one-time reminder and check that its
 Calendar row shows it is held. Use Keep Local only, reopen the reminder, and
 verify it remains local after resuming Calendar sync. Check that its local

@@ -196,7 +196,7 @@ enum RemiloIOSGoogleCalendarPublication {
         }
     }
 
-    private static func calendarLink(_ value: String?) -> String? {
+    static func calendarLink(_ value: String?) -> String? {
         guard let value, value.utf8.count <= 4096, let url = URL(string: value), url.scheme == "https",
               url.user == nil, url.password == nil, url.port == nil,
               url.host == "calendar.google.com" || (url.host == "www.google.com" && url.path.hasPrefix("/calendar/")) else { return nil }
