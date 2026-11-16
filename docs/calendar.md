@@ -49,6 +49,12 @@ the reviewed Google event version before creating a reminder or series, and
 saves the automatic relationship when it can verify the link. Ignore records
 the choice locally so later checks of that calendar skip the event.
 Imported events keep their Google Calendar alerts on iOS.
+
+When creating a one-time reminder on iOS, the editor can override the managed
+calendar's publication default for that reminder. Choosing sync queues
+publication alongside the local save so a retry keeps the original destination.
+New repeating reminders created on iOS stay local. Supported repeats imported
+from Google keep their existing Calendar relationship.
 [The signed iOS test workflow](verification.md#google-calendar-on-a-sideloaded-iphone-or-ipad)
 covers setup and device checks.
 [Google Calendar authorization scopes](https://developers.google.com/workspace/calendar/api/auth)

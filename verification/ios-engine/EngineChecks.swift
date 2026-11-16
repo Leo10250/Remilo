@@ -257,7 +257,10 @@ struct EngineChecks {
             RemiloIOSDelivery.attempts = []
         }
         let initial = store.engine()
-        let old = try await initial.apply(createCommand(id: "calendar-export-before-setup"))
+        let old = try await initial.apply(createCommand(id: "calendar-export-before-setup"), managedExportScope: { explicit in
+            precondition(!explicit, "An untouched preference uses the managed default")
+            return nil
+        })
         let oldID = old["occurrenceId"] as! String
         let scope = IOSCalendarExportIntent.Scope(setupID: UUID(), bindingRevision: 3, authEpoch: 2, accountGeneration: 1)
         var excluded = createCommand(id: "calendar-export-local-only")
@@ -267,10 +270,18 @@ struct EngineChecks {
         })
         let localID = local["occurrenceId"] as! String
 
-        let command = createCommand(id: "calendar-export-managed")
+        var command = createCommand(id: "calendar-export-managed")
+        command["calendarDisposition"] = "Managed"
+        let rejected = try await initial.apply(command, managedExportScope: { _ in nil })
+        precondition(rejected["errorCode"] as? String == "UNSUPPORTED" &&
+                     rejected["errorField"] as? String == "calendarDisposition",
+                     "An explicit export requires an eligible binding")
         RemiloIOSDelivery.onRegister = { _ in store.interruptNextWrite = true }
         do {
-            _ = try await initial.apply(command, managedExportScope: { _ in scope })
+            _ = try await initial.apply(command, managedExportScope: { explicit in
+                precondition(explicit, "An explicit choice can override an off default")
+                return scope
+            })
             preconditionFailure("Expected a write interruption after the reminder and intent commit")
         } catch FixtureStore.Failure.writeInterrupted {}
         RemiloIOSDelivery.onRegister = nil
@@ -288,6 +299,10 @@ struct EngineChecks {
             preconditionFailure("A durable create receipt must never acquire a new export binding")
         })
         precondition(result["occurrenceId"] as? String == exported.id)
+        var changedChoice = command
+        changedChoice["calendarDisposition"] = "LocalOnly"
+        let reused = try await restarted.apply(changedChoice)
+        precondition(reused["errorCode"] as? String == "OPERATION_REUSED")
         let afterReplay = try store.load()
         precondition(afterReplay.reminders.count == 3 && afterReplay.reminders[exported.id]?.calendarExportIntent == captured)
 
@@ -318,8 +333,10 @@ struct EngineChecks {
         let rule: [String: Any] = ["frequency": "daily", "interval": 1, "count": 4, "zoneMode": "pinned"]
         let created = try await engine.apply([
             "kind": "CreateSeries", "operationId": "series", "title": "Daily work", "zoneId": "UTC",
-            "eventStartMs": start, "alarmAtMs": start, "recurrence": rule,
-        ])
+            "eventStartMs": start, "alarmAtMs": start, "recurrence": rule, "calendarDisposition": "LocalOnly",
+        ], managedExportScope: { _ in
+            preconditionFailure("A new local repeating reminder must not capture a Calendar binding")
+        })
         precondition(created["status"] as? String == "Scheduled")
         let segmentID = created["segmentId"] as! String
         let initialState = try store.load()

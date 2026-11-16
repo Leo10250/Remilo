@@ -374,13 +374,34 @@ function EditorForm({
   });
   const latestRoutine = routinePlans.data?.find((plan) => plan.id === loadedRoutine?.id);
   const routineStale = !!latestRoutine && latestRoutine.revision !== loadedRoutine?.revision;
+  const canChooseCalendar =
+    creation &&
+    !routine &&
+    (!iosReminders || (caps.data?.calendarOneOffPublish === true && !recurrence));
   const managed = useQuery({
     queryKey: ['calendar', 'managed'],
     queryFn: () => engine().getManagedCalendarState(),
-    enabled: nativeAvailable && !iosReminders && creation && !routine,
+    enabled: nativeAvailable && canChooseCalendar,
   });
   const [calendarDisposition, setCalendarDisposition] =
     useState<CalendarCreationDisposition>('Default');
+  const managedCalendar =
+    canChooseCalendar &&
+    managed.data?.calendarId &&
+    managed.data.mode !== 'Disabled' &&
+    (!iosReminders ||
+      (!managed.error &&
+        !['PreparingCalendar', 'CreationUnconfirmed'].includes(managed.data.phase)))
+      ? managed.data
+      : undefined;
+  const syncWithCalendar =
+    calendarDisposition === 'Managed' ||
+    (calendarDisposition === 'Default' && !!managedCalendar?.policy.exportNewReminders);
+  const managedChoiceUnavailable =
+    iosReminders &&
+    canChooseCalendar &&
+    calendarDisposition === 'Managed' &&
+    (!managedCalendar || fieldError === 'calendarDisposition');
   const calendar = useQuery({
     queryKey: ['calendar', 'publications'],
     queryFn: () => engine().getCalendarPublications(),
@@ -773,7 +794,7 @@ function EditorForm({
                       ...payload,
                       recurrence: cleanRepeat(recurrence),
                       kind: 'CreateSeries',
-                      calendarDisposition,
+                      calendarDisposition: iosReminders ? 'LocalOnly' : calendarDisposition,
                       operationId: engine().createOperationId(),
                     }
                   : {
@@ -1259,50 +1280,62 @@ function EditorForm({
             error={invalid(['notes'])}
           />
         </Disclosure>
-        {!routine && creation && !!managed.data?.calendarId && managed.data.mode !== 'Disabled' && (
+        {managedChoiceUnavailable && (
+          <ConnectedGroup title={t('m_b074310e911f')}>
+            <ActionFeedback message={t('m_de37d8d70a8f')} tone="warning" />
+            <Button
+              label={t('m_c905013aab29')}
+              variant="secondary"
+              disabled={frozen}
+              onPress={() => {
+                setCalendarDisposition('LocalOnly');
+                if (fieldError === 'calendarDisposition') {
+                  setFieldError(undefined);
+                  setMessage('');
+                }
+              }}
+            />
+          </ConnectedGroup>
+        )}
+        {managedCalendar && !managedChoiceUnavailable && (
           <ConnectedGroup
             title={t('m_b074310e911f')}
             footer={
-              <Copy muted>
-                {managed.data.mode === 'Paused' ? t('m_6191bfd04e38') : t('m_7c56eff50082')}
-              </Copy>
+              managedCalendar.mode === 'Paused' || !iosReminders ? (
+                <Copy muted>
+                  {managedCalendar.mode === 'Paused' ? t('m_6191bfd04e38') : t('m_7c56eff50082')}
+                </Copy>
+              ) : undefined
             }
           >
             <Toggle
               key="sync"
               label={t('m_3e44eada38e6')}
-              value={
-                calendarDisposition === 'Managed' ||
-                (calendarDisposition === 'Default' && managed.data.policy.exportNewReminders)
-              }
+              value={syncWithCalendar}
               disabled={frozen}
               onChange={(value) => setCalendarDisposition(value ? 'Managed' : 'LocalOnly')}
             />
             <Copy muted>
-              {calendarDisposition === 'LocalOnly'
-                ? t('m_c905013aab29')
-                : managed.data.calendarName}
+              {syncWithCalendar ? managedCalendar.calendarName : t('m_c905013aab29')}
             </Copy>
-            {recurrence?.zoneMode === 'floating' && calendarDisposition !== 'LocalOnly' && (
+            {recurrence?.zoneMode === 'floating' && syncWithCalendar && (
               <Copy muted>
                 {t('m_09f21e33c391')}
                 {zone} {t('m_0bdc93934138')}
               </Copy>
             )}
-            {draft.allDay &&
-              managed.data.calendarZone !== zone &&
-              calendarDisposition !== 'LocalOnly' && (
-                <Copy muted>
-                  {t('m_4171fe0e2802')}
-                  {zone}
-                  {t('m_2307d01ab2a5')}
-                  {managed.data.calendarZone}
-                  {t('m_6e558a290d11')}
-                </Copy>
-              )}
+            {draft.allDay && managedCalendar.calendarZone !== zone && syncWithCalendar && (
+              <Copy muted>
+                {t('m_4171fe0e2802')}
+                {zone}
+                {t('m_2307d01ab2a5')}
+                {managedCalendar.calendarZone}
+                {t('m_6e558a290d11')}
+              </Copy>
+            )}
           </ConnectedGroup>
         )}
-        {!routine && creation && managed.error && (
+        {canChooseCalendar && managed.error && !managedChoiceUnavailable && (
           <ActionFeedback message={t('m_7ef8b1a640de')} tone="warning" />
         )}
         {!routine && (
@@ -1316,12 +1349,11 @@ function EditorForm({
             }
           >
             <Copy muted size={13}>
-              {creation &&
-              managed.data?.calendarId &&
-              managed.data.mode !== 'Disabled' &&
-              calendarDisposition !== 'LocalOnly'
+              {managedCalendar && syncWithCalendar
                 ? t('m_dcfcd4d17b81')
-                : t('m_5da6242c60ee')}
+                : iosReminders && creation && recurrence
+                  ? t('m_c905013aab29')
+                  : t('m_5da6242c60ee')}
             </Copy>
             <ConnectedGroup
               footer={

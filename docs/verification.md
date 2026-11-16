@@ -320,6 +320,12 @@ same request after an offline failure. Pause the managed calendar, verify
 that it holds later changes, then review and resume the items you want.
 Confirm that turning off sync keeps the local reminders and Google events.
 
+With automatic publication enabled, turn off Sync with Remilo calendar in a
+new one-time reminder and confirm it saves locally. With automatic publication
+off, turn on the reminder's toggle and verify it publishes to the selected
+Remilo calendar. Turn on the toggle in another draft, add a repeat, and verify
+the repeating reminder saves locally without creating a Google event.
+
 Keep the configured test IPA local.
 [AltServer connection requirements](https://faq.altstore.io/altstore-classic/altserver)
 
