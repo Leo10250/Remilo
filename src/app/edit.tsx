@@ -100,6 +100,7 @@ import { space } from '../ui/tokens';
 type Seed = {
   state: EditorState;
   revision?: number;
+  calendarScheduleProtected?: boolean;
   series?: Series;
   routineId?: string;
   routinePlan?: RoutinePlan;
@@ -108,6 +109,7 @@ async function readSeed(id?: string, segmentId?: string, following?: string): Pr
   let draft: EditorDraft,
     recurrence: RecurrenceDraft | undefined,
     revision: number | undefined,
+    calendarScheduleProtected: boolean | undefined,
     series: Series | undefined,
     routineId: string | undefined;
   if (segmentId) {
@@ -131,8 +133,9 @@ async function readSeed(id?: string, segmentId?: string, following?: string): Pr
     routineId = record.routine?.routineId;
     draft = editorDraft(record);
     revision = record.revision;
+    calendarScheduleProtected = record.calendarScheduleProtected;
   } else draft = editorDraft();
-  return { state: { draft, recurrence }, revision, series, routineId };
+  return { state: { draft, recurrence }, revision, calendarScheduleProtected, series, routineId };
 }
 function routineSeed(plan: RoutinePlan): Seed {
   const when = new Date(
@@ -413,18 +416,16 @@ function EditorForm({
     queryFn: () => engine().getCalendarLinks(),
     enabled: nativeAvailable && !iosReminders && !!editingId && !editingSeries,
   });
-  const hasCalendarContext =
-    calendar.data?.some((item) => item.occurrenceId === editingId) ||
-    calendarLinks.data?.some((item) => item.occurrenceId === editingId);
+  const hasCalendarContext = iosReminders
+    ? !!editingId && seed.calendarScheduleProtected === true
+    : !!calendar.data?.some((item) => item.occurrenceId === editingId) ||
+      !!calendarLinks.data?.some((item) => item.occurrenceId === editingId);
   const preserveEvent =
-    !iosReminders &&
     !!editingId &&
     !editingSeries &&
-    (!calendar.data ||
-      !!calendar.error ||
-      !calendarLinks.data ||
-      !!calendarLinks.error ||
-      !!hasCalendarContext);
+    (hasCalendarContext ||
+      (!iosReminders &&
+        (!calendar.data || !!calendar.error || !calendarLinks.data || !!calendarLinks.error)));
   const dirty =
     saveAsNew ||
     calendarDisposition !== 'Default' ||
@@ -579,10 +580,23 @@ function EditorForm({
     ).catch(() => {});
   };
   const moveAlert = (value: number) => {
-    void updateTiming(
-      () => moveDraftAlert(draft, value, (input) => engine().convertTime(input), preserveEvent),
-      'alarmAtMs',
-    ).catch(() => {});
+    void updateTiming(async () => {
+      // An automatic publication can be queued or attached while the editor is open.
+      const protectLatest =
+        iosReminders && editingId && !editingSeries && !preserveEvent
+          ? (
+              await engine()
+                .getOccurrence(editingId)
+                .catch(() => null)
+            )?.calendarScheduleProtected !== false
+          : false;
+      return moveDraftAlert(
+        draft,
+        value,
+        (input) => engine().convertTime(input),
+        preserveEvent || protectLatest,
+      );
+    }, 'alarmAtMs').catch(() => {});
   };
   const moveCalendarEvent = (value: number) => {
     void updateTiming(

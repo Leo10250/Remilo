@@ -170,7 +170,8 @@ enum SeriesTextWriterChecks {
         let skippedScope = try managed.incomingScope(account)
         let skippedExports = try await imports.seriesTextExports(viewingAs: account, lease: skippedScope.binding.linkLease)
         let skippedSummary = try await runtime().savedSyncSummary()
-        precondition(skippedPass.resumedSeries == 0 && skippedExports.isEmpty && skippedSummary.automatic == 0,
+        precondition(skippedPass.resumedSeries == 0 && skippedExports.isEmpty && skippedSummary.automatic == 0 &&
+                     skippedSummary.seriesStates[family] == .paused,
                      "An unselected series keeps its original lease")
 
         try pause()
@@ -196,7 +197,14 @@ enum SeriesTextWriterChecks {
         let repeated = try await runtime().syncManagedIncoming(expectedRevision: revision)
         let activeSummary = try await runtime().savedSyncSummary()
         precondition(repeated.resumedSeries == 0 && repeated.updatedSeries == 0 && fixture.localSeries?.revision == 2 &&
-                     activeSummary.automatic == 1 && activeSummary.reminderReview == 0)
+                     activeSummary.automatic == 1 && activeSummary.reminderReview == 0 &&
+                     activeSummary.seriesStates[family] == .confirmed)
+        guard let baseline = fixture.localSeries else { preconditionFailure("The resumed series remains available") }
+        fixture.localSeries = .init(familyID: family, segmentID: baseline.segmentID, revision: baseline.revision + 1,
+                                    title: "Changed in Remilo", notes: baseline.notes)
+        let pendingSummary = try await runtime().savedSyncSummary()
+        precondition(pendingSummary.seriesStates[family] == .pending && pendingSummary.pending > 0)
+        fixture.localSeries = baseline
         let sync = runtime()
         let id = UUID()
         _ = try await sync.captureGlobalSync(id, expectedRevision: revision)

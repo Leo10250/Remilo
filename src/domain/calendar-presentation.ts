@@ -103,11 +103,13 @@ export function calendarReviewReason(reason?: string) {
 }
 export function calendarRowNotice(link?: CalendarLink) {
   if (!link || link.state === 'Detached') return null;
-  if (link.syncStatus === 'Review') return t('m_de41ed657181');
-  if (link.syncStatus === 'Unconfirmed') return t('m_151dc5ed7d18');
-  if (link.syncStatus === 'Paused') return t('m_d4f4db50dfc3');
-  if (link.syncStatus === 'UpdatePending' || link.syncStatus === 'Deferred')
-    return t('m_62e78bb2b747');
+  return calendarSyncNotice(link.syncStatus);
+}
+export function calendarSyncNotice(status: CalendarLink['syncStatus']) {
+  if (status === 'Review') return t('m_de41ed657181');
+  if (status === 'Unconfirmed') return t('m_151dc5ed7d18');
+  if (status === 'Paused') return t('m_d4f4db50dfc3');
+  if (status === 'UpdatePending' || status === 'Deferred') return t('m_62e78bb2b747');
   return null;
 }
 export function calendarCheckFailure(code: string) {

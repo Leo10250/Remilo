@@ -325,10 +325,18 @@ new one-time reminder and confirm it saves locally. With automatic publication
 off, turn on the reminder's toggle and verify it publishes to the selected
 Remilo calendar. Turn on the toggle in another draft, add a repeat, and verify
 the repeating reminder saves locally without creating a Google event.
+Open Repeat Details for that reminder and for an imported, linked repeat.
+Only the linked repeat shows Calendar sync status. Pause Calendar sync and
+confirm the linked repeat's row reflects the saved pause.
 While Calendar sync is paused, queue a one-time reminder and check that its
 Calendar row shows it is held. Use Keep Local only, reopen the reminder, and
 verify it remains local after resuming Calendar sync. Check that its local
 alert retains the same time and delivery mode.
+Create a one-time reminder with a coincident alert and Calendar event. After
+publication, edit only the primary Remilo alert. Confirm the new alert time
+and the original event start and end in both apps. Repeat offline or after
+disconnecting Google. An ordinary local reminder with linked timing still
+moves its event with the primary alert.
 
 Keep the configured test IPA local.
 [AltServer connection requirements](https://faq.altstore.io/altstore-classic/altserver)

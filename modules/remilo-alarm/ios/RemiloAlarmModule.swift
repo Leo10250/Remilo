@@ -95,7 +95,12 @@ public final class RemiloAlarmModule: Module {
       resolve(promise) { try RemiloIOSEngine.shared.query(filter, cursor: cursor) }
     }
     AsyncFunction("getOccurrence") { (id: String, promise: Promise) in
-      resolve(promise) { try RemiloIOSEngine.shared.occurrence(id) }
+      resolve(promise) {
+        guard var occurrence = try RemiloIOSEngine.shared.occurrence(id) else { return nil }
+        // A local read failure must not make an existing Calendar event follow an alert.
+        occurrence["calendarScheduleProtected"] = (try? RemiloIOSGoogleCalendarBridge.protectsEventTiming(id)) ?? true
+        return occurrence
+      }
     }
     AsyncFunction("querySeries") { (promise: Promise) in
       resolve(promise) { try RemiloIOSEngine.shared.querySeries() }

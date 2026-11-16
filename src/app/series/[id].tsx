@@ -13,6 +13,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect } from 'react';
 import { View } from 'react-native';
 import { modeLabel } from '../../domain/presentation';
+import { calendarSyncNotice } from '../../domain/calendar-presentation';
 import {
   creationOrigin,
   familyBackRoute,
@@ -31,7 +32,7 @@ import {
   SettingRow,
   Status,
 } from '../../ui/components';
-import { engine, iosReminders, nativeAvailable } from '../../ui/native';
+import { engine, iosReminders, nativeAvailable, useIOSCalendarImport } from '../../ui/native';
 
 import { repeatLabel } from '../../ui/recurrence';
 import { ReminderRow } from '../../ui/reminder-row';
@@ -76,6 +77,22 @@ export default function SeriesDetails() {
     if (routineId) router.replace({ pathname: '/routine-edit', params: { routineId } });
   }, [routineId]);
   const seriesId = family?.seriesId ?? series?.seriesId;
+  const iosCalendar = useIOSCalendarImport();
+  const connection = useQuery({
+    queryKey: ['calendar', 'connection'],
+    queryFn: () => engine().getCalendarConnection(),
+    enabled: iosCalendar,
+  });
+  const current = connection.error ? undefined : connection.data;
+  const syncSummary = useQuery({
+    queryKey: ['calendar', 'sync-summary', current?.revision],
+    queryFn: () => engine().getCalendarSyncSummary(),
+    enabled: iosCalendar && !!current?.connected && !!seriesId,
+  });
+  const seriesCalendarState =
+    iosCalendar && current?.connected && seriesId && !syncSummary.error
+      ? syncSummary.data?.seriesStates?.[seriesId]
+      : undefined;
   const calendarLink = links.data?.find(
     (item) => item.seriesId === seriesId || item.occurrenceId === seriesId,
   );
@@ -305,30 +322,37 @@ export default function SeriesDetails() {
               <SettingRow intent="action" label={t('m_c4aba4adaad7')} />
             )}
           </Group>
-          <Group>
-            <SettingRow
-              intent="navigation"
-              icon="event"
-              label={t('m_b074310e911f')}
-              description={
-                calendarLink
-                  ? t('m_464c52392b11')
-                  : publication
-                    ? t('m_f24802b28eb5')
-                    : t('m_645b7e55ef96')
-              }
-              disabled={action.guarded}
-              onPress={() =>
-                router.push({
-                  pathname: calendarLink || publication ? '/calendar-manage' : '/calendar-publish',
-                  params: {
-                    id: calendarLink?.occurrenceId ?? seriesId ?? series.id,
-                    ...familyOriginParams(params, seriesId ?? series.seriesId, series.id),
-                  },
-                })
-              }
-            />
-          </Group>
+          {(!iosReminders || seriesCalendarState) && (
+            <Group>
+              <SettingRow
+                intent="navigation"
+                icon="event"
+                label={t('m_b074310e911f')}
+                description={
+                  iosReminders
+                    ? (calendarSyncNotice(seriesCalendarState) ?? t('m_5c30a92fdc1b'))
+                    : calendarLink
+                      ? t('m_464c52392b11')
+                      : publication
+                        ? t('m_f24802b28eb5')
+                        : t('m_645b7e55ef96')
+                }
+                disabled={action.guarded}
+                onPress={() => {
+                  const origin = familyOriginParams(params, seriesId ?? series.seriesId, series.id);
+                  if (iosReminders) {
+                    router.push({ pathname: '/calendar', params: origin });
+                    return;
+                  }
+                  router.push({
+                    pathname:
+                      calendarLink || publication ? '/calendar-manage' : '/calendar-publish',
+                    params: { id: calendarLink?.occurrenceId ?? seriesId ?? series.id, ...origin },
+                  });
+                }}
+              />
+            </Group>
+          )}
           {!!upcoming.length && upcoming.length < 3 && (
             <Copy muted size={14}>
               {t('m_de7aab2159df')}

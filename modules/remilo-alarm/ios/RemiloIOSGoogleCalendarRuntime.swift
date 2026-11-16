@@ -98,6 +98,11 @@ final class RemiloIOSGoogleCalendarRuntime {
     }
 
     struct SyncSummary: Sendable {
+        enum SeriesState: String, Sendable {
+            case confirmed = "Confirmed", pending = "UpdatePending", paused = "Paused"
+            case review = "Review", unconfirmed = "Unconfirmed"
+        }
+
         var connected = false
         var connectionRevision = 0
         var bindingRevision = 0
@@ -108,6 +113,7 @@ final class RemiloIOSGoogleCalendarRuntime {
         var unconfirmed = false
         var accessRequired = false
         var request: SyncRequest?
+        var seriesStates: [String: SeriesState] = [:]
 
         var reminderReview: Int { issues.lazy.filter { $0.kind == .association }.count }
         var candidateReview: Int { issues.lazy.filter { $0.kind == .candidate }.count }
@@ -242,15 +248,22 @@ final class RemiloIOSGoogleCalendarRuntime {
                         title: local.title, reason: sent ? "UnconfirmedWrite" : "ChangesNeedReview", discoveredAtMs: 0,
                         seriesID: id, seriesSegmentID: local.segmentID)
                     review[issue.id] = issue
+                    summary.seriesStates[id] = sent ? .unconfirmed : .review
+                    if sent {
+                        blocking.insert(id)
+                        summary.unconfirmed = true
+                    }
+                    continue
                 }
-                if sent {
-                    blocking.insert(id)
-                    summary.unconfirmed = true
-                } else if item.issue == nil, item.priorLease == lease, view.canWriteOwnedEvents {
-                    automatic.insert(id)
-                    if try series.baseline.differs(from: local) || local.scheduleEdit != nil ||
-                        seriesText.instanceExport?.read(id, 1).isEmpty == false { pending.insert(id) }
+                guard item.priorLease == lease, view.canWriteOwnedEvents else {
+                    summary.seriesStates[id] = .paused
+                    continue
                 }
+                automatic.insert(id)
+                let hasPendingChange = try series.baseline.differs(from: local) || local.scheduleEdit != nil ||
+                    seriesText.instanceExport?.read(id, 1).isEmpty == false
+                if hasPendingChange { pending.insert(id) }
+                summary.seriesStates[id] = hasPendingChange ? .pending : .confirmed
             }
         }
         guard try connection.view().revision == view.revision, try managedSetup?.view(expectedRevision: view.revision) == binding else {

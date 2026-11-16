@@ -56,8 +56,9 @@ Imported events keep their Google Calendar alerts on iOS.
 When creating a one-time reminder on iOS, the editor can override the managed
 calendar's publication default for that reminder. Choosing sync queues
 publication alongside the local save so a retry keeps the original destination.
-New repeating reminders created on iOS stay local. Supported repeats imported
-from Google keep their existing Calendar relationship.
+New repeating reminders created on iOS stay local. For linked repeats imported
+from Google, Repeat Details shows the saved sync status and opens Calendar
+settings for sync controls.
 
 A queued or held one-time reminder on iOS shows its Calendar status in
 Details. Keep Local only stops unsent automatic publication and preserves the
@@ -174,6 +175,7 @@ its own installation-provenance rule:
 An empty database or restored backup does not establish installation provenance.
 Recovered items may gain alerts only through deliberate local edit/review. Calendar
 recovery cannot reconstruct completion, Skip, Snooze, sound or device preferences.
+On iOS, restore alerts for recovered items in the individual reminder editor.
 Portable restores do not restore Calendar permission/links. Separate restored copies
 receive new native identities and remain unlinked/Local only.
 
@@ -275,6 +277,11 @@ preserves independent values and an existing future postponement. Ringing Schedu
 changes defer/recompute; metadata updates do not disturb playback. New elapsed alerts
 require review, not tomorrow substitution or replay. Show the local target actually
 in effect and retain Scheduled/Blocked/Pending truth without mode downgrade.
+
+On iOS, changing the primary alert of a one-time reminder with a Calendar
+association or queued publication keeps its authored event time. The editor
+uses saved local Calendar state, including when disconnected. Edit event timing
+in the Calendar section to change the event itself.
 
 | Action | Relationship behavior |
 |---|---|

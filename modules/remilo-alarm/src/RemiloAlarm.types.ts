@@ -78,6 +78,7 @@ export type HistoryEntry = {
 export type ResolvedReminderDraft = Omit<Required<ReminderDraft>, 'listId'> &
   Pick<ReminderDraft, 'listId'>;
 export type Occurrence = ResolvedReminderDraft & {
+  calendarScheduleProtected?: boolean;
   kind?: 'RoutineFamily';
   routineFamily?: RoutinePlan & { recordedDays: number; trashedAtMs: number };
   id: string;
@@ -662,6 +663,7 @@ export type CalendarSyncSummary = {
   automaticCount: number;
   pendingCount: number;
   reviewCount: number;
+  seriesStates?: Partial<Record<string, CalendarSyncStatus>>;
   reviewCounts?: CalendarReviewCounts;
   attention?: { blocking: number; tone: 'warning' | 'danger' };
   syncRequestId?: string | null;

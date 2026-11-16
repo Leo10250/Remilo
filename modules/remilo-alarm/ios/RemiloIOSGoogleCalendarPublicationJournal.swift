@@ -101,6 +101,12 @@ final class RemiloIOSGoogleCalendarPublicationJournal {
         try requireUnreserved(occurrenceID, in: read())
     }
 
+    func hasReservedPublication(_ occurrenceID: String) throws -> Bool {
+        try read().operations.values.contains {
+            $0.identity.local.occurrenceID == occurrenceID && $0.phase.reservesIdentity
+        }
+    }
+
     func operation(_ id: UUID, viewingAs account: Publication.Account) throws -> Entry? {
         guard let entry = try read().operations[id], Self.sameOwner(entry.identity.account, account) else { return nil }
         return entry

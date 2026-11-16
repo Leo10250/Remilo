@@ -58,6 +58,7 @@ final class RemiloIOSGoogleCalendarBridge {
             "reviewCounts": Self.reviewCounts(summary),
             "attention": ["blocking": summary.blocking, "tone": summary.blocking > 0 ? "danger" : "warning"],
             "syncRequestId": iosBridgeValue(request?.id.uuidString.lowercased()), "lastRun": iosBridgeValue(lastRun),
+            "seriesStates": summary.seriesStates.mapValues(\.rawValue),
             "notifications": ["enabled": false, "revision": 1],
         ]
     }
@@ -329,6 +330,15 @@ final class RemiloIOSGoogleCalendarBridge {
                 ["nominalSlot": slot.nominalSlot, "eventStartMs": slot.eventStartMs, "alarmAtMs": slot.alarmAtMs]
             }),
         ]
+    }
+
+    static func protectsEventTiming(_ id: String) throws -> Bool {
+        guard let reminder = try RemiloIOSEngine.shared.read().reminders[id], reminder.isCalendarOneTime else {
+            return false
+        }
+        if reminder.calendarExportIntent != nil { return true }
+        if try LinkStore.local().link(id) != nil { return true }
+        return try PublicationRuntime.Journal.local().hasReservedPublication(id)
     }
 
     func reminderDisposition(_ id: String) throws -> [String: Any]? {

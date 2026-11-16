@@ -638,6 +638,9 @@ enum PublicationChecks {
         let entry = try journal.capture(request, reviewFingerprint: reviewFingerprint, calendarName: "Personal")
         let replay = try journal.capture(request, reviewFingerprint: reviewFingerprint, calendarName: "Renamed")
         precondition(entry.phase == .waiting && replay == entry)
+        let reservesEvent = try journal.hasReservedPublication(request.local.occurrenceID)
+        let unrelated = try journal.hasReservedPublication("unrelated")
+        precondition(reservesEvent && !unrelated)
         let edited = Event.Fields(title: "Different title", notes: request.fields.notes, schedule: request.fields.schedule)
         let changed = try Publication.Request(operationID: request.operationID, account: request.account,
                                               local: request.local, calendarID: request.calendarID,
@@ -683,6 +686,8 @@ enum PublicationChecks {
         let confirmed = try reopened.record(retired.identity, outcome: checked)
         let writes = await fixture.writes
         precondition(confirmed.phase == .published && confirmed.retired && confirmed.confirmation?.remoteDiffers == true && writes == 0)
+        let stillReservesEvent = try reopened.hasReservedPublication(request.local.occurrenceID)
+        precondition(stillReservesEvent, "A confirmed Google copy retains separate event timing after retirement")
         let lateFailure = try reopened.record(retired.identity, outcome: .unconfirmed(.network))
         precondition(lateFailure == confirmed)
 
@@ -698,6 +703,8 @@ enum PublicationChecks {
         try reopened.retireManaged(unsent.operationID, occurrenceID: otherLocal.occurrenceID)
         let cancelled = try reopened.operation(unsent.operationID, viewingAs: refreshed)!
         precondition(cancelled.retired && cancelled.phase == .cancelled)
+        let cancelledReservation = try reopened.hasReservedPublication(otherLocal.occurrenceID)
+        precondition(!cancelledReservation, "Stopping before send releases the event timing constraint")
         guard case .denied(.cancelled) = try reopened.beginSend(unsent) else {
             preconditionFailure("A retired unsent operation cannot authorize a POST")
         }
