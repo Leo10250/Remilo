@@ -33,18 +33,22 @@ Unlinking ends the relationship and leaves the reminder and Google event
 in place.
 
 On an existing one-time link, iOS can separately activate individual
-automatic sync after review and write consent. It checks during protected
-foreground opportunities while the current Google grant is available.
-Sync now on a linked reminder checks that association and records its result.
+automatic sync after review and write consent. Remilo checks when the app
+opens or returns to the foreground with protected data and Google access
+available. Sync now in Calendar settings checks the enabled Remilo calendar and
+authorized automatic links. Sync now on a linked reminder checks that
+association and records its result.
 Turning off automatic sync leaves the link in manual mode. Completion,
 Trash, and a lost source fence the old authorization, so reopening or
 restoring either copy requires review before automatic work resumes.
 
-For a managed calendar on iOS, the saved review list shows incoming events
-that need a decision. Import rechecks the reviewed Google event version before
-creating a reminder or series, and saves the automatic relationship when it
-can verify the link. Ignore records the choice locally so later checks of that
-calendar skip the event.
+On iOS, Calendar settings can set up the dedicated Remilo calendar, change
+its import policy, pause sync, review what to resume, and turn sync off. The
+saved review list shows incoming events that need a decision. Import rechecks
+the reviewed Google event version before creating a reminder or series, and
+saves the automatic relationship when it can verify the link. Ignore records
+the choice locally so later checks of that calendar skip the event.
+Imported events keep their Google Calendar alerts on iOS.
 [The signed iOS test workflow](verification.md#google-calendar-on-a-sideloaded-iphone-or-ipad)
 covers setup and device checks.
 [Google Calendar authorization scopes](https://developers.google.com/workspace/calendar/api/auth)

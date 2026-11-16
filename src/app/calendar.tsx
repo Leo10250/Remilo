@@ -40,6 +40,7 @@ import {
   Toggle,
 } from '../ui/components';
 import {
+  CalendarOperationProgress,
   CalendarStatusCard,
   useCalendarAuthorization,
   useCalendarSync,
@@ -106,14 +107,38 @@ function LocalCalendarSettings() {
     queryFn: () => engine().getCalendarSyncSummary(),
     enabled: available && !!current?.connected,
   });
+  const managed = useQuery({
+    queryKey: ['calendar', 'managed', revision],
+    queryFn: () => engine().getManagedCalendarState(),
+    enabled: ready,
+  });
+  const syncRequest = useCalendarSync(
+    { kind: 'AllAuthorized' },
+    summary.data?.syncRequestId,
+    undefined,
+    revision,
+  );
+  const canSync =
+    ready &&
+    ((!managed.error && managed.data?.mode === 'Enabled' && !!managed.data.calendarId) ||
+      (!summary.error && (summary.data?.automaticCount ?? 0) > 0));
+  const showSyncResult =
+    !!current?.connected &&
+    syncRequest.status?.currentScope !== false &&
+    (syncRequest.showResult || syncRequest.statusLoading || !!syncRequest.statusError);
+  const syncing = syncRequest.working || syncRequest.unknown;
+  const managedState = ready && !managed.error ? managed.data : undefined;
+  const managedLocked = busy || action.unknown || syncing;
   const reviewCount = summary.error ? 0 : (summary.data?.reviewCount ?? 0);
   useFocusEffect(
     useCallback(() => {
       if (available) void client.invalidateQueries({ queryKey: ['calendar'] });
     }, [available, client]),
   );
-  useAppearanceHold(busy || action.unknown);
-  usePreventRemove(busy || action.unknown, () => confirm(t('m_0c849c393ca3'), t('m_e71fd74c140f')));
+  useAppearanceHold(busy || action.unknown || syncRequest.busy || syncRequest.unknown);
+  usePreventRemove(busy || action.unknown || syncRequest.busy || syncRequest.unknown, () =>
+    confirm(t('m_0c849c393ca3'), t('m_e71fd74c140f')),
+  );
   const run = async (perform: () => Promise<unknown>, authorization = false) => {
     if (running.current) return;
     running.current = true;
@@ -186,6 +211,34 @@ function LocalCalendarSettings() {
       },
     ]);
   };
+  const openManaged = (mode: 'setup' | 'resume' | 'policy') =>
+    router.push({ pathname: '/calendar-managed', params: { ...origin, mode } });
+  const changeManagedMode = (kind: 'PauseManagedCalendar' | 'DisableManagedCalendar') => {
+    if (!managedState || revision === undefined || managedLocked) return;
+    const expectedRevision = managedState.revision;
+    const submit = () =>
+      void run(async () => {
+        await action.submit({
+          kind,
+          operationId: engine().createOperationId(),
+          expectedRevision,
+          expectedConnectionRevision: revision,
+        });
+        setFeedback(t(kind === 'PauseManagedCalendar' ? 'm_5864aae7b8ca' : 'm_1cc896b600c5'));
+      });
+    if (kind === 'PauseManagedCalendar') submit();
+    else
+      confirm(t('m_2132b07d8515'), t('m_0bab9b31dda7'), [
+        { text: t('m_19766ed6ccb2'), style: 'cancel' },
+        { text: t('m_72497f61493d'), onPress: submit },
+      ]);
+  };
+  const activeManaged = !!managedState?.calendarId && managedState.mode !== 'Disabled';
+  const setupInProgress =
+    managedState?.mode !== 'Paused' &&
+    ['PreparingCalendar', 'InitialImport', 'CreationUnconfirmed'].includes(
+      managedState?.phase ?? '',
+    );
   const localJobs =
     ready && !jobs.error
       ? (jobs.data ?? []).filter(
@@ -230,7 +283,7 @@ function LocalCalendarSettings() {
           tone={ready ? 'success' : current.connected ? 'warning' : 'muted'}
           announce
           busy={busy}
-          disabled={action.unknown}
+          disabled={action.unknown || syncing}
           label={t(
             ready ? 'm_357bcb0ce661' : current.connected ? 'm_b724411569e0' : 'm_c04f9d6a937e',
           )}
@@ -264,6 +317,87 @@ function LocalCalendarSettings() {
           onPress={() => void run(action.retry)}
         />
       )}
+      {canSync && (
+        <ConnectedGroup title={t('calendar_automatic_sync')}>
+          <SettingRow
+            intent="action"
+            icon="refresh"
+            label={t('m_885e8f48bd70')}
+            description={t('ios_calendar_automatic_scope')}
+            disabled={busy || action.unknown || syncing || syncRequest.statusLoading}
+            onPress={() => void syncRequest.start()}
+          />
+        </ConnectedGroup>
+      )}
+      {!!syncRequest.error && <ActionFeedback message={syncRequest.error} tone="warning" />}
+      {syncRequest.unknown && (
+        <Button
+          label={t('m_16003a1a9190')}
+          variant="secondary"
+          disabled={busy || syncRequest.working}
+          onPress={() => void syncRequest.retryRequest()}
+        />
+      )}
+      {showSyncResult && syncRequest.requestId && (
+        <CalendarOperationProgress
+          operationId={syncRequest.requestId}
+          expectedConnectionRevision={revision}
+          onAction={
+            busy || action.unknown || syncing
+              ? undefined
+              : (status) => {
+                  if (status.action === 'Retry') void syncRequest.retryRequest();
+                  else if (status.action === 'ReviewItems')
+                    router.push({ pathname: '/calendar-reviews', params: origin });
+                  else if (status.action === 'Authorize' || status.action === 'Connect')
+                    authorize(false);
+                }
+          }
+        />
+      )}
+      {managedState && (
+        <ConnectedGroup title={t('calendar_managed_scope')}>
+          {activeManaged && (
+            <>
+              <SettingRow
+                intent="navigation"
+                icon="settings"
+                label={t('m_fc7921108075')}
+                value={managedState.calendarName}
+                description={calendarAutomaticSyncPresentation(managedState).value}
+                disabled={managedLocked}
+                onPress={() => openManaged('policy')}
+              />
+              <SettingRow
+                intent={managedState.mode === 'Paused' ? 'navigation' : 'action'}
+                icon={managedState.mode === 'Paused' ? 'refresh' : 'pause'}
+                label={t(managedState.mode === 'Paused' ? 'm_4a5f846d4f91' : 'm_430a5aaa1e87')}
+                disabled={managedLocked}
+                onPress={() =>
+                  managedState.mode === 'Paused'
+                    ? openManaged('resume')
+                    : changeManagedMode('PauseManagedCalendar')
+                }
+              />
+              <SettingRow
+                intent="action"
+                label={t('calendar_turn_off_automatic')}
+                disabled={managedLocked}
+                onPress={() => changeManagedMode('DisableManagedCalendar')}
+              />
+            </>
+          )}
+          {(!activeManaged || setupInProgress) && (
+            <SettingRow
+              intent="navigation"
+              icon="event"
+              label={t(managedState.operationId ? 'm_c5702c19da53' : 'm_79d5acd6c240')}
+              disabled={managedLocked}
+              onPress={() => openManaged('setup')}
+            />
+          )}
+        </ConnectedGroup>
+      )}
       {available && current?.available && current.connected && (
         <ConnectedGroup>
           {reviewCount > 0 && (
@@ -282,20 +416,20 @@ function LocalCalendarSettings() {
               label={t('m_3994b5141305')}
               value={current.calendarName || t('m_df12aeba9bb9')}
               buttonRef={destinationTrigger}
-              disabled={!ready || busy || action.unknown}
+              disabled={!ready || busy || action.unknown || syncing}
               onPress={() => loadDestinations(null)}
             />
           )}
           <SettingRow
             intent="action"
             label={t('m_2da87a0fec50')}
-            disabled={busy || action.unknown}
+            disabled={busy || action.unknown || syncing}
             onPress={() => authorize(true)}
           />
           <SettingRow
             intent="action"
             label={t('m_1f4e6793ca99')}
-            disabled={busy || action.unknown}
+            disabled={busy || action.unknown || syncing}
             onPress={disconnect}
           />
         </ConnectedGroup>

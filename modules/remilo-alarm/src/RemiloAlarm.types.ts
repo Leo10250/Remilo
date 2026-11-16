@@ -975,6 +975,7 @@ export type ManagedCalendarCommand =
       kind: 'PauseManagedCalendar' | 'DisableManagedCalendar';
       operationId: string;
       expectedRevision: number;
+      expectedConnectionRevision?: number;
     }
   | {
       kind: 'SetCalendarReminderDisposition';

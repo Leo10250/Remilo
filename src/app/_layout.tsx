@@ -78,6 +78,7 @@ function Navigation() {
           <Stack.Screen name="calendar-import" />
           <Stack.Screen name="calendar-review" />
           <Stack.Screen name="calendar-reviews" />
+          <Stack.Screen name="calendar-managed" />
         </Stack.Protected>
         <Stack.Protected guard={!iosReminders || iosCalendarPublish}>
           <Stack.Screen name="calendar-publish" />
@@ -88,7 +89,6 @@ function Navigation() {
         <Stack.Protected guard={!iosReminders}>
           <Stack.Screen name="calendar-activate" />
           <Stack.Screen name="calendar-import-all" />
-          <Stack.Screen name="calendar-managed" />
         </Stack.Protected>
         <Stack.Protected guard={iosReminders}>
           <Stack.Screen name="widget-profiles" />

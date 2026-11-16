@@ -311,6 +311,15 @@ verify the association requests review. Complete and reopen the reminder
 before another check. Verify the original permission stays paused, then
 review again or turn off automatic sync. The reminder and Google event
 should remain linked when automatic sync is turned off.
+
+Set up the dedicated Remilo calendar from Calendar settings with a test
+account. Add a future Google event while Remilo is closed, then open Remilo
+and check for the imported reminder. Edit a second event while Remilo is
+open and use Sync now in Calendar settings. Check the result and retry the
+same request after an offline failure. Pause the managed calendar, verify
+that it holds later changes, then review and resume the items you want.
+Confirm that turning off sync keeps the local reminders and Google events.
+
 Keep the configured test IPA local.
 [AltServer connection requirements](https://faq.altstore.io/altstore-classic/altserver)
 

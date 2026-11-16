@@ -66,7 +66,7 @@ export default function ManagedCalendar() {
       operationId?: string;
     }
   >();
-  const mode = params.mode || 'setup',
+  const mode = iosReminders && params.mode === 'recovered' ? 'setup' : params.mode || 'setup',
     origin = retainedOriginParams(params),
     client = useQueryClient(),
     confirm = useAppearanceConfirmation();
@@ -141,7 +141,9 @@ export default function ManagedCalendar() {
         const choices: ManagedCalendarSetupChoices = {
           ...draft,
           replacement: params.replacement === 'true',
-          ...(params.adoptOccurrenceId ? { adoptOccurrenceIds: [params.adoptOccurrenceId] } : {}),
+          ...(!iosReminders && params.adoptOccurrenceId
+            ? { adoptOccurrenceIds: [params.adoptOccurrenceId] }
+            : {}),
         };
         const next =
           mode === 'resume'
@@ -551,22 +553,24 @@ export default function ManagedCalendar() {
                       )}
                     </ConnectedGroup>
                   )}
-                  <ConnectedGroup>
-                    <SettingRow
-                      intent="picker"
-                      icon="notifications"
-                      label={t('m_2d7a7719bc44')}
-                      buttonRef={googleTrigger}
-                      value={
-                        policy.disableGoogleReminders ? t('m_372ce595191c') : t('m_2856380acc3a')
-                      }
-                      description={
-                        policy.disableGoogleReminders ? t('m_a57bf69e8e1b') : t('m_0e928a7cd037')
-                      }
-                      disabled={locked}
-                      onPress={() => setSheet('google')}
-                    />
-                  </ConnectedGroup>
+                  {!iosReminders && (
+                    <ConnectedGroup>
+                      <SettingRow
+                        intent="picker"
+                        icon="notifications"
+                        label={t('m_2d7a7719bc44')}
+                        buttonRef={googleTrigger}
+                        value={
+                          policy.disableGoogleReminders ? t('m_372ce595191c') : t('m_2856380acc3a')
+                        }
+                        description={
+                          policy.disableGoogleReminders ? t('m_a57bf69e8e1b') : t('m_0e928a7cd037')
+                        }
+                        disabled={locked}
+                        onPress={() => setSheet('google')}
+                      />
+                    </ConnectedGroup>
+                  )}
                   <ConnectedGroup>
                     <Disclosure
                       title={t('m_4a2622a4fb47')}

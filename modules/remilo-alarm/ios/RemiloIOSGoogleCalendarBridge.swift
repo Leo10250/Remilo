@@ -488,10 +488,11 @@ final class RemiloIOSGoogleCalendarBridge {
         }
         if kind == "PauseManagedCalendar" || kind == "DisableManagedCalendar" {
             let view = try await runtime.view()
+            let revision = command["expectedConnectionRevision"] == nil ? view.revision : try Self.revision(input)
             guard let setup = runtime.managedSetup else { throw Failure.invalidConfiguration }
             let receipt = try setup.changeMode(kind == "PauseManagedCalendar" ? .paused : .disabled, operationID: operation,
                 expectedRevision: Int(input.integer("expectedRevision", range: 1...9_007_199_254_740_991)),
-                expectedConnectionRevision: view.revision)
+                expectedConnectionRevision: revision)
             return ["operationId": operation.uuidString.lowercased(), "captured": true,
                     "revision": receipt.revision, "mode": receipt.mode.rawValue]
         }
