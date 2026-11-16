@@ -66,6 +66,8 @@ import { headerScrimGeometry, headerTransition } from './header-transition';
 import { scheduleSnackbarDismiss } from './snackbar-timeout';
 import { rememberConfirmationFocus } from './confirmation-state';
 import { disclosureAutoOpen } from './disclosure-state';
+import { RootChrome } from './root-chrome';
+import { useSheetMotion } from './sheet-motion';
 
 type ConnectedCorners = Pick<
   ViewStyle,
@@ -1703,6 +1705,7 @@ export function AtmosphericHeader({
 }) {
   'use no memo';
   useLocale();
+  const inRootShell = useContext(RootChrome) !== null;
   const colors = useTheme(),
     { height, width, fontScale } = useWindowDimensions(),
     reviewScale = useFontScaleOverride(),
@@ -1757,7 +1760,7 @@ export function AtmosphericHeader({
   );
   return (
     <View pointerEvents="box-none" style={{ height: opening, overflow: 'hidden' }}>
-      {decorative && (
+      {decorative && !inRootShell && (
         <View
           pointerEvents="none"
           aria-hidden
@@ -1852,12 +1855,13 @@ export function Page({
 }>) {
   'use no memo';
   useLocale();
+  const inRootShell = useContext(RootChrome) !== null;
   const colors = useTheme(),
     chrome = usePageChrome(scrollKey, compact);
   return (
     <SafeAreaView
       edges={['top', 'left', 'right']}
-      style={{ flex: 1, backgroundColor: colors.background }}
+      style={{ flex: 1, backgroundColor: inRootShell ? 'transparent' : colors.background }}
     >
       <ScrollChromeProvider value={chrome}>
         <View style={{ flex: 1 }}>
@@ -1905,6 +1909,7 @@ export function Sheet({
   footer,
   returnFocusRef,
   returnFocusWhen,
+  onDismissed,
   fullHeight = false,
   actions,
 }: PropsWithChildren<{
@@ -1915,6 +1920,7 @@ export function Sheet({
   footer?: ReactNode;
   returnFocusRef?: RefObject<View | null>;
   returnFocusWhen?: () => boolean;
+  onDismissed?: () => void;
   fullHeight?: boolean;
   actions?: ReactNode;
 }>) {
@@ -1927,122 +1933,151 @@ export function Sheet({
   const colors = foundation?.colors ?? inheritedColors;
   const reduced = useReducedMotion(),
     heading = useRef<Text>(null);
-  const wasVisible = useRef(visible);
-  const focusGuard = useRef(returnFocusWhen);
-  useEffect(() => {
-    focusGuard.current = returnFocusWhen;
-  }, [returnFocusWhen]);
-  useEffect(() => {
-    const closed = wasVisible.current && !visible;
-    wasVisible.current = visible;
-    if (!closed || !returnFocusRef) return;
-    const timer = setTimeout(
-      () => {
-        const target = returnFocusRef.current;
-        if (
-          target &&
-          (target as View & { isConnected?: boolean }).isConnected !== false &&
-          (focusGuard.current?.() ?? true)
-        ) {
-          if (Platform.OS === 'web') {
-            (target as View & { focus(options: { preventScroll: boolean }): void }).focus({
-              preventScroll: true,
-            });
-          } else {
-            target.focus();
-            if (Platform.OS === 'android')
-              AccessibilityInfo.sendAccessibilityEvent(target, 'focus');
-          }
+  const motion = useSheetMotion(
+    visible,
+    reduced,
+    () => {
+      if (Platform.OS === 'android' && heading.current)
+        AccessibilityInfo.sendAccessibilityEvent(heading.current, 'focus');
+    },
+    () => {
+      const target = returnFocusRef?.current;
+      if (target && target.isConnected !== false && (returnFocusWhen?.() ?? true)) {
+        if (Platform.OS === 'web') {
+          (target as View & { focus(options: { preventScroll: boolean }): void }).focus({
+            preventScroll: true,
+          });
+        } else {
+          target.focus();
+          if (Platform.OS === 'android') AccessibilityInfo.sendAccessibilityEvent(target, 'focus');
         }
-      },
-      reduced ? 0 : 350,
-    );
-    return () => clearTimeout(timer);
-  }, [visible, returnFocusRef, reduced]);
-  useAppearanceHold(visible);
+      }
+      onDismissed?.();
+    },
+  );
+  // Callers often clear a selected item or draft when closing. Keep the last
+  // visible panel intact until its exit finishes, then release its contents.
+  const [lastContent, setLastContent] = useState<{
+    title: string;
+    actions: ReactNode;
+    children: ReactNode;
+    footer: ReactNode;
+  } | null>(null);
+  if (
+    visible &&
+    (!lastContent ||
+      lastContent.title !== title ||
+      lastContent.actions !== actions ||
+      lastContent.children !== children ||
+      lastContent.footer !== footer)
+  ) {
+    setLastContent({ title, actions, children, footer });
+  } else if (!visible && !motion.present && lastContent) {
+    setLastContent(null);
+  }
+  const content = visible ? { title, actions, children, footer } : lastContent;
+  const displayedTitle = content?.title ?? title;
+  useAppearanceHold(visible || motion.present);
   return (
     <PresentationProvider colors={colors}>
       <ScenicChrome.Provider value={false}>
         <ConnectedRowContext.Provider value={null}>
           <ScrollChromeProvider value={null}>
             <Modal
-              visible={visible}
+              visible={motion.present}
               transparent
-              animationType={reduced ? 'none' : 'slide'}
-              onRequestClose={onBack ?? onClose}
-              onShow={() => {
-                if (Platform.OS === 'android' && heading.current)
-                  AccessibilityInfo.sendAccessibilityEvent(heading.current, 'focus');
+              animationType="none"
+              onRequestClose={() => {
+                if (visible) (onBack ?? onClose)();
               }}
+              onShow={motion.onShow}
+              onDismiss={motion.onDismiss}
             >
-              <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+              <View
+                pointerEvents={visible ? 'auto' : 'none'}
+                aria-hidden={!visible}
+                accessibilityElementsHidden={!visible}
+                importantForAccessibility={visible ? 'auto' : 'no-hide-descendants'}
+                style={{ flex: 1, justifyContent: 'flex-end' }}
+              >
                 <Pressable
                   accessibilityLabel={t('m_48845bff334a')}
                   accessibilityRole="button"
                   onPress={onClose}
                   style={StyleSheet.absoluteFill}
                 >
-                  <View style={{ flex: 1, backgroundColor: '#00000066' }} />
+                  <Animated.View
+                    style={{ flex: 1, backgroundColor: '#00000066', opacity: motion.opacity }}
+                  />
                 </Pressable>
-                <SafeAreaView
-                  edges={fullHeight ? ['top', 'left', 'right'] : []}
-                  accessibilityViewIsModal
+                <Animated.View
+                  onLayout={(event) => motion.measure(event.nativeEvent.layout.height)}
                   style={{
                     maxHeight: fullHeight ? '100%' : '88%',
                     flex: fullHeight ? 1 : undefined,
                     flexShrink: 1,
-                    backgroundColor: fullHeight ? colors.background : colors.surface,
-                    borderTopLeftRadius: fullHeight ? 0 : shape.sheet,
-                    borderTopRightRadius: fullHeight ? 0 : shape.sheet,
+                    transform: [{ translateY: motion.translateY }],
                   }}
                 >
-                  <View
+                  <SafeAreaView
+                    edges={fullHeight ? ['top', 'left', 'right'] : []}
+                    accessibilityViewIsModal
                     style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      paddingLeft: 18,
-                      paddingRight: 4,
+                      flex: fullHeight ? 1 : undefined,
+                      flexShrink: 1,
+                      backgroundColor: fullHeight ? colors.background : colors.surface,
+                      borderTopLeftRadius: fullHeight ? 0 : shape.sheet,
+                      borderTopRightRadius: fullHeight ? 0 : shape.sheet,
                     }}
                   >
-                    {fullHeight && (
-                      <IconButton
-                        icon="arrow_back"
-                        label={t('m_76900f1bfd16')}
-                        onPress={onBack ?? onClose}
-                      />
-                    )}
-                    <Text
-                      ref={heading}
-                      accessible
-                      accessibilityRole="header"
+                    <View
                       style={{
-                        color: colors.ink,
-                        flex: 1,
-                        fontSize: typography.appBar * scale,
-                        fontWeight: '600',
-                        ...chineseTextMetrics(typography.appBar, scale, '600'),
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        paddingLeft: 18,
+                        paddingRight: 4,
                       }}
                     >
-                      {title}
-                    </Text>
-                    {fullHeight ? (
-                      actions
-                    ) : (
-                      <IconButton
-                        icon="close"
-                        label={t('m_79c84b48c2f0') + title}
-                        onPress={onClose}
-                      />
-                    )}
-                  </View>
-                  <FormViewport
-                    fill={fullHeight}
-                    footer={footer}
-                    contentStyle={{ padding: 16, gap: 12 }}
-                  >
-                    {children}
-                  </FormViewport>
-                </SafeAreaView>
+                      {fullHeight && (
+                        <IconButton
+                          icon="arrow_back"
+                          label={t('m_76900f1bfd16')}
+                          onPress={onBack ?? onClose}
+                        />
+                      )}
+                      <Text
+                        ref={heading}
+                        accessible
+                        accessibilityRole="header"
+                        style={{
+                          color: colors.ink,
+                          flex: 1,
+                          fontSize: typography.appBar * scale,
+                          fontWeight: '600',
+                          ...chineseTextMetrics(typography.appBar, scale, '600'),
+                        }}
+                      >
+                        {displayedTitle}
+                      </Text>
+                      {fullHeight ? (
+                        content?.actions
+                      ) : (
+                        <IconButton
+                          icon="close"
+                          label={t('m_79c84b48c2f0') + displayedTitle}
+                          onPress={onClose}
+                        />
+                      )}
+                    </View>
+                    <FormViewport
+                      fill={fullHeight}
+                      footer={content?.footer}
+                      contentStyle={{ padding: 16, gap: 12 }}
+                    >
+                      {content?.children}
+                    </FormViewport>
+                  </SafeAreaView>
+                </Animated.View>
               </View>
             </Modal>
           </ScrollChromeProvider>

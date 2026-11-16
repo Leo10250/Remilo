@@ -1,4 +1,5 @@
 export type RootDestination = { kind: 'agenda' | 'lists' | 'completed' | 'trash' };
+export type RootTab = RootDestination['kind'];
 export type DestinationOrigin =
   RootDestination | { kind: 'list'; listId: string | null } | { kind: 'repeats' };
 export type Destination = DestinationOrigin;
@@ -27,13 +28,7 @@ export function destinationRoute(destination: Destination) {
       },
     };
   if (destination.kind === 'repeats') return { pathname: '/series' as const };
-  if (destination.kind === 'lists') return { pathname: '/lists' as const };
-  if (destination.kind === 'completed' || destination.kind === 'trash')
-    return {
-      pathname: '/records' as const,
-      params: { view: destination.kind === 'trash' ? 'deleted' : 'completed' },
-    };
-  return { pathname: '/' as const };
+  return rootRoute(destination);
 }
 export function listOriginParams(listId: string | null) {
   return listId === null ? { originNoList: 'true' } : { originListId: listId };
@@ -62,7 +57,10 @@ export function creationOrigin(params: OriginParams): DestinationOrigin {
   };
 }
 export function rootRoute(destination: RootDestination) {
-  return destinationRoute(destination);
+  return { pathname: '/' as const, params: { tab: destination.kind } };
+}
+export function rootTab(value: unknown): RootTab {
+  return value === 'lists' || value === 'completed' || value === 'trash' ? value : 'agenda';
 }
 export function originParams(origin: DestinationOrigin): OriginParams {
   return origin.kind === 'list'
@@ -106,9 +104,13 @@ export function secondaryOriginRoute(params: OriginParams) {
       pathname: '/series/[id]' as const,
       params: { id: originSegmentId, seriesId: originFamily, ...rootParams, originCollection },
     };
-  if (originCollection === 'completed' || originCollection === 'deleted')
-    return { pathname: '/records' as const, params: { view: originCollection, ...rootParams } };
-  return destinationRoute(creationOrigin(rootParams));
+  const origin = creationOrigin(rootParams);
+  if (originCollection === 'completed' || originCollection === 'deleted') {
+    if (origin.kind === 'list')
+      return { pathname: '/records' as const, params: { view: originCollection, ...rootParams } };
+    return rootRoute({ kind: originCollection === 'deleted' ? 'trash' : 'completed' });
+  }
+  return destinationRoute(origin);
 }
 /** A family child returns to that family, retaining its underlying collection scope. */
 export function familyOriginParams(

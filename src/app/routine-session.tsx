@@ -28,6 +28,7 @@ import {
 } from '../ui/components';
 import { CommandRecovery, RootNotice, useCapturedCommand } from '../ui/navigation';
 import { engine, nativeAvailable } from '../ui/native';
+import { useSheetExitAction } from '../ui/sheet-motion';
 import { useTimeDisplay, useTimeFormatting } from '../ui/time-display';
 
 const stateKeys = {
@@ -94,6 +95,7 @@ function RoutineSessionView() {
     ),
     [menu, setMenu] = useState(!!showMenu),
     [history, setHistory] = useState(!!showHistory);
+  const historyExit = useSheetExitAction(() => setHistory(false));
   const [corrections, setCorrections] = useState(false),
     [now, setNow] = useState(Date.now);
   const [undo, setUndo] = useState<RoutineUndo | null>(null);
@@ -359,7 +361,12 @@ function RoutineSessionView() {
           ))}
         </ConnectedGroup>
       </Sheet>
-      <Sheet title={t('routine_history')} visible={history} onClose={() => setHistory(false)}>
+      <Sheet
+        title={t('routine_history')}
+        visible={history}
+        onClose={() => setHistory(false)}
+        onDismissed={historyExit.onDismissed}
+      >
         <QueryState
           loading={historyQuery.isLoading}
           error={historyQuery.error}
@@ -385,12 +392,13 @@ function RoutineSessionView() {
                   total: past.totalCount,
                 })}
                 disabled={action.guarded}
-                onPress={() => {
-                  setHistory(false);
-                  setUndo(null);
-                  setSelected(undefined);
-                  router.push({ pathname: '/routine-session', params: { id, date: past.date } });
-                }}
+                onPress={() =>
+                  historyExit.afterClose(() => {
+                    setUndo(null);
+                    setSelected(undefined);
+                    router.push({ pathname: '/routine-session', params: { id, date: past.date } });
+                  })
+                }
               />
             ))}
         </ConnectedGroup>

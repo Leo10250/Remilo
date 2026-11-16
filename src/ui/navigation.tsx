@@ -4,7 +4,15 @@ import { useLocalizedState, useLocale, useTranslation } from '../localization/re
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useFocusEffect, useIsFocused } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { BackHandler, Keyboard, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import {
   destinationRoute,
@@ -45,11 +53,13 @@ import { useAppearanceHold, useFontScaleOverride, useTheme } from './theme';
 import { rootLabelsFit } from '../domain/navigation-fit';
 import { useTimeDisplay } from './time-display';
 import { useAppearanceConfirmation } from './confirmation';
+import { RootChrome } from './root-chrome';
+import { useSheetExitAction } from './sheet-motion';
 
 export function switchRoot(destination: RootDestination) {
   Keyboard.dismiss();
   if (router.canDismiss()) router.dismissAll();
-  router.replace(rootRoute(destination));
+  router.dismissTo(rootRoute(destination));
 }
 export function returnToOrigin(destination: DestinationOrigin) {
   Keyboard.dismiss();
@@ -72,10 +82,15 @@ export function useDestinationNavigation(
   secondaryOrigin?: DestinationOrigin,
   secondaryFallback?: ReturnType<typeof secondaryOriginRoute>,
 ) {
+  const root = useContext(RootChrome);
   const back = useCallback(() => {
     if (guarded) return true;
     if (Keyboard.isVisible()) {
       Keyboard.dismiss();
+      return true;
+    }
+    if (root && root.shown !== root.selected) {
+      root.select('agenda');
       return true;
     }
     if (beforeBack?.()) return true;
@@ -84,11 +99,12 @@ export function useDestinationNavigation(
       return true;
     }
     if (destination.kind !== 'agenda') {
-      switchRoot({ kind: 'agenda' });
+      if (root) root.select('agenda');
+      else switchRoot({ kind: 'agenda' });
       return true;
     }
     return false;
-  }, [destination, beforeBack, guarded, secondaryOrigin, secondaryFallback]);
+  }, [destination, beforeBack, guarded, secondaryOrigin, secondaryFallback, root]);
   useFocusEffect(
     useCallback(() => {
       const subscription = BackHandler.addEventListener('hardwareBackPress', back);
@@ -107,17 +123,54 @@ const rootEntries = live(
       { kind: 'trash', label: t('m_c560122ac470'), icon: 'delete' },
     ] as const,
 );
-export function RootNavigation({
-  destination,
-  disabled = false,
-  atRoot = true,
-  isGuarded,
-}: {
+type RootNavigationProps = {
   destination: RootDestination['kind'];
   disabled?: boolean;
   atRoot?: boolean;
   isGuarded?: () => boolean;
+  onChoose?: (tab: RootDestination['kind']) => void;
+};
+
+export function RootNavigation(props: RootNavigationProps) {
+  const root = useContext(RootChrome);
+  return root && props.atRoot !== false ? (
+    <RootBarRegistration
+      register={root.register}
+      disabled={props.disabled}
+      isGuarded={props.isGuarded}
+    />
+  ) : (
+    <RootNavigationBar {...props} />
+  );
+}
+
+function RootBarRegistration({
+  register,
+  disabled = false,
+  isGuarded,
+}: {
+  register: NonNullable<React.ContextType<typeof RootChrome>>['register'];
+  disabled?: boolean;
+  isGuarded?: () => boolean;
 }) {
+  const guard = useRef(isGuarded);
+  useLayoutEffect(() => {
+    guard.current = isGuarded;
+  }, [isGuarded]);
+  useLayoutEffect(
+    () => register({ disabled, isGuarded: () => guard.current?.() ?? false }),
+    [register, disabled],
+  );
+  return null;
+}
+
+function RootNavigationBar({
+  destination,
+  disabled = false,
+  atRoot = true,
+  isGuarded,
+  onChoose,
+}: RootNavigationProps) {
   'use no memo';
   const t = useTranslation();
   const colors = useTheme(),
@@ -155,10 +208,19 @@ export function RootNavigation({
     trigger = useRef<View>(null);
   const blocked = () => disabled || !!isGuarded?.();
   const current = rootEntries.find((entry) => entry.kind === destination)!;
+  const exit = useSheetExitAction(() => setOpen(false));
   const choose = (entry: (typeof rootEntries)[number]) => {
     if (blocked()) return;
-    setOpen(false);
-    if (entry.kind !== destination || !atRoot) switchRoot({ kind: entry.kind });
+    const navigate = () => {
+      if (onChoose) onChoose(entry.kind);
+      else switchRoot({ kind: entry.kind });
+    };
+    if (entry.kind !== destination || !atRoot) {
+      if (open) exit.afterClose(navigate);
+      else navigate();
+    } else {
+      setOpen(false);
+    }
   };
   return (
     <View
@@ -302,7 +364,8 @@ export function RootNavigation({
         visible={open}
         onClose={() => setOpen(false)}
         returnFocusRef={trigger}
-        returnFocusWhen={() => focused}
+        returnFocusWhen={() => focused && exit.canReturnFocus()}
+        onDismissed={exit.onDismissed}
       >
         {rootEntries.map((entry) => (
           <Choice
@@ -532,26 +595,36 @@ export function RootMore({
   'use no memo';
   const t = useTranslation();
   const [open, setOpen] = useState(false);
+  const trigger = useRef<View>(null);
   const close = () => {
     Keyboard.dismiss();
     setOpen(false);
   };
-  const record = (view: 'completed' | 'deleted') => {
-    close();
-    router.push({ pathname: '/records', params: { view, ...originParams(origin) } });
-  };
+  const exit = useSheetExitAction(close);
+  const record = (view: 'completed' | 'deleted') =>
+    exit.afterClose(() =>
+      router.push({ pathname: '/records', params: { view, ...originParams(origin) } }),
+    );
   return (
     <>
       <IconButton
         icon="more_vert"
         label={t('m_74250745fec3')}
+        buttonRef={trigger}
         disabled={disabled}
         onPress={() => {
           Keyboard.dismiss();
           setOpen(true);
         }}
       />
-      <Sheet title={t('m_d47d7cb0e4f8')} visible={open} onClose={close}>
+      <Sheet
+        title={t('m_d47d7cb0e4f8')}
+        visible={open}
+        onClose={close}
+        onDismissed={exit.onDismissed}
+        returnFocusRef={trigger}
+        returnFocusWhen={exit.canReturnFocus}
+      >
         {origin.kind === 'list' && (
           <>
             <SettingRow
@@ -575,19 +648,13 @@ export function RootMore({
               intent="action"
               label={t('m_e01205cfdbd9')}
               icon="edit"
-              onPress={() => {
-                close();
-                listActions.rename();
-              }}
+              onPress={() => exit.afterClose(listActions.rename)}
             />
             <SettingRow
               intent="action"
               label={t('m_669f24b0f91d')}
               icon="delete"
-              onPress={() => {
-                close();
-                listActions.remove();
-              }}
+              onPress={() => exit.afterClose(listActions.remove)}
             />
           </>
         )}
@@ -596,20 +663,22 @@ export function RootMore({
             intent="action"
             label={t('m_ab81e9366bfe')}
             icon="edit"
-            onPress={() => {
-              close();
-              router.push({ pathname: '/lists/manage', params: originParams(origin) });
-            }}
+            onPress={() =>
+              exit.afterClose(() =>
+                router.push({ pathname: '/lists/manage', params: originParams(origin) }),
+              )
+            }
           />
         )}
         <SettingRow
           intent="action"
           label={t('m_74a883a037bc')}
           icon="settings"
-          onPress={() => {
-            close();
-            router.push({ pathname: '/settings', params: originParams(origin) });
-          }}
+          onPress={() =>
+            exit.afterClose(() =>
+              router.push({ pathname: '/settings', params: originParams(origin) }),
+            )
+          }
         />
       </Sheet>
     </>
@@ -621,12 +690,14 @@ export function ListNameSheet({
   list,
   onSaved,
   onClose,
+  onDismissed,
   onGuardChange,
 }: {
   visible: boolean;
   list?: ListRecord;
   onSaved: (id: string) => void;
   onClose: () => void;
+  onDismissed?: () => void;
   onGuardChange?: (guarded: boolean) => void;
 }) {
   'use no memo';
@@ -657,6 +728,7 @@ export function ListNameSheet({
     <Sheet
       title={title}
       visible={visible}
+      onDismissed={onDismissed}
       onClose={() => {
         if (!action.guarded) onClose();
       }}
@@ -717,8 +789,9 @@ export function ListPicker({
     queryFn: () => engine().queryLists(),
     enabled: nativeAvailable,
   });
-  const [open, setOpen] = useState(false),
-    [create, setCreate] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [create, setCreate] = useState<'open' | 'cancelled' | 'saved' | null>(null);
+  const exit = useSheetExitAction(() => setOpen(false));
   return (
     <>
       <SettingRow
@@ -733,7 +806,12 @@ export function ListPicker({
         onPress={() => setOpen(true)}
         disabled={disabled}
       />
-      <Sheet title={t('m_91392cf35939')} visible={open && !create} onClose={() => setOpen(false)}>
+      <Sheet
+        title={t('m_91392cf35939')}
+        visible={open}
+        onClose={() => setOpen(false)}
+        onDismissed={exit.onDismissed}
+      >
         <Choice
           label={t('m_eacd31d849f9')}
           selected={value === null}
@@ -762,17 +840,20 @@ export function ListPicker({
           label={t('m_3fb9aa9bdbb5')}
           icon="add"
           variant="secondary"
-          onPress={() => setCreate(true)}
+          onPress={() => exit.afterClose(() => setCreate('open'))}
         />
       </Sheet>
       {create && (
         <ListNameSheet
-          visible
-          onClose={() => setCreate(false)}
+          visible={create === 'open'}
+          onClose={() => setCreate('cancelled')}
+          onDismissed={() => {
+            if (create === 'cancelled') setOpen(true);
+            setCreate(null);
+          }}
           onSaved={(id) => {
             onChange(id);
-            setCreate(false);
-            setOpen(false);
+            setCreate('saved');
           }}
         />
       )}

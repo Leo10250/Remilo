@@ -57,13 +57,16 @@ export function ScrollReadingPlane() {
   );
 }
 
-/** One native scroll value drives both cover travel and the continuous header surface. */
-export function usePageChrome(scrollKey?: string, compact = false): ScrollChrome {
+export function useCompactChrome() {
   const { height, fontScale } = useWindowDimensions(),
     reviewScale = useFontScaleOverride();
   const insets = useSafeAreaInsets();
-  const constrained =
-    compact || height - insets.top - insets.bottom < 480 || Math.max(fontScale, reviewScale) >= 1.6;
+  return height - insets.top - insets.bottom < 480 || Math.max(fontScale, reviewScale) >= 1.6;
+}
+
+/** One native scroll value drives both cover travel and the continuous header surface. */
+export function usePageChrome(scrollKey?: string, compact = false): ScrollChrome {
+  const constrained = useCompactChrome() || compact;
   const [toolbar, setToolbar] = useState<number>(presentation.geometry.toolbar);
   const opening = constrained ? toolbar : Math.max(presentation.geometry.home, toolbar);
   const decoration = opening - toolbar;

@@ -2,7 +2,7 @@ import { useLocale, useTranslation } from '../localization/react';
 
 import { useTimeFormatting } from '../ui/time-display';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { Redirect, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Keyboard, View, type TextInput } from 'react-native';
 import type { Occurrence } from '../../modules/remilo-alarm/src/RemiloAlarm.types';
@@ -10,6 +10,7 @@ import {
   collectionKey,
   creationOrigin,
   originParams,
+  rootRoute,
   type DestinationOrigin,
   type OriginParams,
 } from '../domain/navigation';
@@ -55,6 +56,7 @@ import { useRootState } from '../ui/root-state';
 import { useAppearanceHold } from '../ui/theme';
 import { routineDayKeys } from '../ui/routine-editor';
 import { space, typography } from '../ui/tokens';
+import { useSheetExitAction } from '../ui/sheet-motion';
 
 export default function Records() {
   'use no memo';
@@ -62,15 +64,11 @@ export default function Records() {
   const params = useLocalSearchParams<OriginParams & { view?: string }>(),
     view = params.view === 'deleted' ? 'deleted' : 'completed',
     origin = creationOrigin(params);
-  return (
-    <RecordsContent
-      key={collectionKey(view, origin.kind === 'list' ? origin.listId : undefined)}
-      view={view}
-      origin={origin}
-    />
-  );
+  if (origin.kind !== 'list')
+    return <Redirect href={rootRoute({ kind: view === 'deleted' ? 'trash' : 'completed' })} />;
+  return <RecordsContent key={collectionKey(view, origin.listId)} view={view} origin={origin} />;
 }
-function RecordsContent({
+export function RecordsContent({
   view,
   origin,
 }: {
@@ -102,6 +100,8 @@ function RecordsContent({
     [selected, setSelected] = useState<Occurrence | null>(null);
   const [scrollResetToken, setScrollResetToken] = useState(0),
     [trashHelpOpen, setTrashHelpOpen] = useState(false);
+  const menuExit = useSheetExitAction(() => setMenuOpen(false));
+  const rowExit = useSheetExitAction(() => setSelected(null));
   const filterOpen = filterDraft !== null,
     searchInput = useRef<TextInput>(null),
     filterTrigger = useRef<View>(null),
@@ -627,6 +627,7 @@ function RecordsContent({
       <Sheet
         title={selecting ? t('m_b847ffdd0a1b') : title + t('m_04d2a6702176')}
         visible={menuOpen}
+        onDismissed={menuExit.onDismissed}
         onClose={() => {
           if (!isGuarded()) setMenuOpen(false);
         }}
@@ -682,8 +683,7 @@ function RecordsContent({
             disabled={guarded}
             onPress={() => {
               if (isGuarded()) return;
-              setMenuOpen(false);
-              setTrashHelpOpen(true);
+              menuExit.afterClose(() => setTrashHelpOpen(true));
             }}
           />
         )}
@@ -695,8 +695,9 @@ function RecordsContent({
             disabled={guarded}
             onPress={() => {
               if (isGuarded()) return;
-              setMenuOpen(false);
-              router.push({ pathname: '/settings', params: originParams(destination) });
+              menuExit.afterClose(() =>
+                router.push({ pathname: '/settings', params: originParams(destination) }),
+              );
             }}
           />
         )}
@@ -737,6 +738,7 @@ function RecordsContent({
       <Sheet
         title={selected?.title ?? t('m_3ddd2c824c07')}
         visible={!!selected}
+        onDismissed={rowExit.onDismissed}
         onClose={() => {
           if (!isGuarded()) setSelected(null);
         }}
@@ -774,8 +776,7 @@ function RecordsContent({
             onPress={() => {
               if (selected?.routine) {
                 const item = selected;
-                setSelected(null);
-                open(item);
+                rowExit.afterClose(() => open(item));
               } else if (selected) update(selected, 'Reopen');
             }}
           />
@@ -797,7 +798,7 @@ function RecordsContent({
             description={t('m_a3e8748f021d')}
             disabled={guarded}
             onPress={() => {
-              if (selected) requestPurge([selected], false);
+              if (selected) rowExit.afterClose(() => requestPurge([selected], false));
             }}
           />
         )}

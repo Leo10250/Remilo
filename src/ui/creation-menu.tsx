@@ -1,9 +1,10 @@
 import { router } from 'expo-router';
-import { useEffect, useRef, type RefObject } from 'react';
+import type { RefObject } from 'react';
 import type { View } from 'react-native';
 import type { OriginParams } from '../domain/navigation';
 import { useTranslation } from '../localization/react';
 import { ConnectedGroup, SettingRow, Sheet } from './components';
+import { useSheetExitAction } from './sheet-motion';
 
 export function CreationMenu({
   visible,
@@ -16,31 +17,18 @@ export function CreationMenu({
   params?: OriginParams;
   trigger: RefObject<View | null>;
 }) {
-  const t = useTranslation(),
-    choosing = useRef(false),
-    destination = useRef<'/edit' | '/routine-edit' | null>(null);
-  useEffect(() => {
-    if (visible) choosing.current = false;
-  }, [visible]);
-  useEffect(() => {
-    if (visible || !destination.current) return;
-    const path = destination.current;
-    destination.current = null;
-    router.push({ pathname: path, params });
-  }, [visible, params]);
-  const choose = (path: '/edit' | '/routine-edit') => {
-    if (choosing.current) return;
-    choosing.current = true;
-    destination.current = path;
-    onClose();
-  };
+  const t = useTranslation();
+  const exit = useSheetExitAction(onClose);
+  const choose = (path: '/edit' | '/routine-edit') =>
+    exit.afterClose(() => router.push({ pathname: path, params }));
   return (
     <Sheet
       title={t('create_title')}
       visible={visible}
       onClose={onClose}
       returnFocusRef={trigger}
-      returnFocusWhen={() => !choosing.current}
+      returnFocusWhen={exit.canReturnFocus}
+      onDismissed={exit.onDismissed}
     >
       <ConnectedGroup>
         <SettingRow

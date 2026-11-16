@@ -7,6 +7,7 @@ import { CommandRecovery, useCapturedCommand } from './navigation';
 import { notify } from './feedback';
 import { engine, nativeAvailable } from './native';
 import { QueryState, SettingRow, Sheet } from './components';
+import { useSheetExitAction } from './sheet-motion';
 import { WidgetSetupRow } from './widget-setup';
 
 export type RoutineActionTarget = { id: string; date?: string };
@@ -40,6 +41,7 @@ export function RoutineActions({
   });
   const plan = plans.data?.find((p) => p.id === target?.id),
     day = session.data;
+  const exit = useSheetExitAction(onClose);
   const action = useCapturedCommand((job, result) => {
     if (job.command.kind === 'TrashRoutine' && result.routine) {
       notify({
@@ -53,8 +55,8 @@ export function RoutineActions({
           },
         },
       });
-      onClose();
-      onRemoved?.();
+      if (onRemoved) exit.afterClose(onRemoved);
+      else onClose();
       return false;
     }
   });
@@ -62,8 +64,7 @@ export function RoutineActions({
     if (!action.isGuarded()) onClose();
   };
   const navigate = (task: () => void) => {
-    close();
-    task();
+    if (!action.isGuarded()) exit.afterClose(task);
   };
   const mutate = (kind: 'TrashRoutine' | 'PauseRoutine' | 'ResumeRoutine') => {
     if (!plan || action.isGuarded()) return;
@@ -90,8 +91,9 @@ export function RoutineActions({
         title={plan?.title ?? t('routine_more')}
         visible={!!target}
         onClose={close}
+        onDismissed={exit.onDismissed}
         returnFocusRef={returnFocusRef}
-        returnFocusWhen={() => focused}
+        returnFocusWhen={() => focused && exit.canReturnFocus()}
       >
         <QueryState
           loading={plans.isLoading && !!target}
@@ -124,7 +126,12 @@ export function RoutineActions({
             )
           }
         />
-        <WidgetSetupRow routineId={target?.id} disabled={action.guarded || !plan} onOpen={close} />
+        <WidgetSetupRow
+          routineId={target?.id}
+          disabled={action.guarded || !plan}
+          onOpen={close}
+          onNavigate={navigate}
+        />
         <SettingRow
           intent="navigation"
           label={t('routine_duplicate')}

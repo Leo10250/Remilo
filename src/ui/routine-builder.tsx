@@ -27,6 +27,7 @@ import {
 } from './components';
 import { RoutineBuilderStepRow, RoutineExerciseForm, routineDayKeys } from './routine-editor';
 import { useAppearanceConfirmation } from './confirmation';
+import { useSheetExitAction } from './sheet-motion';
 import type { ExerciseFormHandle } from './exercise-target-fields';
 import { useExerciseImageLeases } from './exercise-images';
 import { useFontScaleOverride, useTheme } from './theme';
@@ -183,6 +184,7 @@ export function RoutineBuilderFields({
     [editing, setEditing] = useState<Editing | null>(null),
     [imageOpen, setImageOpen] = useState(false),
     [options, setOptions] = useState(false);
+  const optionsExit = useSheetExitAction(() => setOptions(false));
   const [removed, setRemoved] = useState<{
       day: number;
       step: RoutineExercise;
@@ -513,6 +515,7 @@ export function RoutineBuilderFields({
           title={t('routine_more')}
           visible={options && !!editing}
           onClose={() => setOptions(false)}
+          onDismissed={optionsExit.onDismissed}
         >
           <ConnectedGroup>
             <SettingRow
@@ -553,7 +556,7 @@ export function RoutineBuilderFields({
                   list.filter((step) => step.id !== editing.value.id),
                 );
                 trigger.current = addTrigger.current;
-                finishClose();
+                optionsExit.afterClose(finishClose);
               }}
             />
           </ConnectedGroup>

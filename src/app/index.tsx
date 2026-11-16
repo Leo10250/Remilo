@@ -5,7 +5,7 @@ import { useLocalizedState, useLocale, useTranslation } from '../localization/re
 import { canCreateFromEmptyAgenda } from '../domain/empty-agenda';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useIsFocused, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Keyboard,
@@ -73,6 +73,7 @@ import {
   readRootSnapshot,
   retainedOriginParams,
   rootKey,
+  rootTab,
   secondaryOriginRoute,
   writeRootSnapshot,
   type DestinationOrigin,
@@ -107,6 +108,11 @@ import {
   useChromeScroll,
   usePageChrome,
 } from '../ui/scroll-chrome';
+import { RootShell } from '../ui/root-shell';
+import { RootChrome } from '../ui/root-chrome';
+import { useSheetExitAction } from '../ui/sheet-motion';
+import { ListLibrary } from './lists/index';
+import { RecordsContent } from './records';
 
 type Toast = {
   message: string;
@@ -117,11 +123,31 @@ type AgendaSection = { key: string; title: string; count: number };
 export default function HomeScreen() {
   'use no memo';
   useLocale();
-  return <AgendaScreen destination={{ kind: 'agenda' }} />;
+  const { tab, postponeRequest } = useLocalSearchParams<{
+    tab?: string;
+    postponeRequest?: string;
+  }>();
+  return (
+    <RootShell
+      selected={postponeRequest === undefined ? rootTab(tab) : 'agenda'}
+      scene={(shown) => {
+        if (shown === 'lists') return <ListLibrary />;
+        if (shown === 'completed' || shown === 'trash')
+          return (
+            <RecordsContent
+              view={shown === 'trash' ? 'deleted' : 'completed'}
+              origin={{ kind: shown }}
+            />
+          );
+        return <AgendaScreen destination={{ kind: 'agenda' }} />;
+      }}
+    />
+  );
 }
 export function AgendaScreen({ destination }: { destination: DestinationOrigin }) {
   'use no memo';
   const t = useTranslation();
+  const inRootShell = useContext(RootChrome) !== null;
   const params = useLocalSearchParams<
       OriginParams & { postponeRequest?: string | string[]; postponeRequestKey?: string | string[] }
     >(),
@@ -543,7 +569,11 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
       } else if (parsed.kind === 'invalid')
         setToast({ message: t('postpone_invalid_request'), persistent: true });
       // Consuming the presentation params prevents a render/focus refresh from reopening a closed draft.
-      router.setParams({ postponeRequest: undefined, postponeRequestKey: undefined });
+      router.setParams({
+        tab: 'agenda',
+        postponeRequest: undefined,
+        postponeRequestKey: undefined,
+      });
     });
     return () => {
       active = false;
@@ -620,10 +650,11 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
     };
   };
   const showSearchResults = searching || !!search.trim();
+  const reminderMenuExit = useSheetExitAction(() => setSelected(null));
   return (
     <SafeAreaView
       edges={['top', 'left', 'right']}
-      style={{ flex: 1, backgroundColor: colors.background }}
+      style={{ flex: 1, backgroundColor: inRootShell ? 'transparent' : colors.background }}
     >
       <ScrollChromeProvider value={chrome}>
         <View style={{ flex: 1 }}>
@@ -1140,6 +1171,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
                 title={selected?.title ?? t('m_3ddd2c824c07')}
                 visible={!!selected}
                 onClose={() => setSelected(null)}
+                onDismissed={reminderMenuExit.onDismissed}
               >
                 <SettingRow
                   intent="action"
@@ -1147,15 +1179,14 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
                   icon="edit"
                   onPress={() => {
                     if (isGuarded()) return;
-                    if (selected)
+                    if (!selected) return;
+                    const edit = editDestination(selected);
+                    reminderMenuExit.afterClose(() =>
                       router.push({
-                        ...editDestination(selected),
-                        params: {
-                          ...editDestination(selected).params,
-                          ...originParams(destination),
-                        },
-                      });
-                    setSelected(null);
+                        ...edit,
+                        params: { ...edit.params, ...originParams(destination) },
+                      }),
+                    );
                   }}
                   disabled={guarded}
                 />
@@ -1165,12 +1196,14 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
                     label={t('postpone_action')}
                     icon="schedule"
                     onPress={() => {
-                      if (selected)
+                      if (!selected) return;
+                      reminderMenuExit.afterClose(() =>
                         openPostpone({
                           kind: 'Single',
                           occurrenceId: selected.id,
                           expectedGeneration: selected.generation,
-                        });
+                        }),
+                      );
                     }}
                     disabled={guarded}
                   />
@@ -1190,8 +1223,7 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
                   label={t('m_9adcdf33dce1')}
                   icon="delete"
                   onPress={() => {
-                    if (selected) trash(selected);
-                    setSelected(null);
+                    if (selected) reminderMenuExit.afterClose(() => trash(selected));
                   }}
                   disabled={guarded}
                 />

@@ -1,12 +1,17 @@
 import { useLocale, useTranslation } from '../../localization/react';
 
 import { useQuery } from '@tanstack/react-query';
-import { router, useLocalSearchParams } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ListRecord } from '../../../modules/remilo-alarm/src/RemiloAlarm.types';
-import { creationOrigin, originParams, type OriginParams } from '../../domain/navigation';
+import {
+  creationOrigin,
+  originParams,
+  rootRoute,
+  type OriginParams,
+} from '../../domain/navigation';
 import {
   ActionFeedback,
   AtmosphericHeader,
@@ -35,18 +40,17 @@ import { engine, nativeAvailable } from '../../ui/native';
 import { useTheme } from '../../ui/theme';
 import { useAppearanceConfirmation } from '../../ui/confirmation';
 import { space } from '../../ui/tokens';
+import { useSheetExitAction } from '../../ui/sheet-motion';
 
 export default function Lists() {
-  'use no memo';
-  useLocale();
-  return <ListLibrary />;
+  return <Redirect href={rootRoute({ kind: 'lists' })} />;
 }
 export function ManageLists() {
   'use no memo';
   useLocale();
   return <ListLibrary management />;
 }
-function ListLibrary({ management = false }: { management?: boolean }) {
+export function ListLibrary({ management = false }: { management?: boolean }) {
   'use no memo';
   const t = useTranslation();
   const confirm = useAppearanceConfirmation();
@@ -65,6 +69,7 @@ function ListLibrary({ management = false }: { management?: boolean }) {
   const [editing, setEditing] = useState<ListRecord | 'create' | null>(null),
     [selected, setSelected] = useState<ListRecord | null>(null),
     [formGuarded, setFormGuarded] = useState(false);
+  const menuExit = useSheetExitAction(() => setSelected(null));
   const menuTrigger = useRef<View>(null);
   const menuButtons = useRef(new Map<string, View>());
   const createTrigger = useRef<View>(null);
@@ -298,7 +303,9 @@ function ListLibrary({ management = false }: { management?: boolean }) {
         title={selected?.name ?? t('m_abc46aaef9ad')}
         visible={!!selected}
         onClose={() => setSelected(null)}
-        returnFocusRef={editing ? undefined : menuTrigger}
+        onDismissed={menuExit.onDismissed}
+        returnFocusRef={menuTrigger}
+        returnFocusWhen={menuExit.canReturnFocus}
       >
         <SettingRow
           intent="action"
@@ -306,8 +313,7 @@ function ListLibrary({ management = false }: { management?: boolean }) {
           icon="edit"
           disabled={guarded}
           onPress={() => {
-            setEditing(selected);
-            setSelected(null);
+            if (selected) menuExit.afterClose(() => setEditing(selected));
           }}
         />
         <SettingRow
@@ -316,7 +322,7 @@ function ListLibrary({ management = false }: { management?: boolean }) {
           icon="delete"
           disabled={guarded}
           onPress={() => {
-            if (selected) remove(selected);
+            if (selected) menuExit.afterClose(() => remove(selected));
           }}
         />
       </Sheet>

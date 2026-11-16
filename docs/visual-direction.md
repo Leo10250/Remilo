@@ -50,6 +50,14 @@ the shared toolbar cover blends continuously toward an opaque canvas. Toolbar
 foreground stays readable throughout; use the existing reduced-motion behavior.
 Sheets/dialogs restore ordinary surface roles rather than inherit scenic header ink.
 
+Agenda, Lists, Completed, and Trash share a stationary navigation bar and scenic
+backdrop. A tab switch fades out the current content before fading in the next
+view. A list's own Completed and Trash pages are drill-downs, so they use native
+forward and Back motion, as do detail pages and editors. In a bottom sheet the
+panel moves from the bottom and the dimming layer fades in place. Centered
+confirmations use a fade. Reduce Motion makes app-owned tab and sheet changes
+immediate on Android and iOS.
+
 Cards emphasize title and actual alert/No alert information, followed by supporting
 timing, recurrence and status. Group related rows into connected items, with shared
 corners/seams and a larger section gap. Standalone reminder lists own their card

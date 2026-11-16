@@ -21,11 +21,13 @@ export function WidgetSetupRow({
   description,
   disabled = false,
   onOpen,
+  onNavigate,
 }: {
   routineId?: string;
   description?: string;
   disabled?: boolean;
   onOpen?: () => void;
+  onNavigate?: (openProfiles: () => void) => void;
 }) {
   const t = useTranslation(),
     live = useRef(true),
@@ -50,8 +52,10 @@ export function WidgetSetupRow({
         disabled={disabled || busy || !nativeAvailable}
         onPress={() => {
           if (iosReminders) {
-            onOpen?.();
-            router.push({ pathname: '/widget-profiles', params: { routineId } });
+            const openProfiles = () =>
+              router.push({ pathname: '/widget-profiles', params: { routineId } });
+            if (onNavigate) onNavigate(openProfiles);
+            else openProfiles();
             return;
           }
           if (running.current) return;

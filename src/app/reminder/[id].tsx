@@ -64,6 +64,7 @@ import { space, typography } from '../../ui/tokens';
 import { InformationRow, Schedule, ScheduleDetails, SchedulePrimary } from '../../ui/schedule';
 import { useAppearanceHold, useFontScaleOverride, useTheme } from '../../ui/theme';
 import { useAppearanceConfirmation } from '../../ui/confirmation';
+import { useSheetExitAction } from '../../ui/sheet-motion';
 import { PurgeConfirmation } from '../../ui/purge-confirmation';
 import { TrashConfirmation } from '../../ui/trash-confirmation';
 import { CalendarExceptionNotice, CalendarSummaryRow } from '../../ui/calendar-association';
@@ -224,6 +225,8 @@ export default function ReminderDetails() {
   const postponeAction = usePostponeController();
   const [scope, setScope] = useState(action === 'edit'),
     [menu, setMenu] = useState(false);
+  const menuExit = useSheetExitAction(() => setMenu(false));
+  const scopeExit = useSheetExitAction(() => setScope(false));
   const postponeFromRoute = useRef(false);
   const [purgeItem, setPurgeItem] = useState<Occurrence | null>(null);
   const [trashItem, setTrashItem] = useState<Occurrence | null>(null);
@@ -776,11 +779,17 @@ export default function ReminderDetails() {
         title={t('m_3ddd2c824c07')}
         visible={menu && (!alarmScoped || !!item)}
         onClose={() => setMenu(false)}
+        onDismissed={menuExit.onDismissed}
         returnFocusRef={menuTrigger}
-        returnFocusWhen={() => focused && !!item}
+        returnFocusWhen={() => focused && !!item && menuExit.canReturnFocus()}
       >
         {item && !item.deleted && (
-          <SettingRow intent="action" icon="edit" label={t('m_464c4ffd019e')} onPress={edit} />
+          <SettingRow
+            intent="action"
+            icon="edit"
+            label={t('m_464c4ffd019e')}
+            onPress={() => menuExit.afterClose(edit)}
+          />
         )}
         {canPublish &&
           active &&
@@ -793,13 +802,14 @@ export default function ReminderDetails() {
               icon="event"
               label={t('m_3a4c8285963f')}
               disabled={command.isPending || uncertain}
-              onPress={() => {
-                setMenu(false);
-                router.push({
-                  pathname: '/calendar-publish',
-                  params: { id, ...routeParams, originReminderId: id },
-                });
-              }}
+              onPress={() =>
+                menuExit.afterClose(() =>
+                  router.push({
+                    pathname: '/calendar-publish',
+                    params: { id, ...routeParams, originReminderId: id },
+                  }),
+                )
+              }
             />
           )}
         {manualCandidate.eligible && (!calendarLink || calendarLink.state === 'Detached') && (
@@ -808,13 +818,14 @@ export default function ReminderDetails() {
             icon="event"
             label={t(calendarLink ? 'm_1b01ea836cde' : 'm_45f738fd2ff1')}
             disabled={command.isPending || uncertain}
-            onPress={() => {
-              setMenu(false);
-              router.push({
-                pathname: '/calendar-review',
-                params: { ...routeParams, id, originReminderId: id },
-              });
-            }}
+            onPress={() =>
+              menuExit.afterClose(() =>
+                router.push({
+                  pathname: '/calendar-review',
+                  params: { ...routeParams, id, originReminderId: id },
+                }),
+              )
+            }
           />
         )}
         {calendarLink && calendarLink.state !== 'Detached' && (
@@ -823,26 +834,27 @@ export default function ReminderDetails() {
             icon="close"
             label={t('m_d9203b69027f')}
             disabled={unlinkBusy || unlinkUncertain}
-            onPress={() => {
-              setMenu(false);
-              confirm(
-                t('m_b89208529acc'),
-                t(
-                  calendarOperations.data?.some(
-                    (operation) =>
-                      operation.occurrenceId === id &&
-                      operation.remoteAttempted &&
-                      !['Confirmed', 'Cancelled', 'Conflict', 'Failed'].includes(operation.state),
-                  )
-                    ? 'unlink_reminder_confirmation_pending'
-                    : 'unlink_reminder_confirmation',
+            onPress={() =>
+              menuExit.afterClose(() =>
+                confirm(
+                  t('m_b89208529acc'),
+                  t(
+                    calendarOperations.data?.some(
+                      (operation) =>
+                        operation.occurrenceId === id &&
+                        operation.remoteAttempted &&
+                        !['Confirmed', 'Cancelled', 'Conflict', 'Failed'].includes(operation.state),
+                    )
+                      ? 'unlink_reminder_confirmation_pending'
+                      : 'unlink_reminder_confirmation',
+                  ),
+                  [
+                    { text: t('m_19766ed6ccb2'), style: 'cancel' },
+                    { text: t('m_b90108da0bd2'), onPress: () => void unlink() },
+                  ],
                 ),
-                [
-                  { text: t('m_19766ed6ccb2'), style: 'cancel' },
-                  { text: t('m_b90108da0bd2'), onPress: () => void unlink() },
-                ],
-              );
-            }}
+              )
+            }
           />
         )}
         <SettingRow
@@ -850,23 +862,25 @@ export default function ReminderDetails() {
           icon="content_copy"
           label={t('m_02cdaabfca80')}
           disabled={command.isPending || uncertain}
-          onPress={() => {
-            setMenu(false);
-            router.push({ pathname: '/edit', params: { duplicate: id, ...routeParams } });
-          }}
+          onPress={() =>
+            menuExit.afterClose(() =>
+              router.push({ pathname: '/edit', params: { duplicate: id, ...routeParams } }),
+            )
+          }
         />
         <SettingRow
           intent="action"
           icon="history"
           label={t('m_38da1505ca83')}
           disabled={command.isPending || uncertain}
-          onPress={() => {
-            setMenu(false);
-            router.push({
-              pathname: '/activity',
-              params: { id, ...routeParams, originReminderId: id },
-            });
-          }}
+          onPress={() =>
+            menuExit.afterClose(() =>
+              router.push({
+                pathname: '/activity',
+                params: { id, ...routeParams, originReminderId: id },
+              }),
+            )
+          }
         />
         {adjust && item?.deliveryState !== 'Alerting' && (
           <SettingRow
@@ -906,7 +920,7 @@ export default function ReminderDetails() {
               label={t('m_9adcdf33dce1')}
               description={t('m_1faff714eac7')}
               disabled={command.isPending || uncertain}
-              onPress={moveToTrash}
+              onPress={() => menuExit.afterClose(moveToTrash)}
             />
           </View>
         )}
@@ -919,8 +933,7 @@ export default function ReminderDetails() {
             disabled={command.isPending || uncertain}
             onPress={() => {
               if (command.isPending || pendingOperation.current || runningOperation.current) return;
-              setMenu(false);
-              setPurgeItem({ ...item });
+              menuExit.afterClose(() => setPurgeItem({ ...item }));
             }}
           />
         )}
@@ -961,8 +974,9 @@ export default function ReminderDetails() {
         title={t('m_4794fc66cf81')}
         visible={scope && !!item?.segmentId}
         returnFocusRef={scopeTrigger}
-        returnFocusWhen={() => focused}
+        returnFocusWhen={() => focused && scopeExit.canReturnFocus()}
         onClose={() => setScope(false)}
+        onDismissed={scopeExit.onDismissed}
       >
         <Copy heading>{item?.title}</Copy>
         {item && (
@@ -982,13 +996,14 @@ export default function ReminderDetails() {
           intent="action"
           label={t('m_f1f3c6717092')}
           description={t('m_2e865a55dab6')}
-          onPress={() => {
-            setScope(false);
-            router.push({
-              pathname: '/edit',
-              params: { id, ...routeParams, originReminderId: id },
-            });
-          }}
+          onPress={() =>
+            scopeExit.afterClose(() =>
+              router.push({
+                pathname: '/edit',
+                params: { id, ...routeParams, originReminderId: id },
+              }),
+            )
+          }
         />
         <QueryState
           loading={series.isLoading}
@@ -1001,30 +1016,32 @@ export default function ReminderDetails() {
               intent="action"
               label={t('m_3374941b0ba2')}
               description={t('m_5f4c9ca214d4')}
-              onPress={() => {
-                setScope(false);
-                router.push({
-                  pathname: '/edit',
-                  params: {
-                    segmentId: item.segmentId!,
-                    following: item.nominalSlot!,
-                    ...routeParams,
-                    originReminderId: id,
-                  },
-                });
-              }}
+              onPress={() =>
+                scopeExit.afterClose(() =>
+                  router.push({
+                    pathname: '/edit',
+                    params: {
+                      segmentId: item.segmentId!,
+                      following: item.nominalSlot!,
+                      ...routeParams,
+                      originReminderId: id,
+                    },
+                  }),
+                )
+              }
             />
             <SettingRow
               intent="action"
               label={t('m_b76950f065f0')}
               description={t('m_9b8c73c985f1')}
-              onPress={() => {
-                setScope(false);
-                router.push({
-                  pathname: '/edit',
-                  params: { segmentId: item.segmentId!, ...routeParams, originReminderId: id },
-                });
-              }}
+              onPress={() =>
+                scopeExit.afterClose(() =>
+                  router.push({
+                    pathname: '/edit',
+                    params: { segmentId: item.segmentId!, ...routeParams, originReminderId: id },
+                  }),
+                )
+              }
             />
           </>
         )}

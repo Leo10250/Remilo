@@ -256,6 +256,12 @@ export function PostponeHost({
     t = useTranslation(),
     { formatTime } = useTimeFormatting();
   const draft = draftFor(state.capture);
+  const captureKey = state.capture
+    ? JSON.stringify([state.request, state.capture.referenceAtMs])
+    : null;
+  // A new request resets the chooser. Closing keeps it mounted for the sheet exit.
+  const [chooserKey, setChooserKey] = useState(captureKey);
+  if (captureKey !== null && captureKey !== chooserKey) setChooserKey(captureKey);
   const presentation = postponeHostPresentation(
     state.destination,
     destination,
@@ -346,9 +352,7 @@ export function PostponeHost({
         {state.queued && <Copy muted>{t('postpone_request_waiting')}</Copy>}
       </Sheet>
       <PostponeChooser
-        key={
-          state.capture ? JSON.stringify([state.request, state.capture.referenceAtMs]) : 'closed'
-        }
+        key={chooserKey}
         draftOwner={draft}
         visible={visible && !!state.capture}
         capture={state.capture}

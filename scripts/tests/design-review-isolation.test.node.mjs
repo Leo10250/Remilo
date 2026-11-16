@@ -558,6 +558,17 @@ test('sheets restore surface foregrounds and controls when opened inside scenic 
           const generated = compile('src/ui/atmosphere.generated.ts');
           const tokens = compile('src/ui/tokens.ts', { './atmosphere.generated': generated });
           const jsx = (type, props, key) => ({ type, props, key });
+          const motionReact = {
+            useState: (value) => [typeof value === 'function' ? value() : value, () => {}],
+            useRef: (value) => ({ current: value }),
+            useEffect: () => {},
+            useLayoutEffect: () => {},
+          };
+          const motionNative = {
+            Animated: { View: 'Animated.View', Value: class {} },
+            Platform: { OS: 'web' },
+            useWindowDimensions: () => ({ width: 412, height: 915, fontScale: 1 }),
+          };
           const components = compile('src/ui/components.tsx', {
             ...Object.fromEntries(
               [...read('src/ui/components.tsx').matchAll(/require\('([^']+\.webp)'\)/g)].map(
@@ -565,16 +576,14 @@ test('sheets restore surface foregrounds and controls when opened inside scenic 
               ),
             ),
             react: {
+              ...motionReact,
               createContext: (value) => {
                 const context = { value, Provider: Symbol('Provider') };
                 contexts.push(context);
                 return context;
               },
               useContext: (context) => context.value,
-              useState: (value) => [value, () => {}],
-              useRef: (value) => ({ current: value }),
               useCallback: (callback) => callback,
-              useEffect: () => {},
               Children: {
                 toArray: (children) =>
                   [children]
@@ -585,13 +594,12 @@ test('sheets restore surface foregrounds and controls when opened inside scenic 
             },
             'react/jsx-runtime': { jsx, jsxs: jsx, Fragment: 'Fragment' },
             'react-native': {
+              ...motionNative,
               View: 'View',
               Text: 'Text',
               Pressable: 'Pressable',
               Modal: 'Modal',
-              Platform: { OS: 'web' },
               StyleSheet: { create: (styles) => styles, absoluteFill: { position: 'absolute' } },
-              useWindowDimensions: () => ({ width: 412, height: 915, fontScale: 1 }),
             },
             '@react-native-community/datetimepicker': {},
             'expo-symbols': { SymbolView: 'Glyph' },
@@ -614,6 +622,13 @@ test('sheets restore surface foregrounds and controls when opened inside scenic 
             './snackbar-timeout': {},
             './confirmation-state': compile('src/ui/confirmation-state.ts'),
             './disclosure-state': compile('src/ui/disclosure-state.ts'),
+            './root-chrome': compile('src/ui/root-chrome.ts', {
+              react: { createContext: (value) => ({ value }) },
+            }),
+            './sheet-motion': compile('src/ui/sheet-motion.ts', {
+              react: motionReact,
+              'react-native': motionNative,
+            }),
           });
           // Model the header's foreground and scenic-control context; a Modal retains both.
           contexts.find((context) => context.value === false).value = true;
@@ -681,10 +696,14 @@ test('sheets restore surface foregrounds and controls when opened inside scenic 
             assert.equal(text('Settings').props.style.lineHeight, 24 * fontScale);
             assert.equal(text('App preferences').props.style.lineHeight, 22 * fontScale);
           }
+          const animated = nodes.filter((node) => node.type === 'Animated.View');
           assert.equal(
-            nodes.find((node) => node.type === 'Modal').props.animationType,
-            'none',
-            'Reduced-motion context survives the boundary.',
+            animated.find((node) => node.props.style.transform).props.style.transform[0].translateY,
+            0,
+          );
+          assert.equal(
+            animated.find((node) => 'opacity' in node.props.style).props.style.opacity,
+            1,
           );
           const close = nodes.find(
             (node) =>

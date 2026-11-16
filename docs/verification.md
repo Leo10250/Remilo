@@ -123,6 +123,10 @@ Select relevant scenarios from this reusable release smoke menu:
   registrations and Direct Boot privacy.
 - Data-preserving in-place upgrade/restore when storage/export changes.
 - Changed UI/native/widget behavior, English/Chinese, text scaling/accessibility.
+- On Android and iOS, switch tabs quickly and check that the bar stays in
+  place. Open list-scoped Completed and use Back. Check a routine menu's
+  dismiss-and-focus return, then open its editor or a date from routine history.
+  Repeat those transitions with Reduce Motion enabled.
 - Live Calendar authorization, both directions, conflicts, uncertain writes and
   relevant background/reconnection opportunities.
 - On iPhone or iPad, separate AlarmKit/Notification authorization, delivery while

@@ -11,23 +11,27 @@ import {
   reminderListRoute,
   rootKey,
   rootRoute,
+  rootTab,
   secondaryOriginRoute,
   writeRootSnapshot,
 } from './navigation';
 describe('root navigation and creation context', () => {
-  it('keeps global collections separate even though they share a route', () => {
+  it('switches the root scene through a parameter while preserving separate snapshots', () => {
     expect(rootKey({ kind: 'completed' })).not.toBe(rootKey({ kind: 'trash' }));
     expect(rootRoute({ kind: 'trash' })).toEqual({
-      pathname: '/records',
-      params: { view: 'deleted' },
+      pathname: '/',
+      params: { tab: 'trash' },
     });
+    for (const kind of ['agenda', 'lists', 'completed', 'trash'] as const)
+      expect(rootTab(rootRoute({ kind }).params.tab)).toBe(kind);
+    expect(rootTab(['completed', 'trash'])).toBe('agenda');
     writeRootSnapshot('test-completed', { search: 'bill' });
     expect(readRootSnapshot('test-trash', { search: '' })).toEqual({ search: '' });
   });
   it('retains every root and fixed-list secondary origin', () => {
     for (const kind of ['agenda', 'lists', 'completed', 'trash', 'repeats'] as const)
       expect(creationOrigin(originParams({ kind }))).toEqual({ kind });
-    expect(rootRoute({ kind: 'lists' })).toEqual({ pathname: '/lists' });
+    expect(rootRoute({ kind: 'lists' })).toEqual({ pathname: '/', params: { tab: 'lists' } });
     expect(creationOrigin(originParams({ kind: 'list', listId: 'work' }))).toEqual({
       kind: 'list',
       listId: 'work',
@@ -83,10 +87,11 @@ describe('root navigation and creation context', () => {
           pathname: '/series/[id]',
           params: { id: 'segment', seriesId: 'family', ...membership, originCollection: view },
         });
-        expect(familyBackRoute(child)).toEqual({
-          pathname: '/records',
-          params: { view, ...membership },
-        });
+        expect(familyBackRoute(child)).toEqual(
+          'originRoot' in membership
+            ? rootRoute({ kind: view === 'deleted' ? 'trash' : 'completed' })
+            : { pathname: '/records', params: { view, ...membership } },
+        );
         expect(origin.originReminderId).toBe('prior-reminder');
       }
   });
