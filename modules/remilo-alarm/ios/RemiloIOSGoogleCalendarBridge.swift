@@ -79,6 +79,7 @@ final class RemiloIOSGoogleCalendarBridge {
                 if let segment = issue.seriesSegmentID { value["seriesSegmentId"] = segment }
             case .candidate:
                 value["candidateId"] = issue.targetID
+                value["connectionRevision"] = page.summary.connectionRevision
                 value["calendarName"] = Self.providerLabel(issue.calendarName ?? "")
             case .setup:
                 value["operationId"] = issue.targetID
@@ -282,26 +283,46 @@ final class RemiloIOSGoogleCalendarBridge {
         let view = try await runtime.view()
         guard view.revision == revision else { throw Failure.staleConnection }
         guard view.access == .ownedCalendars || view.access == .managedCreation else { throw Failure.needsAccess }
-        let timing = try review.timing(reviewedChoices)
         let now = iosMillis(Date())
+        previews.removeAll { $0.revision != revision || $0.expiresAtMs < now }
+        if previews.count == 8 { previews.removeFirst() }
+        previews.append(PreviewChoices(id: review.id, revision: revision, expiresAtMs: review.checkedAtMs + 600_000, choices: reviewedChoices))
+        return try Self.importPreview(review, choices: reviewedChoices, view: view, now: now)
+    }
+
+    func previewCandidate(_ id: String, choices: [String: Any]) async throws -> [String: Any] {
+        guard id.utf8.count <= 4_133 else { throw Failure.invalidInput }
+        let runtime = try runtime()
+        let view = try await runtime.view()
+        let candidate = try await runtime.prepareCandidate(id, expectedRevision: view.revision,
+            choices: Self.choices(IOSInput(values: choices)), useDefaultMode: choices["mode"] == nil)
+        let current = try await runtime.view()
+        guard current.revision == view.revision else { throw Failure.staleConnection }
+        var preview = try Self.importPreview(candidate.review, choices: candidate.choices, view: current, now: iosMillis(Date()))
+        preview["candidateId"] = id
+        preview["candidateRevision"] = candidate.revision
+        return preview
+    }
+
+    private static func importPreview(_ review: Import.Review, choices reviewedChoices: Import.Choices,
+                                      view: Connection.View, now: Int64) throws -> [String: Any] {
+        let timing = try review.timing(reviewedChoices)
         let recurrence = try review.recurrenceSpec()
         let upcoming = try recurrence.map { _ in try review.upcoming(reviewedChoices, after: now) }
         let nextAlert: Int64?
         if reviewedChoices.mode == .none { nextAlert = nil }
         else if let upcoming { nextAlert = upcoming.map(\.alarmAtMs).min() }
         else { nextAlert = timing.alert > now ? timing.alert : nil }
-        previews.removeAll { $0.revision != revision || $0.expiresAtMs < now }
-        if previews.count == 8 { previews.removeFirst() }
-        previews.append(PreviewChoices(id: review.id, revision: revision, expiresAtMs: review.checkedAtMs + 600_000, choices: reviewedChoices))
         let fields = review.source.fields
         let title = (reviewedChoices.title ?? fields.title).trimmingCharacters(in: .whitespacesAndNewlines)
         let reminders: Bool? = review.googleReminders == .unknown ? nil : review.googleReminders == .enabled
         return [
-            "previewId": review.id.uuidString, "occurrenceId": "", "connectionRevision": revision,
+            "previewId": review.id.uuidString, "occurrenceId": "", "connectionRevision": view.revision,
             "calendarName": review.calendarName ?? "", "email": view.email, "remote": Self.fields(fields),
             "local": NSNull(), "baseline": NSNull(), "selections": NSNull(), "timings": NSNull(),
             "choices": ["mode": reviewedChoices.mode.rawValue, "title": title, "dueAtMs": timing.due, "alarmAtMs": timing.alert,
-                        "listId": iosBridgeValue(reviewedChoices.listID), "automaticSync": false, "disableReminders": false] as [String: Any],
+                        "listId": iosBridgeValue(reviewedChoices.listID), "automaticSync": reviewedChoices.automaticSync,
+                        "disableReminders": reviewedChoices.disableGoogleReminders] as [String: Any],
             "googleReminders": iosBridgeValue(reminders), "checkedAtMs": review.checkedAtMs,
             "nextAlertMs": iosBridgeValue(nextAlert), "recurrence": iosBridgeValue(recurrence?.payload),
             "upcoming": iosBridgeValue(upcoming?.map { slot -> [String: Any] in
@@ -453,6 +474,18 @@ final class RemiloIOSGoogleCalendarBridge {
         let operation = try Self.uuid(input, "operationId")
         let runtime = try runtime()
         defer { NotificationCenter.default.post(name: .remiloIOSChange, object: nil, userInfo: [Runtime.automaticStatusChangeKey: true]) }
+        if kind == "ImportManagedCalendarCandidate" {
+            guard try input.flag("automaticSync", fallback: false), command["selections"] == nil else { throw Failure.invalidInput }
+            let revision = try Self.revision(input)
+            let result = try await runtime.confirmCandidate(operation, reviewID: Self.uuid(input, "previewId"), expectedRevision: revision)
+            return Self.linked(.init(receipt: result))
+        }
+        if kind == "IgnoreManagedCalendarCandidate" {
+            let revision = try Self.revision(input)
+            try await runtime.ignoreCandidate(operation, candidateID: input.text("candidateId", maximum: 4_133),
+                expectedRevision: Int(input.integer("expectedRevision", range: 0...9_007_199_254_740_991)), connectionRevision: revision)
+            return ["operationId": operation.uuidString.lowercased(), "ignored": true]
+        }
         if kind == "PauseManagedCalendar" || kind == "DisableManagedCalendar" {
             let view = try await runtime.view()
             guard let setup = runtime.managedSetup else { throw Failure.invalidConfiguration }
@@ -630,6 +663,11 @@ final class RemiloIOSGoogleCalendarBridge {
                     "pending": 0, "review": 0, "held": 0, "children": [String](), "currentScope": current]
         }
         guard view.connected else { return nil }
+        if try await runtime.ignoredCandidate(id, expectedRevision: revision) {
+            return ["operationId": id.uuidString.lowercased(), "kind": "IgnoreManagedCalendarCandidate", "stage": "Confirmed",
+                    "reason": "", "action": "None", "confirmed": 1, "pending": 0, "review": 0, "held": 0,
+                    "children": [String](), "currentScope": true]
+        }
         if let setup = runtime.managedSetup, let receipt = try setup.policyOperation(id, expectedRevision: revision) {
             let current = try setup.view(expectedRevision: revision).bindingRevision == receipt.revision
             return ["operationId": id.uuidString.lowercased(), "kind": "Policy", "stage": "Confirmed", "reason": "",

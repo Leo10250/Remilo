@@ -86,7 +86,7 @@ final class RemiloIOSGoogleCalendarManagedSetup {
     /// One bounded foreground pass. The durable inbox stages source versions
     /// for subsequent exact import or reconciliation, independent of delivery.
     func scanIncoming(expectedRevision: Int, budget: RemiloIOSGoogleCalendarHTTP.Budget = .init(),
-                      tracking: Set<String> = []) async throws -> Inbox.Progress {
+                      tracking: Set<String> = [], ignored: Set<String> = []) async throws -> Inbox.Progress {
         guard !scanningIncoming else { throw Journal.Rejection.operationPending }
         scanningIncoming = true
         defer { scanningIncoming = false }
@@ -118,7 +118,7 @@ final class RemiloIOSGoogleCalendarManagedSetup {
             }
             try fence()
             try inbox.record(page, request: request, now: Int64((now().timeIntervalSince1970 * 1_000).rounded()),
-                             tracking: scope.policy.automaticImport ? nil : tracking)
+                             tracking: scope.policy.automaticImport ? nil : tracking, ignored: ignored)
             pages += 1
             if page.next == nil { return try inbox.progress(scope, pages: pages, continuation: false) }
         }
@@ -388,6 +388,11 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         let scope: Inbox.Scope
         do { scope = try journal.incomingScope(account) }
         catch Failure.staleConnection { return false }
+        if permit.reviewedETag != nil {
+            guard permit.scope.binding.linkLease == scope.binding.linkLease,
+                  let progress = try savedIncomingProgress(expectedRevision: account.connectionRevision) else { return false }
+            return progress.pending.contains(where: permit.matchesReviewedCandidate)
+        }
         return try inbox.capturedPermit(permit, scope: scope) != nil
     }
 
@@ -408,6 +413,11 @@ final class RemiloIOSGoogleCalendarManagedSetup {
         catch Failure.staleConnection { return }
         if let current = try inbox.capturedPermit(permit, scope: scope) {
             try inbox.finish(current, reviewReason: reviewReason)
+        } else if permit.reviewedETag != nil {
+            try journal.resumeInboxCheckpoint(scope, account: account)
+            if let current = try inbox.capturedPermit(permit, scope: scope) {
+                try inbox.finish(current, reviewReason: reviewReason)
+            }
         }
     }
 

@@ -101,7 +101,12 @@ export default function CalendarReviews() {
                     ...('params' in route ? route.params : {}),
                     ...origin,
                     ...(issue.kind === 'Candidate'
-                      ? { candidateRevision: String(issue.revision) }
+                      ? {
+                          candidateRevision: String(issue.revision),
+                          ...(iosReminders && issue.connectionRevision !== undefined
+                            ? { expectedConnectionRevision: String(issue.connectionRevision) }
+                            : {}),
+                        }
                       : {}),
                   },
                 });
@@ -150,7 +155,7 @@ function CalendarIssueRow({ issue, onPress }: { issue: CalendarReviewIssue; onPr
       }
       accessibilityLabel={[title, timing, scope, reason].filter(Boolean).join('. ')}
       minHeight={56}
-      onPress={iosReminders && issue.kind === 'Candidate' ? undefined : onPress}
+      onPress={onPress}
     />
   );
 }

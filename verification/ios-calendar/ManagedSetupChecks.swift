@@ -339,8 +339,10 @@ enum ManagedSetupChecks {
                          "Resume one global request, reuse native link checks, and preserve a known review issue")
             let beforeReviewReads = fixture.requests
             let reviewPage = try await afterRestart.savedReviewPage(nil)
+            guard let afterImport else { preconditionFailure("An enabled calendar keeps its import progress") }
+            let changedCandidate = Setup.Inbox.candidateID(binding: afterImport.scope.binding, eventID: "resume-changed")
             precondition(reviewPage.summary.review == globalSummary.review && reviewPage.items.count == globalSummary.review &&
-                         reviewPage.items.contains { $0.kind == .candidate && $0.targetID == "resume-changed" && $0.title == "resume-changed" } &&
+                         reviewPage.items.contains { $0.kind == .candidate && $0.targetID == changedCandidate && $0.title == "resume-changed" } &&
                          reviewPage.next == nil && fixture.requests == beforeReviewReads,
                          "The review page and summary share saved issues without contacting Google")
             do {
@@ -349,6 +351,7 @@ enum ManagedSetupChecks {
             } catch Failure.staleCursor {}
             let beforeDisable = try await policyChecks(fixture: fixture, setup: reopened, journal: journal, connection: connection,
                 account: authorized.account, imports: .init(directory: directory, now: nowMs), runtime: { runtime().0 }, local: local)
+            try await candidateChecks(fixture: fixture, revision: revision, runtime: { runtime().0 }, local: local)
             let retiredSync = UUID()
             _ = try await afterRestart.captureGlobalSync(retiredSync, expectedRevision: revision)
             let disabled = try reopened.changeMode(.disabled, operationID: UUID(), expectedRevision: beforeDisable.bindingRevision,
@@ -482,6 +485,61 @@ enum ManagedSetupChecks {
         return current
     }
 
+    private static func candidateChecks(fixture: Fixture, revision: Int, runtime: () -> Runtime, local: LocalImports) async throws {
+        let editor = runtime()
+        let commandCount = local.commands.count
+        fixture.policyEvents = ["review-import", "review-ignore"]
+        fixture.candidateVersions = ["review-import": "v3", "review-ignore": "v3"]
+        let check = try await editor.syncManagedIncoming(expectedRevision: revision)
+        let page = try await editor.savedReviewPage(nil)
+        precondition(check.imported == 0 && check.needsReview == 2 && local.commands.count == commandCount)
+        guard let importRow = page.items.first(where: { $0.kind == .candidate && $0.title == "review-import" }),
+              let ignoreRow = page.items.first(where: { $0.kind == .candidate && $0.title == "review-ignore" }) else {
+            preconditionFailure("Provider versions changed between listing and individual lookup")
+        }
+
+        let choices = Runtime.Import.Choices(mode: .none, title: "Reviewed title")
+        let stale = try await editor.prepareCandidate(importRow.targetID, expectedRevision: revision, choices: choices, useDefaultMode: false)
+        fixture.candidateVersions["review-import"] = "v4"
+        let rejected = try await editor.confirmCandidate(UUID(), reviewID: stale.review.id, expectedRevision: revision)
+        precondition(rejected.errorCode == Runtime.Import.Failure.staleRemote.rawValue && local.commands.count == commandCount)
+
+        let current = try await editor.prepareCandidate(importRow.targetID, expectedRevision: revision, choices: choices, useDefaultMode: false)
+        let operation = UUID()
+        let imported = try await editor.confirmCandidate(operation, reviewID: current.review.id, expectedRevision: revision)
+        let replayed = try await runtime().confirmCandidate(operation, reviewID: current.review.id, expectedRevision: revision)
+        let remaining = try await editor.savedReviewPage(nil)
+        precondition(imported.local != nil && imported.relationship == .automaticRequested && imported == replayed &&
+                     local.commands.count == commandCount + 1 && local.commands.last?.title == "Reviewed title" &&
+                     local.commands.last?.mode == .some(.none) && !remaining.items.contains { $0.targetID == importRow.targetID })
+        guard let latest = remaining.items.first(where: { $0.targetID == ignoreRow.targetID }) else {
+            preconditionFailure("Import leaves the other candidate available")
+        }
+
+        let ignore = UUID()
+        let requests = fixture.requests
+        do {
+            try await editor.ignoreCandidate(ignore, candidateID: latest.targetID, expectedRevision: latest.revision - 1,
+                                             connectionRevision: revision)
+            preconditionFailure("Ignoring an outdated review row must fail")
+        } catch Runtime.Import.Failure.stalePreview {}
+        try await editor.ignoreCandidate(ignore, candidateID: latest.targetID, expectedRevision: latest.revision,
+                                         connectionRevision: revision)
+        try await runtime().ignoreCandidate(ignore, candidateID: latest.targetID, expectedRevision: latest.revision,
+                                            connectionRevision: revision)
+        let ignored = try await runtime().ignoredCandidate(ignore, expectedRevision: revision)
+        let afterIgnore = try await editor.savedReviewPage(nil)
+        precondition(ignored && fixture.requests == requests && !afterIgnore.items.contains { $0.targetID == latest.targetID })
+
+        fixture.policyEvents = ["review-ignore"]
+        fixture.candidateVersions.removeValue(forKey: "review-ignore")
+        let rescan = try await runtime().syncManagedIncoming(expectedRevision: revision)
+        let afterScan = try await runtime().savedReviewPage(nil)
+        precondition(rescan.imported == 0 && local.commands.count == commandCount + 1 &&
+                     !afterScan.items.contains { $0.targetID == latest.targetID },
+                     "The provider can return the ignored event again without creating a reminder or a review")
+    }
+
     @MainActor
     private final class LocalImports {
         enum Failure: Error { case interrupted }
@@ -522,6 +580,7 @@ enum ManagedSetupChecks {
         private(set) var policyTokens: [String?] = []
         var scanAfterResume = false
         var recoveredVersion = "v2"
+        var candidateVersions: [String: String] = [:]
         private(set) var resumeStartedFrom: String?
         private(set) var initialPages: [Int] = []
         private(set) var deltaTokens: [String] = []
@@ -580,7 +639,8 @@ enum ManagedSetupChecks {
             }
             if url.deletingLastPathComponent().lastPathComponent == "events" {
                 let id = url.lastPathComponent
-                let version = id == "recovered" ? recoveredVersion : (scanAfterResume && id == "resume-changed" ? "v3" : "v2")
+                let version = candidateVersions[id] ??
+                    (id == "recovered" ? recoveredVersion : (scanAfterResume && id == "resume-changed" ? "v3" : "v2"))
                 let event = id == "all-day" ? allDayEvent() : timedEvent(id, version: version)
                 return .init(status: 200, body: try JSONSerialization.data(withJSONObject: event))
             }

@@ -710,6 +710,7 @@ export type CalendarReviewIssue =
       issueId: string;
       candidateId: string;
       revision: number;
+      connectionRevision?: number;
       fingerprint?: string;
       title: string;
       reason: string;
@@ -987,6 +988,7 @@ export type ManagedCalendarCommand =
       operationId: string;
       previewId: string;
       automaticSync: true;
+      expectedConnectionRevision?: number;
       selections?: CalendarSelections;
     }
   | {
@@ -994,6 +996,7 @@ export type ManagedCalendarCommand =
       operationId: string;
       candidateId: string;
       expectedRevision: number;
+      expectedConnectionRevision?: number;
     }
   | { kind: 'RetryManagedCalendarOperation'; operationId: string };
 export type CalendarLegacyCommand =

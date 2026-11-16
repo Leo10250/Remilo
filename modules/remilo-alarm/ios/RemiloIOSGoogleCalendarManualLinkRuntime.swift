@@ -141,7 +141,7 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
         let lease = work.permit.scope.binding.linkLease
         let receipt = work.receipt
         guard receipt.relationship == .automaticRequested, let imported = receipt.local, imported.kind == .reminder,
-              receipt.source == work.permit.source, receipt.reviewedETag == work.permit.observation.etag,
+              receipt.source == work.permit.source, receipt.reviewedETag == work.permit.etag,
               try permitsManagedLease(lease, account: account) else { throw Link.Failure.stalePreview }
         let source = Link.Source(subject: receipt.source.subject, clientID: account.clientID,
                                  calendarID: receipt.source.calendarID, eventID: receipt.source.eventID)
@@ -157,7 +157,10 @@ final class RemiloIOSGoogleCalendarManualLinkRuntime {
             canRead: { [canUseForeground, allowsManagedLease] in
                 canUseForeground() && (try? allowsManagedLease(lease, account)) == true
             })
-        guard remote.etag == receipt.reviewedETag, remote.fields == snapshot.fields else { throw Link.Failure.staleRemote }
+        let titleMatches = remote.fields.title == snapshot.fields.title ||
+            receipt.reviewedTitleDigest == Data(SHA256.hash(data: Data(snapshot.fields.title.utf8)))
+        guard remote.etag == receipt.reviewedETag, titleMatches, remote.fields.notes == snapshot.fields.notes,
+              remote.fields.schedule == snapshot.fields.schedule else { throw Link.Failure.staleRemote }
         let checkpoint = try await local.permit(snapshot) { [self] in
             guard canUseForeground(), try connection.isCurrentAccount(account),
                   try permitsManagedLease(lease, account: account),

@@ -249,6 +249,7 @@ actor RemiloIOSGoogleCalendarImportJournal {
         let relationship: Import.Relationship?
         let suppression: Suppression
         let errorCode: String?
+        var reviewedTitleDigest: Data? = nil
     }
 
     struct SavedOperation: Sendable {
@@ -306,6 +307,7 @@ actor RemiloIOSGoogleCalendarImportJournal {
         var recurringIssue: RecurringIssue?
         var seriesTextBaseline: SeriesTextBaseline?
         var seriesActivation: SeriesActivation?
+        var candidateReviewID: UUID?
 
         var seriesLease: Inbox.Journal.Lease? { seriesActivation?.lease ?? managed?.scope.binding.linkLease }
 
@@ -317,9 +319,19 @@ actor RemiloIOSGoogleCalendarImportJournal {
         }
     }
 
+    struct IgnoredCandidate: Codable, Equatable, Sendable {
+        let source: Import.SourceKey
+        let clientID: String
+        let bindingID: UUID
+        let revision: Int
+
+        var candidateID: String { bindingID.uuidString.lowercased() + ":" + source.eventID }
+    }
+
     private struct State: Codable {
         let schemaVersion: Int
         var entries: [UUID: Entry]
+        var ignoredCandidates: [UUID: IgnoredCandidate]?
 
         init() {
             schemaVersion = 1
@@ -366,6 +378,54 @@ actor RemiloIOSGoogleCalendarImportJournal {
         let id = UUID()
         _ = try capture(operationID: id, review: review, choices: choices, managed: permit)
         return id
+    }
+
+    func captureReviewedCandidate(_ operationID: UUID, permit: Inbox.Permit, review: Import.Review, choices: Import.Choices) throws {
+        guard permit.source == review.source.key, permit.reviewedETag == review.source.etag,
+              permit.scope.binding.belongs(to: review.account), permit.scope.binding.account.accountGeneration == review.account.accountGeneration,
+              choices.automaticSync, !choices.disableGoogleReminders else { throw Failure.stalePreview }
+        _ = try capture(operationID: operationID, review: review, choices: choices, managed: permit, candidate: true)
+    }
+
+    func hasCandidateCapture(_ id: UUID, reviewID: UUID, account: Import.Account) throws -> Bool {
+        let state = try read()
+        if state.ignoredCandidates?[id] != nil { throw Failure.operationReused }
+        guard let entry = state.entries[id] else { return false }
+        guard entry.candidateReviewID == reviewID, entry.source.subject == account.subject,
+              (entry.capture?.review.account ?? entry.receipt?.account)?.clientID == account.clientID else {
+            throw Failure.operationReused
+        }
+        return true
+    }
+
+    func ignoredCandidate(_ id: UUID, account: Import.Account) throws -> IgnoredCandidate? {
+        guard let saved = try read().ignoredCandidates?[id], saved.source.subject == account.subject,
+              saved.clientID == account.clientID else { return nil }
+        return saved
+    }
+
+    func ignoreCandidate(_ id: UUID, candidate: IgnoredCandidate) throws {
+        var state = try read()
+        if let saved = state.ignoredCandidates?[id] {
+            guard saved == candidate else { throw Failure.operationReused }
+            return
+        }
+        guard state.entries[id] == nil else { throw Failure.operationReused }
+        for existing in state.entries.values where existing.source == candidate.source {
+            if existing.receipt?.local != nil { throw Failure.alreadyImported }
+            if existing.receipt == nil { throw Failure.operationPending }
+        }
+        var receipts = state.ignoredCandidates ?? [:]
+        receipts[id] = candidate
+        state.ignoredCandidates = receipts
+        try write(state)
+    }
+
+    func ignoredEvents(account: Import.Account, calendarID: String) throws -> Set<String> {
+        Set((try read().ignoredCandidates ?? [:]).values.compactMap {
+            $0.source.subject == account.subject && $0.clientID == account.clientID && $0.source.calendarID == calendarID
+                ? $0.source.eventID : nil
+        })
     }
 
     func pendingManaged(viewingAs account: Import.Account) throws -> [ManagedWork] {
@@ -659,13 +719,17 @@ actor RemiloIOSGoogleCalendarImportJournal {
     }
 
     private func capture(operationID: UUID, review: Import.Review, choices: Import.Choices,
-                         managed: RemiloIOSGoogleCalendarManagedInbox.Permit?) throws -> Receipt? {
+                         managed: RemiloIOSGoogleCalendarManagedInbox.Permit?, candidate: Bool = false) throws -> Receipt? {
         let fingerprint = try Request(operationID: operationID, review: review, choices: choices).fingerprint()
         var state = try read()
+        guard state.ignoredCandidates?[operationID] == nil else { throw Failure.operationReused }
         if let existing = state.entries[operationID] {
             guard existing.fingerprint == fingerprint, existing.managed == managed else { throw Failure.operationReused }
             return existing.receipt
         }
+        if managed != nil, (state.ignoredCandidates ?? [:]).values.contains(where: {
+            $0.source == review.source.key && $0.clientID == review.account.clientID
+        }) { throw Failure.stalePreview }
         for existing in state.entries.values where existing.source == review.source.key {
             if existing.receipt?.local != nil { throw Failure.alreadyImported }
             if existing.receipt == nil { throw Failure.operationPending }
@@ -673,7 +737,7 @@ actor RemiloIOSGoogleCalendarImportJournal {
         let capturedAt = now()
         let capture = try Import.Capture(operationID: operationID, review: review, choices: choices, now: capturedAt)
         state.entries[operationID] = Entry(fingerprint: fingerprint, source: review.source.key, createdAtMs: capturedAt,
-                                          capture: capture, managed: managed)
+                                          capture: capture, managed: managed, candidateReviewID: candidate ? review.id : nil)
         try write(state)
         return nil
     }
@@ -814,9 +878,10 @@ actor RemiloIOSGoogleCalendarImportJournal {
         else if !authorized { suppression = .suspended }
         else if [.blocked, .pending, .partial].contains(observedLocal.status) { suppression = .deferredUntilLocalDelivery }
         else { suppression = .requiresRemoteCheck }
+        let titleDigest = capture.choices.title.map { _ in Data(SHA256.hash(data: Data(capture.command.title.utf8))) }
         let receipt = Receipt(operationID: capture.operationID, source: capture.review.source.key,
                               reviewedETag: capture.review.source.etag, account: capture.review.account, local: observedLocal,
-                              relationship: relationship, suppression: suppression, errorCode: nil)
+                              relationship: relationship, suppression: suppression, errorCode: nil, reviewedTitleDigest: titleDigest)
         return try finalize(receipt)
     }
 

@@ -58,6 +58,19 @@ final class RemiloIOSGoogleCalendarManagedInbox {
     struct Permit: Codable, Equatable, Sendable {
         let scope: Scope
         let observation: Observation
+        var reviewedETag: String? = nil
+
+        var etag: String? { reviewedETag ?? observation.etag }
+
+        func matchesReviewedCandidate(_ current: Observation) -> Bool {
+            guard let reviewedETag, current.eventID == observation.eventID else { return false }
+            switch current.kind {
+            case .removed, .changedInstance: return false
+            case .oneTime, .recurringMaster, .needsReview:
+                return current.etag == reviewedETag ||
+                    (current.etag == observation.etag && current.kind == observation.kind)
+            }
+        }
 
         var source: RemiloIOSGoogleCalendarImport.SourceKey {
             .init(subject: scope.binding.account.subject, calendarID: scope.binding.record.id, eventID: observation.eventID)
@@ -84,15 +97,18 @@ final class RemiloIOSGoogleCalendarManagedInbox {
         return Request(scope: scope, version: state.version, since: state.since, next: state.next)
     }
 
-    func record(_ page: Transport.Page<Transport.Event>, request: Request, now: Int64, tracking: Set<String>? = nil) throws {
+    func record(_ page: Transport.Page<Transport.Event>, request: Request, now: Int64, tracking: Set<String>? = nil,
+                ignored: Set<String> = []) throws {
         var state = try read(request.scope)
         guard state.version == request.version, (page.next == nil) != (page.checkpoint == nil) else { throw Failure.invalidResponse }
+        for id in ignored { state.observations.removeValue(forKey: id) }
         let initial = request.scope.binding.initialImport
         let mode = state.initialComplete ? request.scope.policy.importMode : initial?.mode ?? .none
         let recovery = !state.initialComplete && (initial?.recoveringExistingCalendar ?? true)
         let minutes = state.initialComplete ? request.scope.policy.allDayAlarmMinutes
             : request.scope.initialAllDayAlarmMinutes ?? request.scope.policy.allDayAlarmMinutes
         for event in page.items {
+            guard !ignored.contains(event.id) else { continue }
             let existing = state.observations[event.id]
             if request.scope.resumedEventIDs?.contains(event.id) == true, case .needsReview? = existing?.kind { continue }
             let row = Event.row(event, calendarZone: request.scope.binding.record.zoneId)
@@ -193,10 +209,21 @@ final class RemiloIOSGoogleCalendarManagedInbox {
               prior.scope.binding.account.accountGeneration == scope.binding.account.accountGeneration else { return nil }
         let id = prior.observation.eventID
         let saved = try read(scope)
+        if prior.reviewedETag != nil {
+            guard let observed = saved.observations[id], prior.matchesReviewedCandidate(observed),
+                  scope.heldEventIDs?.contains(id) != true else { return nil }
+            // A candidate may be explicitly reviewed before a complete scan.
+            // The provider is re-read using the reviewed ETag at execution.
+            return Permit(scope: scope, observation: observed, reviewedETag: prior.reviewedETag)
+        }
         guard let observed = saved.observations[id], observed.etag == prior.observation.etag,
               observed.kind == prior.observation.kind else { return nil }
         let permit = Permit(scope: scope, observation: observed)
         return try permits(permit) ? permit : nil
+    }
+
+    static func candidateID(binding: Journal.Binding, eventID: String) -> String {
+        binding.operationID.uuidString.lowercased() + ":" + eventID
     }
 
     func hasCompleteCheckpoint(_ scope: Scope) throws -> Bool {

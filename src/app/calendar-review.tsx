@@ -88,7 +88,12 @@ export default function CalendarReviewRoute() {
       />
     );
   const sourceKey = iosReminders
-    ? JSON.stringify([params.expectedConnectionRevision, params.calendarId, params.eventId])
+    ? JSON.stringify([
+        params.expectedConnectionRevision,
+        params.calendarId,
+        params.eventId,
+        params.candidateId,
+      ])
     : 'calendar-review';
   return <CalendarReview key={sourceKey} params={params} />;
 }
@@ -117,14 +122,13 @@ function CalendarReview({ params }: { params: CalendarReviewParams }) {
   const current = !connection.error ? connection.data : undefined;
   const ready = iosReminders && available && calendarReadAccess(current);
   const revision = current?.revision;
+  const iosCandidate = iosReminders && !!params.candidateId;
   const sameSource =
     ready &&
     revision !== undefined &&
     params.expectedConnectionRevision === String(revision) &&
-    !!params.calendarId &&
-    !!params.eventId &&
+    (iosCandidate || (!!params.calendarId && !!params.eventId)) &&
     !params.id &&
-    !params.candidateId &&
     !params.automatic &&
     !params.managedHistory;
   const preview =
@@ -200,7 +204,7 @@ function CalendarReview({ params }: { params: CalendarReviewParams }) {
   const enable = !link || link.state === 'Detached';
   const activating = !iosReminders && params.automatic === 'true';
   useAppearanceHold(busy || uncertain);
-  usePreventRemove(capturing || (!iosReminders && uncertain), () =>
+  usePreventRemove(capturing || ((!iosReminders || iosCandidate) && uncertain), () =>
     confirm(t('m_12dd26f54ada'), t('m_b6cae41bec3a')),
   );
   const load = useCallback(async () => {
@@ -308,14 +312,18 @@ function CalendarReview({ params }: { params: CalendarReviewParams }) {
       previewId: preview!.previewId,
       revision,
     });
-    const submit = () =>
-      engine().applyCalendarCommand({
-        kind: 'ImportCalendarEvent',
+    const submit = () => {
+      const command = {
         operationId: request.operationId,
         previewId: request.previewId,
         expectedConnectionRevision: request.revision,
-        automaticSync: false,
-      });
+      };
+      return engine().applyCalendarCommand(
+        iosCandidate
+          ? { ...command, kind: 'ImportManagedCalendarCandidate', automaticSync: true }
+          : { ...command, kind: 'ImportCalendarEvent', automaticSync: false },
+      );
+    };
     running.current = true;
     setBusy(true);
     setCapturing(true);
@@ -388,7 +396,8 @@ function CalendarReview({ params }: { params: CalendarReviewParams }) {
     }
   };
   const apply = async () => {
-    if (iosReminders) return applyLocal();
+    if (iosReminders && captured.current?.kind !== 'IgnoreManagedCalendarCandidate')
+      return applyLocal();
     if (running.current || (!preview && !captured.current)) return;
     if (dirty && !captured.current) {
       await load();
@@ -459,6 +468,7 @@ function CalendarReview({ params }: { params: CalendarReviewParams }) {
             operationId: engine().createOperationId(),
             candidateId: params.candidateId!,
             expectedRevision: candidateRevision,
+            ...(iosReminders ? { expectedConnectionRevision: revision } : {}),
           };
           void apply();
         },
@@ -480,10 +490,11 @@ function CalendarReview({ params }: { params: CalendarReviewParams }) {
     timing.alarmAtMs !== preview?.timings?.remilo?.alarmAtMs;
   const recurring = !!preview?.recurrence;
   const syncSelected =
-    !iosReminders &&
-    (activating ||
-      !!params.candidateId ||
-      (choices.automaticSync ?? preview?.choices.automaticSync ?? (imported || enable)));
+    iosCandidate ||
+    (!iosReminders &&
+      (activating ||
+        !!params.candidateId ||
+        (choices.automaticSync ?? preview?.choices.automaticSync ?? (imported || enable))));
   const invalid =
     imported && !adopting
       ? !title.trim() ||
@@ -602,11 +613,11 @@ function CalendarReview({ params }: { params: CalendarReviewParams }) {
           }
         />
       )}
-      {!iosReminders && !preview && uncertain && (
+      {(!iosReminders || iosCandidate) && !preview && uncertain && (
         <Button label={t('m_16003a1a9190')} disabled={busy} onPress={() => void apply()} />
       )}
-      {!iosReminders &&
-        params.candidateId &&
+      {params.candidateId &&
+        (!iosReminders || sameSource) &&
         candidateRevision !== null &&
         !operationId &&
         !sourceUnavailable && (
@@ -628,7 +639,7 @@ function CalendarReview({ params }: { params: CalendarReviewParams }) {
               value={scheduleDateTime(preview.checkedAtMs)}
             />
           </ConnectedGroup>
-          {iosReminders ? (
+          {iosReminders && !iosCandidate ? (
             <Copy muted>{t('ui_calendar_import_local_only')}</Copy>
           ) : (
             <ConnectedGroup title={t('m_b97900d1be7c')}>

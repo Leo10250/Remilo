@@ -63,6 +63,7 @@ final class RemiloIOSGoogleCalendarRuntime {
     private let seriesText: SeriesTextAuthority?
     private var seriesTextWriter: RemiloIOSGoogleCalendarSeriesTextWriter?
     private var reviews: [Import.Review] = []
+    private var candidateReviews: [CandidateReview] = []
     private var importingManaged = false
     private var advancingManagedSetups: Set<UUID> = []
     private var runningSyncRequest: UUID?
@@ -178,10 +179,12 @@ final class RemiloIOSGoogleCalendarRuntime {
             summary.unconfirmed = summary.unconfirmed || status.stage == "Unconfirmed"
             summary.accessRequired = summary.accessRequired || status.stage == "NeedsAccess"
         }
-        let observations = progress?.pending ?? []
+        let ignored = try await ignoredEvents(for: progress?.scope, account: account)
+        let observations = (progress?.pending ?? []).filter { !ignored.contains($0.eventID) }
         let candidates: [ReviewIssue] = observations.compactMap { item in
-            guard case .needsReview(let reason) = item.kind else { return nil }
-            return .init(kind: .candidate, targetID: item.eventID, revision: progress?.revision ?? 0, title: item.title ?? "",
+            guard case .needsReview(let reason) = item.kind, let progress else { return nil }
+            let id = Inbox.candidateID(binding: progress.scope.binding, eventID: item.eventID)
+            return .init(kind: .candidate, targetID: id, revision: progress.revision, title: item.title ?? "",
                 reason: reason == "ELAPSED_EVENT" || reason == Import.Failure.alertExpired.rawValue ? "ElapsedAlert" : "ReviewRequired",
                 discoveredAtMs: item.observedAtMs ?? 0, calendarName: binding?.binding?.record.name)
         }
@@ -605,6 +608,91 @@ final class RemiloIOSGoogleCalendarRuntime {
         return review
     }
 
+    struct CandidateReview: Sendable {
+        let review: Import.Review
+        let choices: Import.Choices
+        let permit: Inbox.Permit
+        let revision: Int
+    }
+
+    private func candidate(_ id: String, account: Import.Account) throws -> (Inbox.Permit, Int) {
+        guard let setup = managedSetup, let progress = try setup.savedIncomingProgress(expectedRevision: account.connectionRevision),
+              progress.scope.binding.belongs(to: account),
+              let observation = progress.pending.first(where: {
+                  Inbox.candidateID(binding: progress.scope.binding, eventID: $0.eventID) == id
+              }), case .needsReview = observation.kind else { throw Import.Failure.notFound }
+        return (.init(scope: progress.scope, observation: observation), progress.revision)
+    }
+
+    func prepareCandidate(_ id: String, expectedRevision: Int, choices: Import.Choices, useDefaultMode: Bool) async throws -> CandidateReview {
+        try requireForeground()
+        let account = try connection.account(expectedRevision: expectedRevision)
+        guard let setup = managedSetup else { throw Failure.invalidConfiguration }
+        let (prior, revision) = try candidate(id, account: account)
+        guard try setup.collectionScope(account) == prior.scope, prior.scope.policy.automaticImport else {
+            throw Import.Failure.stalePreview
+        }
+        let ignored = try await ignoredEvents(for: prior.scope, account: account)
+        guard !ignored.contains(prior.observation.eventID) else { throw Import.Failure.notFound }
+        var selected = choices
+        if useDefaultMode { selected.mode = prior.observation.importMode }
+        selected.automaticSync = true
+        selected.allDayAlarmMinutes = prior.observation.allDayAlarmMinutes ?? prior.scope.policy.allDayAlarmMinutes
+        let review = try await connection.prepareImport(expectedRevision: expectedRevision, calendarID: prior.source.calendarID,
+            eventID: prior.source.eventID, recurringChoices: selected, managedLease: prior.scope.binding.linkLease, canRead: canUseForeground)
+        let reserved = try await reservedEvents(account, calendarID: prior.source.calendarID)
+        try requireCurrentAccount(account)
+        let (current, _) = try candidate(id, account: account)
+        guard current == prior, try setup.collectionScope(account) == prior.scope else { throw Import.Failure.stalePreview }
+        guard !reserved.contains(prior.source.eventID) else { throw Import.Failure.alreadyImported }
+        let permit = Inbox.Permit(scope: prior.scope, observation: prior.observation, reviewedETag: review.source.etag)
+        let reviewed = CandidateReview(review: review, choices: selected, permit: permit, revision: revision)
+        candidateReviews.removeAll { $0.permit.source == permit.source || !$0.review.valid(at: review.checkedAtMs) }
+        if candidateReviews.count >= 8 { candidateReviews.removeFirst() }
+        candidateReviews.append(reviewed)
+        return reviewed
+    }
+
+    func confirmCandidate(_ id: UUID, reviewID: UUID, expectedRevision: Int) async throws -> ImportJournal.Receipt {
+        try requireForeground()
+        let account = try connection.account(expectedRevision: expectedRevision)
+        if try await !importJournal.hasCandidateCapture(id, reviewID: reviewID, account: account) {
+            guard let setup = managedSetup, let saved = candidateReviews.first(where: { $0.review.id == reviewID }),
+                  saved.review.account == account, try setup.permitsCapturedImport(saved.permit, account: account),
+                  try setup.collectionScope(account) == saved.permit.scope else { throw Import.Failure.stalePreview }
+            if try outboundAndLinkedEvents(account, calendarID: saved.permit.source.calendarID).contains(saved.permit.source.eventID) {
+                throw Import.Failure.alreadyImported
+            }
+            try await importJournal.captureReviewedCandidate(id, permit: saved.permit, review: saved.review, choices: saved.choices)
+        }
+        return try await recoverImport(operationID: id, expectedRevision: expectedRevision)
+    }
+
+    func ignoreCandidate(_ id: UUID, candidateID: String, expectedRevision: Int, connectionRevision: Int) async throws {
+        try requireForeground()
+        let account = try connection.account(expectedRevision: connectionRevision)
+        if let saved = try await importJournal.ignoredCandidate(id, account: account) {
+            guard saved.candidateID == candidateID, saved.revision == expectedRevision else { throw Failure.operationReused }
+            return
+        }
+        try requireCurrentAccount(account)
+        let (permit, revision) = try candidate(candidateID, account: account)
+        guard revision == expectedRevision else { throw Import.Failure.stalePreview }
+        let ignored = ImportJournal.IgnoredCandidate(source: permit.source, clientID: account.clientID,
+            bindingID: permit.scope.binding.operationID, revision: revision)
+        try await importJournal.ignoreCandidate(id, candidate: ignored)
+    }
+
+    func ignoredCandidate(_ id: UUID, expectedRevision: Int) async throws -> Bool {
+        let account = try connection.savedAccount(expectedRevision: expectedRevision)
+        return try await importJournal.ignoredCandidate(id, account: account) != nil
+    }
+
+    private func ignoredEvents(for scope: Inbox.Scope?, account: Import.Account) async throws -> Set<String> {
+        guard let scope else { return [] }
+        return try await importJournal.ignoredEvents(account: account, calendarID: scope.binding.record.id)
+    }
+
     func confirmImport(operationID: UUID, reviewID: UUID, expectedRevision: Int,
                        choices: Import.Choices) async throws -> ImportJournal.Receipt {
         try requireForeground()
@@ -630,7 +718,13 @@ final class RemiloIOSGoogleCalendarRuntime {
         guard let original = try await importJournal.account(for: operationID),
               original.subject == viewer.subject, original.clientID == viewer.clientID else { throw Import.Failure.notFound }
         try requireCurrentAccount(viewer)
-        return try await runImport(operationID, viewingAs: viewer)
+        let receipt = try await runImport(operationID, viewingAs: viewer)
+        if let permit = try await importJournal.managedPermit(operationID, viewingAs: viewer), permit.reviewedETag != nil {
+            var result = ManagedImportPass()
+            try finishManagedImport(receipt, permit: permit, account: viewer, result: &result)
+            try await attachPendingManagedLinks(account: viewer, budget: .init(), result: &result)
+        }
+        return receipt
     }
 
     func savedImportOperation(_ id: UUID, expectedRevision: Int) async throws -> ImportJournal.SavedOperation? {
@@ -680,7 +774,9 @@ final class RemiloIOSGoogleCalendarRuntime {
                 }
                 guard !tracking.isEmpty else { return result }
             }
-            let scan = try await managedSetup.scanIncoming(expectedRevision: expectedRevision, budget: budget, tracking: tracking)
+            let ignored = try await ignoredEvents(for: scope, account: account)
+            let scan = try await managedSetup.scanIncoming(expectedRevision: expectedRevision, budget: budget,
+                                                           tracking: tracking, ignored: ignored)
             result.pages = scan.pages
             guard !scan.continuation && scan.initialComplete else {
                 result.continuation = true
@@ -841,7 +937,9 @@ final class RemiloIOSGoogleCalendarRuntime {
         -> [RemiloIOSGoogleCalendarManagedSetup.ResumeImportRow] {
         typealias Row = RemiloIOSGoogleCalendarManagedSetup.ResumeImportRow
         guard let managedSetup else { throw Failure.invalidConfiguration }
+        let ignored = try await ignoredEvents(for: scope, account: account)
         let candidates = observations.filter {
+            guard !ignored.contains($0.eventID) else { return false }
             switch $0.kind {
             case .oneTime, .recurringMaster, .needsReview: return true
             case .removed, .changedInstance: return false

@@ -39,6 +39,12 @@ Sync now on a linked reminder checks that association and records its result.
 Turning off automatic sync leaves the link in manual mode. Completion,
 Trash, and a lost source fence the old authorization, so reopening or
 restoring either copy requires review before automatic work resumes.
+
+For a managed calendar on iOS, the saved review list shows incoming events
+that need a decision. Import rechecks the reviewed Google event version before
+creating a reminder or series, and saves the automatic relationship when it
+can verify the link. Ignore records the choice locally so later checks of that
+calendar skip the event.
 [The signed iOS test workflow](verification.md#google-calendar-on-a-sideloaded-iphone-or-ipad)
 covers setup and device checks.
 [Google Calendar authorization scopes](https://developers.google.com/workspace/calendar/api/auth)
