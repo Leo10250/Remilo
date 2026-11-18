@@ -1390,6 +1390,7 @@ export function DateField({
     instant: number;
   }>();
   const [confirming, setConfirming] = useState(false);
+  const trigger = useRef<View>(null);
   useAppearanceHold(picking);
   const live = useRef(true),
     ticket = useRef(0);
@@ -1514,47 +1515,55 @@ export function DateField({
         compact={compact}
         value={formatted}
         accessibilityLabel={accessibilityLabel ? accessibilityLabel + ', ' + formatted : undefined}
+        buttonRef={trigger}
         onPress={pick}
       />
-      {iosDraft && (
+      {Platform.OS === 'ios' && (
         <Sheet
           title={label}
-          visible
+          visible={iosDraft !== undefined}
           onClose={closeIOSPicker}
+          returnFocusRef={trigger}
           footer={
-            <View style={{ padding: space.gutter, gap: space.sm }}>
-              <Button
-                label={t(
-                  iosDraft.mode === 'date' && !dateOnly ? 'ios_picker_continue' : 'm_11a6767d5674',
-                )}
-                disabled={disabled || confirming}
-                onPress={() => void acceptIOSPicker()}
-              />
-              <Button label={t('m_19766ed6ccb2')} variant="secondary" onPress={closeIOSPicker} />
-            </View>
+            iosDraft && (
+              <View style={{ padding: space.gutter, gap: space.sm }}>
+                <Button
+                  label={t(
+                    iosDraft.mode === 'date' && !dateOnly
+                      ? 'ios_picker_continue'
+                      : 'm_11a6767d5674',
+                  )}
+                  disabled={disabled || confirming}
+                  onPress={() => void acceptIOSPicker()}
+                />
+                <Button label={t('m_19766ed6ccb2')} variant="secondary" onPress={closeIOSPicker} />
+              </View>
+            )
           }
         >
-          <DateTimePicker
-            key={iosDraft.mode}
-            accessibilityLabel={accessibilityLabel ?? label}
-            mode={iosDraft.mode}
-            display="spinner"
-            themeVariant={colors.dark ? 'dark' : 'light'}
-            timeZoneName={zoneId}
-            value={new Date(iosDraft.instant)}
-            disabled={confirming || disabled}
-            onValueChange={({ nativeEvent }) => {
-              setIOSDraft(
-                (draft) =>
-                  draft && {
-                    ...draft,
-                    instant: nativeEvent.timestamp,
-                    // The iOS Fabric picker sends the instant without the zone offset.
-                    selection: civilAt(nativeEvent.timestamp, zoneId),
-                  },
-              );
-            }}
-          />
+          {iosDraft && (
+            <DateTimePicker
+              key={iosDraft.mode}
+              accessibilityLabel={accessibilityLabel ?? label}
+              mode={iosDraft.mode}
+              display="spinner"
+              themeVariant={colors.dark ? 'dark' : 'light'}
+              timeZoneName={zoneId}
+              value={new Date(iosDraft.instant)}
+              disabled={confirming || disabled}
+              onValueChange={({ nativeEvent }) => {
+                setIOSDraft(
+                  (draft) =>
+                    draft && {
+                      ...draft,
+                      instant: nativeEvent.timestamp,
+                      // The iOS Fabric picker sends the instant without the zone offset.
+                      selection: civilAt(nativeEvent.timestamp, zoneId),
+                    },
+                );
+              }}
+            />
+          )}
         </Sheet>
       )}
       {!!message &&

@@ -122,44 +122,48 @@ export function ClockPreferenceRow({
           <ActionFeedback message={error} tone="danger" />
         </RowSupport>
       )}
-      {iosDraft != null && (
+      {Platform.OS === 'ios' && (
         <Sheet
           title={label}
-          visible
+          visible={iosDraft != null}
           returnFocusRef={trigger}
           onClose={closeIOSPicker}
           footer={
-            <View style={{ padding: space.gutter, gap: space.sm }}>
-              <Button
-                label={t('m_11a6767d5674')}
-                disabled={disabled}
-                onPress={() => {
-                  closeIOSPicker();
-                  if (iosDraft !== minutes) onChange(iosDraft);
-                }}
-              />
-              <Button label={t('m_19766ed6ccb2')} variant="secondary" onPress={closeIOSPicker} />
-            </View>
+            iosDraft != null && (
+              <View style={{ padding: space.gutter, gap: space.sm }}>
+                <Button
+                  label={t('m_11a6767d5674')}
+                  disabled={disabled}
+                  onPress={() => {
+                    closeIOSPicker();
+                    if (iosDraft !== minutes) onChange(iosDraft);
+                  }}
+                />
+                <Button label={t('m_19766ed6ccb2')} variant="secondary" onPress={closeIOSPicker} />
+              </View>
+            )
           }
         >
-          <DateTimePicker
-            accessibilityLabel={label}
-            mode="time"
-            display="spinner"
-            themeVariant={colors.dark ? 'dark' : 'light'}
-            timeZoneName="UTC"
-            value={clockPreferenceDate(iosDraft)}
-            disabled={disabled}
-            onValueChange={({ nativeEvent }) => {
-              try {
-                const value = clockPreferenceFromPicker(nativeEvent.timestamp, 0);
-                setIOSDraft((current) => (current == null ? current : value));
-              } catch {
-                closeIOSPicker();
-                setError(t('m_67a437769493'));
-              }
-            }}
-          />
+          {iosDraft != null && (
+            <DateTimePicker
+              accessibilityLabel={label}
+              mode="time"
+              display="spinner"
+              themeVariant={colors.dark ? 'dark' : 'light'}
+              timeZoneName="UTC"
+              value={clockPreferenceDate(iosDraft)}
+              disabled={disabled}
+              onValueChange={({ nativeEvent }) => {
+                try {
+                  const value = clockPreferenceFromPicker(nativeEvent.timestamp, 0);
+                  setIOSDraft((current) => (current == null ? current : value));
+                } catch {
+                  closeIOSPicker();
+                  setError(t('m_67a437769493'));
+                }
+              }}
+            />
+          )}
         </Sheet>
       )}
       {preview && (

@@ -235,7 +235,10 @@ feasibility. Physical acceptance uses a signed build of Remilo itself.
    longer change the reminder.
 5. Open **Settings → Tomorrow shortcuts** and edit a time. Confirm Done saves
    the exact minute and Cancel discards the edit. Check the new time in the
-   postpone chooser with both system clock formats.
+   postpone chooser with both system clock formats. Close the reminder and
+   shortcut pickers and check that the wheel stays visible until the sheet
+   slides away and focus returns to its row. With Reduce Motion enabled, check
+   that the sheet closes immediately and still returns focus.
 6. Complete a test routine date. In Records, move it to Trash and restore it,
    then check that the saved steps are still completed. Move the test date back
    to Trash and permanently delete it. Relaunch and confirm the routine plan
