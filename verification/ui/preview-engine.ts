@@ -347,8 +347,9 @@ const routines = routinePreview(
   },
 );
 const currentRoutine = routines.progress;
+const mixedDelivery = review.get('reviewSession') === 'mixed-delivery';
 const routineAlarms: RoutineAlarmActionRequest[] =
-  review.get('reviewSession') === 'routine-alarm' && currentRoutine
+  (review.get('reviewSession') === 'routine-alarm' || mixedDelivery) && currentRoutine
     ? [1, 2].map((index) => ({
         kind: 'RoutineAlarmActions',
         occurrenceId: 'fixture-routine-alarm-' + index,
@@ -360,7 +361,23 @@ const routineAlarms: RoutineAlarmActionRequest[] =
         closesAtMs: Date.now() + 3_600_000,
       }))
     : [];
-let routineAlarmsTaken = false;
+const reviewReminder = items.find((item) => item.id === 'review');
+const reviewPostponeRequest = reviewReminder && {
+  kind: 'Single' as const,
+  occurrenceId: reviewReminder.id,
+  expectedGeneration: reviewReminder.generation,
+};
+const pendingDeliveryRequests =
+  mixedDelivery && routineAlarms.length && reviewPostponeRequest
+    ? [
+        routineAlarms[0],
+        reviewPostponeRequest,
+        { ...reviewPostponeRequest },
+        { kind: 'ReminderActions' as const, occurrenceId: 'review' },
+        { kind: 'ReminderActions' as const, occurrenceId: 'dentist' },
+      ]
+    : routineAlarms;
+let deliveryRequestsTaken = false;
 const handledRoutineAlarms = new Set<string>();
 if (currentRoutine)
   items.push(
@@ -1374,12 +1391,12 @@ const preview = {
   previewRoutine: routines.previewRoutine,
   createOperationId: () => 'preview-operation-' + nextId(),
   getTimeDisplayPreferences: async () => timePreferences(),
-  ...(routineAlarms.length
+  ...(pendingDeliveryRequests.length
     ? {
         takePendingDeliveryRequests: async () => {
-          if (routineAlarmsTaken) return [];
-          routineAlarmsTaken = true;
-          return clone(routineAlarms);
+          if (deliveryRequestsTaken) return [];
+          deliveryRequestsTaken = true;
+          return clone(pendingDeliveryRequests);
         },
       }
     : {}),
@@ -1458,6 +1475,7 @@ const preview = {
   resolvePostponeTime: async (input: PostponeTimeInput) => resolvePostponeTime(input),
   queryReminders: async (filter: ReminderFilter, cursor: string | null) => query(filter, cursor),
   getOccurrence: async (id: string) => {
+    if (mixedDelivery && id === 'review') await new Promise((resolve) => setTimeout(resolve, 500));
     const item = items.find((row) => row.id === id);
     return item ? view(item) : null;
   },

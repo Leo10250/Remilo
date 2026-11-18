@@ -111,6 +111,9 @@ Open the preview at `/?reviewRoutine=1&reviewSession=routine-alarm&reviewLostRep
 to exercise two queued routine alarm sheets and retry after a lost reply.
 Use Start routine, then Retry the same action. Check that the first sheet
 closes before the dated session opens and the second sheet appears.
+Use `/?reviewRoutine=1&reviewSession=mixed-delivery` to check that a routine
+alarm opens before a queued Postpone request. Dismiss both, then use Back from
+the final reminder and confirm the preceding reminder is still in the stack.
 
 ## Physical testing
 

@@ -33,6 +33,8 @@ const emptySnapshot = () => emptyPostponeDraft;
 export function PostponeChooser({
   visible,
   capture,
+  loading,
+  loadFailed,
   busy,
   uncertain,
   acknowledged,
@@ -41,6 +43,8 @@ export function PostponeChooser({
   retryLabel,
   progressLabel,
   onClose,
+  onDismissed,
+  onLoadRetry,
   onSubmit,
   onRetry,
   onAlarmSettings,
@@ -52,6 +56,8 @@ export function PostponeChooser({
 }: {
   visible: boolean;
   capture: PostponeCapture | null;
+  loading: boolean;
+  loadFailed: boolean;
   busy: boolean;
   uncertain: boolean;
   acknowledged: boolean;
@@ -62,6 +68,8 @@ export function PostponeChooser({
   acknowledgedLabel?: string;
   draftOwner?: PostponeDraft;
   onClose: () => void;
+  onDismissed: () => void;
+  onLoadRetry: () => void;
   onSubmit: (targetMs: number) => void;
   onRetry: () => void;
   onAlarmSettings: () => void;
@@ -197,90 +205,112 @@ export function PostponeChooser({
       draft?.backToChoices();
     }
   };
+  const loadingFooter = (
+    <BottomActionBar>
+      {!loading && <Button label={t('m_942087cc2d41')} onPress={onLoadRetry} />}
+      <Button label={t('m_19766ed6ccb2')} variant="secondary" onPress={onClose} />
+    </BottomActionBar>
+  );
   return (
     <Sheet
       visible={visible}
-      title={state.customOpen ? t('postpone_custom_date_time') : t('m_a5200499d443')}
+      title={
+        !capture
+          ? t('postpone_action')
+          : state.customOpen
+            ? t('postpone_custom_date_time')
+            : t('m_a5200499d443')
+      }
       onClose={onClose}
+      onDismissed={onDismissed}
       returnFocusRef={returnFocusRef}
       returnFocusWhen={returnFocusWhen}
       onBack={state.customOpen ? back : onClose}
       footer={
-        <BottomActionBar>
-          <View style={{ width: '100%', gap: 8 }}>
-            {capture && previewMs != null && (
-              <View
-                style={{
-                  backgroundColor: colors.background,
-                  padding: 12,
-                  borderRadius: 16,
-                  gap: 4,
-                }}
-              >
+        !capture ? (
+          loadingFooter
+        ) : (
+          <BottomActionBar>
+            <View style={{ width: '100%', gap: 8 }}>
+              {capture && previewMs != null && (
+                <View
+                  style={{
+                    backgroundColor: colors.background,
+                    padding: 12,
+                    borderRadius: 16,
+                    gap: 4,
+                  }}
+                >
+                  <Copy muted size={typography.supporting}>
+                    {groupCount != null
+                      ? t('postpone_next_group', { count: groupCount })
+                      : t('postpone_next_alert')}
+                  </Copy>
+                  <Copy>{formatTime(previewMs, capture.zoneId)}</Copy>
+                  <ZoneSummary zoneId={capture.zoneId} atMs={previewMs} />
+                </View>
+              )}
+              {selected?.adjustment !== 'none' && selected && (
                 <Copy muted size={typography.supporting}>
-                  {groupCount != null
-                    ? t('postpone_next_group', { count: groupCount })
-                    : t('postpone_next_alert')}
+                  {selected.adjustment === 'gapForward' ? t('m_d242331f3d81') : t('m_9365adde07dc')}
                 </Copy>
-                <Copy>{formatTime(previewMs, capture.zoneId)}</Copy>
-                <ZoneSummary zoneId={capture.zoneId} atMs={previewMs} />
-              </View>
-            )}
-            {selected?.adjustment !== 'none' && selected && (
-              <Copy muted size={typography.supporting}>
-                {selected.adjustment === 'gapForward' ? t('m_d242331f3d81') : t('m_9365adde07dc')}
-              </Copy>
-            )}
-            {previewMs != null && !future && !frozen && (
-              <Status label={t('postpone_future_time')} tone="danger" />
-            )}
-            {feedback}
-            {state.customOpen ? (
-              <>
+              )}
+              {previewMs != null && !future && !frozen && (
+                <Status label={t('postpone_future_time')} tone="danger" />
+              )}
+              {feedback}
+              {state.customOpen ? (
+                <>
+                  <Button
+                    label={t('postpone_use_time')}
+                    disabled={frozen || state.resolving || !!state.error || !future}
+                    onPress={() => {
+                      void draft?.useCustom(Date.now()).then((applied) => {
+                        if (applied) onSelectionChange();
+                      });
+                    }}
+                  />
+                  <Button
+                    label={t('postpone_back_choices')}
+                    variant="secondary"
+                    disabled={frozen}
+                    onPress={back}
+                  />
+                </>
+              ) : acknowledged ? (
+                <>
+                  <Button label={acknowledgedLabel ?? t('m_59f6ec7bb281')} onPress={onClose} />
+                  <Button
+                    label={t('m_0146bbb12bf3')}
+                    variant="secondary"
+                    onPress={onAlarmSettings}
+                  />
+                </>
+              ) : (
                 <Button
-                  label={t('postpone_use_time')}
-                  disabled={frozen || state.resolving || !!state.error || !future}
+                  label={
+                    busy
+                      ? progressLabel
+                      : uncertain
+                        ? retryLabel
+                        : groupCount != null
+                          ? t('postpone_all_action', { count: groupCount })
+                          : t('postpone_action')
+                  }
+                  busy={busy}
+                  disabled={
+                    busy ||
+                    (!uncertain && (!eligible || !future || state.resolving || !!state.error))
+                  }
                   onPress={() => {
-                    void draft?.useCustom(Date.now()).then((applied) => {
-                      if (applied) onSelectionChange();
-                    });
+                    if (uncertain) onRetry();
+                    else if (state.target) onSubmit(state.target.instantMs);
                   }}
                 />
-                <Button
-                  label={t('postpone_back_choices')}
-                  variant="secondary"
-                  disabled={frozen}
-                  onPress={back}
-                />
-              </>
-            ) : acknowledged ? (
-              <>
-                <Button label={acknowledgedLabel ?? t('m_59f6ec7bb281')} onPress={onClose} />
-                <Button label={t('m_0146bbb12bf3')} variant="secondary" onPress={onAlarmSettings} />
-              </>
-            ) : (
-              <Button
-                label={
-                  busy
-                    ? progressLabel
-                    : uncertain
-                      ? retryLabel
-                      : groupCount != null
-                        ? t('postpone_all_action', { count: groupCount })
-                        : t('postpone_action')
-                }
-                busy={busy}
-                disabled={
-                  busy || (!uncertain && (!eligible || !future || state.resolving || !!state.error))
-                }
-                onPress={() => {
-                  if (uncertain) onRetry();
-                  else if (state.target) onSubmit(state.target.instantMs);
-                }}
-              />
-            )}
-          </View>
-        </BottomActionBar>
+              )}
+            </View>
+          </BottomActionBar>
+        )
       }
     >
       {capture && (
@@ -422,6 +452,16 @@ export function PostponeChooser({
           {!acknowledged && !uncertain && !eligible && (
             <Status label={t('postpone_stale')} tone="warning" />
           )}
+        </>
+      )}
+      {!capture && (
+        <>
+          <ActionFeedback
+            loading={loading}
+            message={loadFailed ? t('postpone_load_failed') : undefined}
+            tone="danger"
+          />
+          {feedback}
         </>
       )}
     </Sheet>

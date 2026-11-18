@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, useSyncExternalStore, type RefObject } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type RefObject,
+} from 'react';
 import { AppState, View } from 'react-native';
 import { router, useIsFocused } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
@@ -7,6 +14,7 @@ import { PostponeDraft, type PostponeCapture } from '../domain/postpone';
 import { PostponeController, postponeHostPresentation } from '../domain/postpone-controller';
 import {
   parsePostponeRequest,
+  postponeRequestIdentity,
   subscribePostponeLinks,
   takePostponeLink,
   type PostponeRequest,
@@ -16,7 +24,7 @@ import { deviceZone } from '../domain/time';
 import { ringingMembersRemain } from '../domain/ringing-session';
 import { errorText } from '../localization';
 import { useTranslation } from '../localization/react';
-import { ActionFeedback, BottomActionBar, Button, Copy, Sheet } from './components';
+import { ActionFeedback, Copy } from './components';
 import { engine, iosReminders, nativeAvailable } from './native';
 import { PostponeChooser } from './postpone-chooser';
 import { useAppearanceConfirmation } from './confirmation';
@@ -96,28 +104,31 @@ export function NativeDeliveryRequestHost() {
         AppState.currentState !== 'active'
       )
         return;
-      if (pending[0]?.kind === 'RoutineAlarmActions' && controller.snapshot().request) return;
-      const request = pending.shift();
-      if (request?.kind === 'ReminderActions') {
-        router.navigate({ pathname: '/reminder/[id]', params: { id: request.occurrenceId } });
-      } else if (iosReminders && request?.kind === 'AlarmReminderActions') {
-        router.push({
-          pathname: '/reminder/[id]',
-          params: {
-            id: request.occurrenceId,
-            alarmGeneration: String(request.expectedGeneration),
-          },
-        });
-      } else if (request?.kind === 'Routine') {
-        router.navigate({
-          pathname: '/routine-session',
-          params: { id: request.routineId, date: request.date },
-        });
-      } else if (request?.kind === 'RoutineAlarmActions') {
-        currentRoutineAlarm.current = request;
-        setRoutineAlarm(request);
-      } else if (request?.kind === 'Single' && openPostpone(request) && !controller.isGuarded()) {
-        router.navigate('/');
+      if (controller.snapshot().request) return;
+      for (let request = pending.shift(); request; request = pending.shift()) {
+        if (request.kind === 'ReminderActions') {
+          router.navigate({ pathname: '/reminder/[id]', params: { id: request.occurrenceId } });
+        } else if (iosReminders && request.kind === 'AlarmReminderActions') {
+          router.push({
+            pathname: '/reminder/[id]',
+            params: {
+              id: request.occurrenceId,
+              alarmGeneration: String(request.expectedGeneration),
+            },
+          });
+        } else if (request.kind === 'Routine') {
+          router.navigate({
+            pathname: '/routine-session',
+            params: { id: request.routineId, date: request.date },
+          });
+        } else if (request.kind === 'RoutineAlarmActions') {
+          currentRoutineAlarm.current = request;
+          setRoutineAlarm(request);
+          return;
+        } else if (request.kind === 'Single' && openPostpone(request)) {
+          router.navigate('/');
+          return;
+        }
       }
     };
     const receive = () => {
@@ -130,7 +141,6 @@ export function NativeDeliveryRequestHost() {
       void module.takePendingDeliveryRequests!()
         .then((requests) => {
           if (!mounted) return;
-          let opened = false;
           for (const request of requests) {
             if (
               request.kind === 'RoutineAlarmActions' &&
@@ -142,14 +152,16 @@ export function NativeDeliveryRequestHost() {
                 ))
             )
               continue;
-            if (request.kind === 'Single' && !currentRoutineAlarm.current) {
-              opened = openPostpone(request) || opened;
-              continue;
+            if (request.kind === 'Single') {
+              const matches = (other: Request | PostponeRequest | null) =>
+                other?.kind === 'Single' &&
+                other.occurrenceId === request.occurrenceId &&
+                other.expectedGeneration === request.expectedGeneration;
+              if (matches(controller.snapshot().request) || pending.some(matches)) continue;
             }
             pending.push(request);
           }
-          if (opened && !controller.isGuarded()) router.navigate('/');
-          else present();
+          present();
         })
         .catch(() => getHomeController().invalidRequest())
         .finally(() => {
@@ -161,7 +173,8 @@ export function NativeDeliveryRequestHost() {
         });
     };
     const native = module.addListener('onDeliveryRequested', receive);
-    const unsubscribe = controller.subscribe(present);
+    // Wait until a close has also handed off any draft already in the controller queue.
+    const unsubscribe = controller.subscribe(() => queueMicrotask(present));
     const app = AppState.addEventListener('change', (state) => {
       if (state === 'active') receive();
     });
@@ -256,19 +269,38 @@ export function PostponeHost({
     t = useTranslation(),
     { formatTime } = useTimeFormatting();
   const draft = draftFor(state.capture);
-  const captureKey = state.capture
-    ? JSON.stringify([state.request, state.capture.referenceAtMs])
-    : null;
-  // A new request resets the chooser. Closing keeps it mounted for the sheet exit.
-  const [chooserKey, setChooserKey] = useState(captureKey);
-  if (captureKey !== null && captureKey !== chooserKey) setChooserKey(captureKey);
+  const [closing, setClosing] = useState(false);
+  const exit = useRef<{ request: PostponeRequest; after?: () => void } | null>(null);
+  const close = useCallback(
+    (after?: () => void) => {
+      const request = controller.snapshot().request;
+      if (!request || controller.isGuarded() || exit.current) return;
+      exit.current = { request, after };
+      setClosing(true);
+    },
+    [controller],
+  );
+  // The request owns the presentation until the shared sheet finishes dismissing.
+  const dismissed = () => {
+    const job = exit.current;
+    exit.current = null;
+    setClosing(false);
+    if (job && controller.snapshot().request === job.request && controller.close()) job.after?.();
+  };
+  useEffect(
+    () => () => {
+      if (exit.current && exit.current.request === controller.snapshot().request)
+        controller.close();
+    },
+    [controller],
+  );
   const presentation = postponeHostPresentation(
     state.destination,
     destination,
     focused,
     action.guarded,
   );
-  const visible = presentation.visible;
+  const visible = presentation.visible && !!state.request && !closing;
   useEffect(() => {
     if (presentation.navigateHome && state.request) router.navigate('/');
   }, [presentation.navigateHome, state.request]);
@@ -294,8 +326,8 @@ export function PostponeHost({
     )
       return;
     notify({ message: resultFeedback.message, tone: resultFeedback.tone });
-    controller.close();
-  }, [visible, state.acknowledged, state.result, resultFeedback, controller]);
+    close();
+  }, [visible, state.acknowledged, state.result, resultFeedback, close]);
   // The exact chosen target is already visible in the persistent chooser preview.
   const feedback = (
     <>
@@ -314,67 +346,41 @@ export function PostponeHost({
       )}
     </>
   );
-  const close = () => {
-    controller.close();
-  };
   const settings = () => {
-    if (controller.close()) {
+    close(() => {
       if (onAlarmSettings) onAlarmSettings();
       else router.push('/alarm-check');
-    }
+    });
   };
   return (
-    <>
-      <Sheet
-        visible={visible && !!state.request && !state.capture}
-        title={t('postpone_action')}
-        onClose={close}
-        returnFocusRef={returnFocusRef}
-        footer={
-          <BottomActionBar>
-            {!state.loading && (
-              <Button
-                label={t('m_942087cc2d41')}
-                onPress={() => {
-                  void controller.load();
-                }}
-              />
-            )}
-            <Button label={t('m_19766ed6ccb2')} variant="secondary" onPress={close} />
-          </BottomActionBar>
-        }
-      >
-        <ActionFeedback
-          loading={state.loading}
-          message={state.failure === 'load' ? t('postpone_load_failed') : undefined}
-          tone="danger"
-        />
-        {state.queued && <Copy muted>{t('postpone_request_waiting')}</Copy>}
-      </Sheet>
-      <PostponeChooser
-        key={chooserKey}
-        draftOwner={draft}
-        visible={visible && !!state.capture}
-        capture={state.capture}
-        busy={state.submitting}
-        uncertain={state.uncertain}
-        acknowledged={state.acknowledged}
-        eligible={state.eligible}
-        feedback={feedback}
-        retryLabel={recovery.retry}
-        progressLabel={recovery.progress}
-        acknowledgedLabel={destination === 'home' ? t('postpone_return_home') : t('m_59f6ec7bb281')}
-        returnFocusRef={returnFocusRef}
-        returnFocusWhen={() => focused}
-        onClose={close}
-        onSubmit={(target) => {
-          controller.submit(target);
-          draft?.setFrozen(controller.isGuarded());
-        }}
-        onRetry={() => controller.retry()}
-        onSelectionChange={() => controller.select()}
-        onAlarmSettings={settings}
-      />
-    </>
+    <PostponeChooser
+      key={state.request ? postponeRequestIdentity(state.request) : undefined}
+      draftOwner={draft}
+      visible={visible}
+      capture={state.capture}
+      loading={state.loading}
+      loadFailed={state.failure === 'load'}
+      onLoadRetry={() => void controller.load()}
+      busy={state.submitting}
+      uncertain={state.uncertain}
+      acknowledged={state.acknowledged}
+      eligible={state.eligible}
+      feedback={feedback}
+      retryLabel={recovery.retry}
+      progressLabel={recovery.progress}
+      acknowledgedLabel={destination === 'home' ? t('postpone_return_home') : t('m_59f6ec7bb281')}
+      returnFocusRef={returnFocusRef}
+      returnFocusWhen={() => focused && !exit.current?.after}
+      onClose={() => close()}
+      onDismissed={dismissed}
+      onSubmit={(target) => {
+        if (exit.current) return;
+        controller.submit(target);
+        draft?.setFrozen(controller.isGuarded());
+      }}
+      onRetry={() => controller.retry()}
+      onSelectionChange={() => controller.select()}
+      onAlarmSettings={settings}
+    />
   );
 }
