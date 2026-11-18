@@ -1532,7 +1532,7 @@ A previously sent Google update may still finish.</string>
   <string name="l10n_m_58cefb489b1a">Reset all filters</string>
   <string name="l10n_m_d80ab19b7edb">Apply filters</string>
   <string name="l10n_m_920e413c7d41">Status</string>
-  <string name="l10n_m_c64ccd9027a7">Missed, timed out, interrupted, blocked or failed alerts.</string>
+  <string name="l10n_m_c64ccd9027a7">Missed, timed out, interrupted, blocked, failed, or unconfirmed alerts.</string>
   <string name="l10n_m_0df6f1cad36c">Show</string>
   <string name="l10n_m_614f35ad96d0">Show skipped</string>
   <string name="l10n_m_53eb3f7aeec6">All lists</string>

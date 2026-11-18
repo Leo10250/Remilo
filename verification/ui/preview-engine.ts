@@ -236,6 +236,11 @@ if (review.get('reviewCards') === 'states') {
       nextAlertMs: null,
       deliveryState: 'TimedOut',
     }),
+    make('unconfirmed', 'An alert with unconfirmed delivery', 0, {
+      alarmAtMs: now - 240_000,
+      nextAlertMs: null,
+      deliveryState: 'DeliveryUnconfirmed',
+    }),
     make('notified', 'A delivered notification', 0, {
       mode: 'Notification',
       alarmAtMs: now - 3_600_000,
@@ -823,7 +828,9 @@ function query(filter: ReminderFilter, cursor: string | null): ReminderPage {
     (!filter.listName || filter.listName === item.listName) &&
     (!filter.deliveryIssuesOnly ||
       (item.mode !== 'None' &&
-        ['Missed', 'TimedOut', 'Interrupted', 'Blocked', 'Failed'].includes(item.deliveryState))) &&
+        ['Missed', 'TimedOut', 'Interrupted', 'Blocked', 'Failed', 'DeliveryUnconfirmed'].includes(
+          item.deliveryState,
+        ))) &&
     (!filter.segmentId || filter.segmentId === item.segmentId) &&
     (!filter.seriesId || series.get(item.segmentId ?? '')?.seriesId === filter.seriesId);
   const rows = items

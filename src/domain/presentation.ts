@@ -34,39 +34,47 @@ export function nextAlertTime(item: Occurrence) {
 }
 export function stateLabel(
   item: Pick<
-    Occurrence,
-    'deliveryState' | 'nextAlertMs' | 'alarmAtMs' | 'completed' | 'skipped' | 'alertAdjustment'
-  > & { mode?: Occurrence['mode'] },
+    ScheduleItem,
+    | 'deliveryState'
+    | 'nextAlertMs'
+    | 'alarmAtMs'
+    | 'completed'
+    | 'skipped'
+    | 'alertAdjustment'
+    | 'mode'
+  >,
+  language = currentLanguage(),
 ) {
-  if (item.completed) return t('m_22a970d2e5b1');
-  if (item.skipped) return t('m_12698ce1ea5c');
-  if (item.mode === 'None') return t('m_d1af410eb4d0');
+  if (item.completed) return t('m_22a970d2e5b1', undefined, language);
+  if (item.skipped) return t('m_12698ce1ea5c', undefined, language);
+  if (item.mode === 'None') return t('m_d1af410eb4d0', undefined, language);
   if (item.deliveryState === 'Scheduled')
     return (
-      (item.alertAdjustment ? ownedMessage(item.alertAdjustment) : undefined) ??
-      (item.nextAlertMs != null && item.nextAlertMs !== item.alarmAtMs ? t('m_0eb42cd9606b') : '')
+      (item.alertAdjustment ? ownedMessage(item.alertAdjustment, language) : undefined) ??
+      (item.nextAlertMs != null && item.nextAlertMs !== item.alarmAtMs
+        ? t('m_0eb42cd9606b', undefined, language)
+        : '')
     );
-  if (item.mode === 'Notification' && item.deliveryState === 'Missed') return t('m_e634611aa858');
-  return (
-    (
-      {
-        Alerting: t('m_426a858eacbb'),
-        Stopped: t('m_f36a51f323bf'),
-        Missed: t('m_5c12863b4f4d'),
-        TimedOut: t('m_ba0c9f7afee3'),
-        Interrupted: t('m_a48a8f6a3fa3'),
-        DeliveryUnconfirmed: t('m_3229d16ca643'),
-        Blocked: t('m_4bf68dddf882'),
-        Failed: item.mode === 'Notification' ? t('m_8d3fa6513897') : t('m_c7102925c08a'),
-        Paused: t('m_e159b06187d3'),
-        Changing: t('m_379738c9c123'),
-        SeriesChanging: t('m_176ac00b6f0e'),
-        Pending: t('m_ed5c58303a98'),
-        Notified: t('m_02e87bf90c4c'),
-        NoAlert: t('m_d1af410eb4d0'),
-      } as Record<string, string>
-    )[item.deliveryState] ?? ''
-  );
+  const labels = {
+    Alerting: 'm_426a858eacbb',
+    Stopped: 'm_f36a51f323bf',
+    Missed: item.mode === 'Notification' ? 'm_e634611aa858' : 'm_5c12863b4f4d',
+    TimedOut: 'm_ba0c9f7afee3',
+    Interrupted: 'm_a48a8f6a3fa3',
+    DeliveryUnconfirmed: 'm_3229d16ca643',
+    Blocked: 'm_4bf68dddf882',
+    Failed: item.mode === 'Notification' ? 'm_8d3fa6513897' : 'm_c7102925c08a',
+    Paused: 'm_e159b06187d3',
+    Changing: 'm_379738c9c123',
+    SeriesChanging: 'm_176ac00b6f0e',
+    Pending: 'm_ed5c58303a98',
+    Notified: 'm_02e87bf90c4c',
+    NoAlert: 'm_d1af410eb4d0',
+  } as const;
+  const state = item.deliveryState;
+  return state && Object.hasOwn(labels, state)
+    ? t(labels[state as keyof typeof labels], undefined, language)
+    : '';
 }
 
 export type ScheduleItem = Pick<
@@ -245,7 +253,7 @@ export function agendaAlertPresentation(
       ? t('m_24aa76b87f0f', { arg0: String(mode), arg1: String(time) }, options.resolvedLanguage)
       : t('m_430655ba4ce1', { arg0: String(mode), arg1: String(time) }, options.resolvedLanguage);
 }
-export type CardContext = { groupKey: string };
+export type CardContext = { groupKey: string; showDeliveryIssues?: boolean };
 /** A date may be omitted only when this row has an actual matching date heading. */
 export function cardTimingPresentation(
   item: ScheduleItem & { agendaAtMs?: number },
@@ -482,16 +490,22 @@ export function reminderBrowsingPresentation(
       tone: 'muted',
       icon: 'pause',
     };
-  // A future snoozed/postponed target or blocked/intended target is already explicit
-  // in timing. Missed/timeout/interruption/notified labels add no useful work state.
+  const filteredOutcome =
+    context?.showDeliveryIssues &&
+    !terminal &&
+    item.mode !== 'None' &&
+    ['Missed', 'TimedOut', 'Interrupted'].includes(item.deliveryState ?? '')
+      ? stateLabel(item, options.resolvedLanguage)
+      : null;
   const warning =
-    !terminal && overdue && !ringing && item.mode !== 'None' && item.deliveryState === 'Failed'
+    filteredOutcome ??
+    (!terminal && overdue && !ringing && item.mode !== 'None' && item.deliveryState === 'Failed'
       ? item.mode === 'Notification'
         ? t('m_8d3fa6513897', undefined, options.resolvedLanguage)
         : t('m_c7102925c08a', undefined, options.resolvedLanguage)
       : overdue
         ? unconfirmed
-        : null;
+        : null);
   const spokenLabel = [
     spokenTiming,
     status?.spokenLabel,

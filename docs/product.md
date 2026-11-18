@@ -161,8 +161,9 @@ date membership; No alert uses When. Groups are Overdue, Earlier, Today, Tomorro
 and explicit future dates. Native filtering, ordering and full-query counts precede
 pagination. Overdue sorts by its original boundary then ID. Search and list, overdue
 and Alert problems filters are local dataset controls. Alert problems includes
-Missed, Timed out, Interrupted, Blocked and Failed, excluding No alert, Stopped,
-Notification sent and Updating. Draft filters require Apply; Cancel preserves the
+Missed, Timed out, Interrupted, Blocked, Failed and iOS Unconfirmed, excluding
+No alert, Stopped, Notification sent and Updating. Filtered rows show the problem
+alongside the work state. Draft filters require Apply; Cancel preserves the
 applied query. A quiet automatic refresh is distinct from deliberate pull-to-refresh.
 
 Cards lead with local alert time or No alert, then meaningful timing/repeat context.

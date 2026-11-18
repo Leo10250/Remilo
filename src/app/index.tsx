@@ -1020,7 +1020,10 @@ export function AgendaScreen({ destination }: { destination: DestinationOrigin }
                           calendarSyncNotice(repeatCalendarStates?.[item.seriesId])) ||
                         undefined
                       }
-                      context={{ groupKey: section.key }}
+                      context={{
+                        groupKey: section.key,
+                        showDeliveryIssues: appliedFilters.deliveryIssuesOnly,
+                      }}
                       nowMs={caps?.observedAtMs}
                       onOpen={() => {
                         if (!isGuarded()) open(item);

@@ -10136,8 +10136,8 @@
       "calendarStatus": false
     },
     "m_c64ccd9027a7": {
-      "en": "Missed, timed out, interrupted, blocked or failed alerts.",
-      "zh-Hans": "已错过、超时、中断、受阻或失败的提醒。",
+      "en": "Missed, timed out, interrupted, blocked, failed, or unconfirmed alerts.",
+      "zh-Hans": "已错过、超时、中断、受阻、失败或尚未确认的提醒。",
       "args": {},
       "context": "src\\ui\\browse-filters.tsx",
       "calendarStatus": false

@@ -389,6 +389,28 @@ describe('concise work-state browsing', () => {
     expect(failed.status?.label).toBe('Overdue · 3 min');
     expect(failed.warning).toBe('Notification could not be sent');
   });
+  it('adds the specific problem to filtered rows and keeps the overdue status', () => {
+    const context = { groupKey: 'overdue', showDeliveryIssues: true };
+    const missed = reminderBrowsingPresentation(
+      { ...overdue, mode: 'Notification', deliveryState: 'Missed' },
+      start,
+      context,
+    );
+    expect(missed.status?.label).toBe('Overdue · 3 min');
+    expect(missed.warning).toBe('Notification delivery missed');
+    expect(missed.spokenLabel).toContain('Notification delivery missed');
+    const interrupted = reminderBrowsingPresentation(
+      { ...overdue, deliveryState: 'Interrupted' },
+      start,
+      context,
+      { resolvedLanguage: 'zh-Hans' },
+    );
+    expect(interrupted.warning).toBe('闹钟已中断');
+    expect(
+      reminderBrowsingPresentation({ ...overdue, deliveryState: 'Notified' }, start, context)
+        .warning,
+    ).toBeNull();
+  });
   it('surfaces an unconfirmed delivery alongside overdue work without promising another alert', () => {
     const item = { ...overdue, deliveryState: 'DeliveryUnconfirmed' };
     const result = reminderBrowsingPresentation(item, start);

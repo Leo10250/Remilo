@@ -16,6 +16,7 @@ import {
   recordedCompletionTime,
   repeatSummary,
   spokenDateTime,
+  stateIcon,
   stateTone,
   type CardContext,
 } from '../domain/presentation';
@@ -563,16 +564,18 @@ export function ReminderRow({
                       label={repeat + (item.exception ? t('m_93ae4c694ec5') : '')}
                     />
                   )}
-                  {(!item.routine || terminal) && !!browsing.status && !browsing.ringing && (
+                  {(!item.routine || terminal || context?.showDeliveryIssues) &&
+                    !!browsing.status &&
+                    !browsing.ringing && (
+                      <MetadataLine
+                        icon={browsing.status.icon}
+                        label={active ? browsing.status.label : terminalState}
+                        color={colors[browsing.status.tone]}
+                      />
+                    )}
+                  {(!item.routine || context?.showDeliveryIssues) && !!browsing.warning && (
                     <MetadataLine
-                      icon={browsing.status.icon}
-                      label={active ? browsing.status.label : terminalState}
-                      color={colors[browsing.status.tone]}
-                    />
-                  )}
-                  {!item.routine && !!browsing.warning && (
-                    <MetadataLine
-                      icon={item.deliveryState === 'DeliveryUnconfirmed' ? 'warning' : 'error'}
+                      icon={stateIcon(item)}
                       label={browsing.warning}
                       color={colors[stateTone(item)]}
                     />

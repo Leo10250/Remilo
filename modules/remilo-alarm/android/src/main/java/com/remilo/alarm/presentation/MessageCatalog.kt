@@ -1527,7 +1527,7 @@ object MessageCatalog {
     "m_58cefb489b1a" to Entry(R.string.l10n_m_58cefb489b1a, false, listOf(), "Reset all filters", false),
     "m_d80ab19b7edb" to Entry(R.string.l10n_m_d80ab19b7edb, false, listOf(), "Apply filters", false),
     "m_920e413c7d41" to Entry(R.string.l10n_m_920e413c7d41, false, listOf(), "Status", false),
-    "m_c64ccd9027a7" to Entry(R.string.l10n_m_c64ccd9027a7, false, listOf(), "Missed, timed out, interrupted, blocked or failed alerts.", false),
+    "m_c64ccd9027a7" to Entry(R.string.l10n_m_c64ccd9027a7, false, listOf(), "Missed, timed out, interrupted, blocked, failed, or unconfirmed alerts.", false),
     "m_0df6f1cad36c" to Entry(R.string.l10n_m_0df6f1cad36c, false, listOf(), "Show", false),
     "m_614f35ad96d0" to Entry(R.string.l10n_m_614f35ad96d0, false, listOf(), "Show skipped", false),
     "m_53eb3f7aeec6" to Entry(R.string.l10n_m_53eb3f7aeec6, false, listOf(), "All lists", false),

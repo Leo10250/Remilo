@@ -1515,7 +1515,7 @@
   <string name="l10n_m_58cefb489b1a">重置所有筛选</string>
   <string name="l10n_m_d80ab19b7edb">应用筛选</string>
   <string name="l10n_m_920e413c7d41">状态</string>
-  <string name="l10n_m_c64ccd9027a7">已错过、超时、中断、受阻或失败的提醒。</string>
+  <string name="l10n_m_c64ccd9027a7">已错过、超时、中断、受阻、失败或尚未确认的提醒。</string>
   <string name="l10n_m_0df6f1cad36c">显示</string>
   <string name="l10n_m_614f35ad96d0">显示已跳过</string>
   <string name="l10n_m_53eb3f7aeec6">所有清单</string>
