@@ -202,10 +202,11 @@ shared verification and export the JavaScript bundle. Xcode compiles and links
 the native iPhone/iPad app on macOS.
 
 The [iOS build workflow](../.github/workflows/build-ios.yml) runs the Swift
-engine, widget policy, Calendar, archive and photo checks on macOS. It compiles
-the optional WidgetKit extension separately. The standard unsigned Release
-package checks for bundled JavaScript, sound, App Intents metadata and
-iPhone/iPad device families. A running IPA build can finish while the Swift
+engine, widget policy, Calendar, archive and photo checks on macOS. The standard
+unsigned Release package checks for bundled JavaScript, sound, App Intents
+metadata and iPhone/iPad device families. The workflow also packages the same
+app with its WidgetKit extension for AltStore and checks the App Group in both
+input signatures. A running IPA build can finish while the Swift
 engine and Calendar checks run for a newer commit. Each IPA requires a passing
 engine check for its commit.
 Device installation requires separate signing. The AlarmKit probe checks OS
@@ -220,6 +221,8 @@ feasibility. Physical acceptance uses a signed build of Remilo itself.
    the same network after Wi-Fi sync is set up.
 3. On the device, open **AltStore → My Apps → +** and choose the IPA from
    Files. Open Remilo after installation.
+   Check that icons appear in all four tabs, the Lists add button, and the
+   Settings rows.
 4. In Remilo, use **Settings → Permissions & alarm check → Alarm** to allow
    alarms, then tap **Test alarm**. Create a real reminder and choose a PM time
    that falls on the next UTC date in its zone, such as 9:09 PM Pacific. Check
@@ -367,8 +370,17 @@ Keep the configured test IPA local.
 
 #### iOS widget build
 
-The standard unsigned Remilo build omits the widget extension. To build the
-widget-enabled app, use one Apple development team authorized for both App IDs
+For an AltStore Classic test from Windows, download **Remilo-widgets-sideload**
+from the [iOS build workflow](../.github/workflows/build-ios.yml). Extract the
+ZIP, copy **Remilo-widgets-sideload.ipa** to Files, and install it from
+**AltStore → My Apps → +**. Keep the widget extension if AltStore prompts.
+AltStore provisions the app and extension for the signed-in account, including
+their shared App Group. The extension uses an additional App ID. Use the
+standard **Remilo-unsigned** IPA for app-only or configured Calendar testing.
+[AltStore App IDs](https://faq.altstore.io/altstore-classic/app-ids)
+[AltStore provisioning implementation](https://github.com/altstoreio/AltStore/blob/develop/AltStore/Operations/FetchProvisioningProfilesOperation.swift)
+
+To build with Xcode, use one Apple development team authorized for both App IDs
 (`com.remilo.app` and `com.remilo.app.widgets`) and give both profiles the
 `group.com.remilo.app.widgets` App Group. Select that team and build the
 extension before the app with the same configuration and build directory.
@@ -410,14 +422,6 @@ The host's conditional entitlement path belongs to the Xcode project
 configuration. Expo autolinking reads target-level paths as inputs to its
 provider-generation script. An empty expansion at target level makes the
 whole iOS directory an input, including the provider the script generates.
-
-For an AltStore Classic test, the input IPA needs the widget embedded and the
-App Group present in both original code signatures so AltStore can read and
-re-provision it. Keep the widget extension during sideloading. The extension
-uses an additional App ID, and App Group provisioning must succeed for the
-Apple account used to sign. The standard unsigned IPA covers app-only testing.
-[AltStore App IDs](https://faq.altstore.io/altstore-classic/app-ids)
-[AltStore provisioning implementation](https://github.com/altstoreio/AltStore/blob/develop/AltStore/Operations/FetchProvisioningProfilesOperation.swift)
 
 ## Private diagnostics and handoff
 

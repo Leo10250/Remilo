@@ -104,6 +104,63 @@ jobs:
           path: ${{ runner.temp }}/Remilo-unsigned.ipa
           if-no-files-found: error
           retention-days: 3
+      - name: Build the WidgetKit extension
+        shell: bash
+        run: |
+          log="$RUNNER_TEMP/remilo-widget-build.log"
+          if ! xcodebuild -quiet \
+            -project ios/Remilo.xcodeproj \
+            -scheme RemiloWidgets \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/RemiloWidgets-build" \
+            CODE_SIGNING_ALLOWED=NO build >"$log" 2>&1; then
+            grep -inE 'error:|undefined symbols|command .* failed|^ld:' "$log" | tail -n 60 || true
+            tail -n 120 "$log"
+            exit 1
+          fi
+      - name: Prepare the WidgetKit sideload package
+        shell: bash
+        run: |
+          stage="$RUNNER_TEMP/remilo-widget-ipa"
+          app="$stage/Payload/Remilo.app"
+          widget="$app/PlugIns/RemiloWidgets.appex"
+          ipa="$RUNNER_TEMP/Remilo-widgets-sideload.ipa"
+          mkdir -p "$stage/Payload"
+          ditto "$RUNNER_TEMP/remilo-ipa/Payload/Remilo.app" "$app"
+          mkdir -p "$app/PlugIns"
+          ditto "$RUNNER_TEMP/RemiloWidgets-build/Build/Products/Release-iphoneos/RemiloWidgets.appex" "$widget"
+          test -s "$widget/RemiloWidgets" || { echo "Missing WidgetKit executable"; exit 1; }
+          test -d "$widget/Metadata.appintents" || { echo "Missing widget App Intents metadata"; exit 1; }
+          app_id=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app/Info.plist")
+          widget_id=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$widget/Info.plist")
+          test "$widget_id" = "$app_id.widgets" || { echo "Widget bundle identifier does not match the app"; exit 1; }
+          for key in CFBundleVersion CFBundleShortVersionString; do
+            app_value=$(/usr/libexec/PlistBuddy -c "Print :$key" "$app/Info.plist")
+            widget_value=$(/usr/libexec/PlistBuddy -c "Print :$key" "$widget/Info.plist")
+            test "$app_value" = "$widget_value" || { echo "Widget $key does not match the app"; exit 1; }
+          done
+          # AltStore reads the input signatures to request profiles for the app and its extension.
+          while IFS= read -r -d '' dependency; do
+            codesign --force --sign - "$dependency"
+          done < <(find "$app" -depth \( -name '*.framework' -type d -o -name '*.dylib' -type f -path '*/Frameworks/*' \) -print0)
+          codesign --force --sign - --entitlements ios/RemiloWidgets/RemiloWidgets.entitlements "$widget"
+          codesign --force --sign - --entitlements ios/Remilo/RemiloWidgetsHost.entitlements "$app"
+          codesign --verify --deep --strict "$app"
+          for bundle in "$app" "$widget"; do
+            test ! -e "$bundle/embedded.mobileprovision"
+            codesign --display --entitlements - --xml "$bundle" >"$stage/entitlements.plist"
+            group=$(/usr/libexec/PlistBuddy -c 'Print :com.apple.security.application-groups:0' "$stage/entitlements.plist")
+            test "$group" = 'group.com.remilo.app.widgets'
+          done
+          ditto -c -k --keepParent "$stage/Payload" "$ipa"
+          unzip -tq "$ipa"
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: Remilo-widgets-sideload
+          path: ${{ runner.temp }}/Remilo-widgets-sideload.ipa
+          if-no-files-found: error
+          retention-days: 3
   widget-and-calendar:
     concurrency:
       group: remilo-ios-checks-${{ github.ref }}
@@ -138,22 +195,3 @@ jobs:
                 abort "Unexpected host entitlements for widget mode #{ARGV[0]}: #{path.inspect}" unless valid
               ' "$mode"
           done
-      - name: Build the optional WidgetKit extension
-        if: ${{ !cancelled() }}
-        shell: bash
-        run: |
-          log="$RUNNER_TEMP/remilo-widget-build.log"
-          if ! xcodebuild -quiet \
-            -project ios/Remilo.xcodeproj \
-            -scheme RemiloWidgets \
-            -configuration Release \
-            -destination 'generic/platform=iOS' \
-            -derivedDataPath "$RUNNER_TEMP/RemiloWidgets-build" \
-            CODE_SIGNING_ALLOWED=NO build >"$log" 2>&1; then
-            grep -inE 'error:|undefined symbols|command .* failed|^ld:' "$log" | tail -n 60 || true
-            tail -n 120 "$log"
-            exit 1
-          fi
-          extension="$RUNNER_TEMP/RemiloWidgets-build/Build/Products/Release-iphoneos/RemiloWidgets.appex"
-          test -s "$extension/RemiloWidgets" || { echo "Missing WidgetKit executable"; exit 1; }
-          test -d "$extension/Metadata.appintents" || { echo "Missing widget App Intents metadata"; exit 1; }
