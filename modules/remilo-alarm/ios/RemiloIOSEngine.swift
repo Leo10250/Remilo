@@ -458,6 +458,17 @@ final class RemiloIOSEngine {
         }
     }
 
+    func observeNotificationDelivery(occurrenceID: String, generation: Int, registrationID: UUID) async throws {
+        await acquire()
+        defer { release() }
+        var state = try read()
+        guard var record = state.reminders[occurrenceID], record.active, record.generation == generation,
+              let registration = record.registration, registration.systemID == registrationID,
+              recordNotificationDelivery(&record, registration: registration, state: &state) else { return }
+        state.reminders[occurrenceID] = record
+        try commit(state)
+    }
+
     func canOpenAlarmReminderActions(occurrenceID: String, generation: Int, registrationID: UUID?,
                                      now: Int64 = iosMillis(Date())) throws -> Bool {
         guard let record = try read().reminders[occurrenceID], record.active, !record.isTest,
@@ -495,7 +506,8 @@ final class RemiloIOSEngine {
         let queued = Set(state.outbox.filter { $0.action == .register }.map { $0.registration.systemID })
         if let observed {
             for record in state.reminders.values where record.active {
-                if let registration = record.registration, observed[registration.systemID] == nil,
+                if let registration = record.registration, record.nextAlertMs == registration.targetMs,
+                   observed[registration.systemID] == nil,
                    !queued.contains(registration.systemID), registration.targetMs > now {
                     state.outbox.append(IOSDeliveryWork(action: .register, registration: registration))
                 }
@@ -1045,16 +1057,33 @@ final class RemiloIOSEngine {
         var state = try read()
         var changed = false
         for (id, var record) in state.reminders where record.active {
-            guard let registration = record.registration, registration.targetMs <= now,
-                  ["Scheduled", "Alerting"].contains(record.deliveryState) else { continue }
-            let outcome = observed[registration.systemID] ?? (record.deliveryState == "Alerting" ? "Interrupted" : "DeliveryUnconfirmed")
-            guard outcome != record.deliveryState else { continue }
-            record.deliveryState = outcome
-            if outcome != "Scheduled" && outcome != "Alerting" { record.nextAlertMs = nil }
+            guard let registration = record.registration else { continue }
+            let systemState = observed[registration.systemID]
+            if systemState == "Notified" {
+                guard recordNotificationDelivery(&record, registration: registration, state: &state) else { continue }
+            } else {
+                guard registration.targetMs <= now, ["Scheduled", "Alerting"].contains(record.deliveryState) else { continue }
+                let outcome = systemState ?? (record.deliveryState == "Alerting" ? "Interrupted" : "DeliveryUnconfirmed")
+                guard outcome != record.deliveryState else { continue }
+                record.deliveryState = outcome
+                if outcome != "Scheduled" && outcome != "Alerting" { record.nextAlertMs = nil }
+            }
             state.reminders[id] = record
             changed = true
         }
         if changed { try commit(state) }
+    }
+
+    private func recordNotificationDelivery(
+        _ record: inout IOSReminder, registration: IOSReminderRegistration, state: inout IOSDatabase
+    ) -> Bool {
+        guard record.mode == "Notification", registration.mode == "Notification",
+              registration.occurrenceID == record.id, registration.generation == record.generation,
+              ["Scheduled", "Pending", "Blocked", "Missed", "DeliveryUnconfirmed"].contains(record.deliveryState) else { return false }
+        record.deliveryState = "Notified"
+        record.nextAlertMs = nil
+        state.outbox.removeAll { $0.action == .register && $0.registration.systemID == registration.systemID }
+        return true
     }
 
     private func finalize(_ operationID: String) throws -> [String: Any] {

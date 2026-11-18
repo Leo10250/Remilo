@@ -34,6 +34,7 @@ extension Notification.Name {
 enum RemiloIOSDelivery {
     static var registrations: [UUID: IOSReminderRegistration] = [:]
     static var alerting = Set<UUID>()
+    static var deliveredNotifications = Set<UUID>()
     static var attempts: [UUID] = []
     static var onRegister: ((IOSReminderRegistration) throws -> Void)?
     static var onCancel: ((IOSReminderRegistration) throws -> Void)?
@@ -54,7 +55,9 @@ enum RemiloIOSDelivery {
     static func isAlarmAlerting(_ id: UUID) throws -> Bool { alerting.contains(id) }
 
     static func observedStates() async throws -> [UUID: String] {
-        registrations.mapValues { alerting.contains($0.systemID) ? "Alerting" : "Scheduled" }
+        var states = registrations.mapValues { alerting.contains($0.systemID) ? "Alerting" : "Scheduled" }
+        for id in deliveredNotifications { states[id] = "Notified" }
+        return states
     }
 }
 
@@ -95,6 +98,7 @@ struct EngineChecks {
         try await deniedRegistrationRecoversAndStaleDeliveryCannotComplete()
         try await recurringPauseAndSplitPreserveIndependentOccurrences()
         try await expiredAcceptedRegistrationIsNotReplayed()
+        try await notificationDeliveryUsesCurrentRegistration()
         try await alarmDismissalLeavesReminderOpen()
         try await routineEditsRetainProgressAndTrashRestoresFamily()
         try await datedRoutineTrashPreservesProgressAndPurgeSurvivesRestore()
@@ -461,6 +465,88 @@ struct EngineChecks {
         precondition(recovered?["deliveryState"] as? String == "DeliveryUnconfirmed")
         precondition(recovered?["completed"] as? Bool == false)
         precondition(RemiloIOSDelivery.attempts.isEmpty)
+    }
+
+    private static func notificationDeliveryUsesCurrentRegistration() async throws {
+        let store = FixtureStore()
+        defer {
+            store.remove()
+            RemiloIOSDelivery.deliveredNotifications = []
+            RemiloIOSDelivery.registrations = [:]
+            RemiloIOSDelivery.attempts = []
+        }
+        let now = iosMillis(Date())
+        func reminder(_ id: String, target: Int64) -> IOSReminder {
+            var record = IOSReminder(
+                id: id, title: "Keep me open", notes: "", listID: nil, eventStartMs: target,
+                eventEndMs: target + 60_000, dueAtMs: target, alarmAtMs: target,
+                zoneID: "UTC", mode: "Notification", allDay: false, dueLinked: true, alarmLinked: true
+            )
+            record.generation = 1
+            record.deliveryState = "Scheduled"
+            record.nextAlertMs = target
+            record.registration = IOSReminderRegistration(
+                occurrenceID: id, generation: 1, systemID: UUID(),
+                targetMs: target, mode: "Notification", language: "en"
+            )
+            return record
+        }
+        let callback = reminder("notification-response", target: now - 60_000)
+        let center = reminder("notification-center", target: now - 60_000)
+        let rewind = reminder("notification-clock-rewind", target: now + 180_000)
+        var state = IOSDatabase()
+        state.reminders = [callback.id: callback, center.id: center, rewind.id: rewind]
+        state.outbox.append(IOSDeliveryWork(action: .register, registration: rewind.registration!))
+        try store.save(state)
+
+        let engine = store.engine()
+        try await engine.observeNotificationDelivery(
+            occurrenceID: rewind.id, generation: rewind.generation, registrationID: rewind.registration!.systemID
+        )
+        try await engine.reconcile()
+        let missing = try store.load()
+        precondition(missing.reminders[callback.id]?.deliveryState == "DeliveryUnconfirmed")
+        precondition(missing.reminders[center.id]?.deliveryState == "DeliveryUnconfirmed")
+        precondition(missing.reminders[rewind.id]?.deliveryState == "Notified")
+        precondition(missing.outbox.isEmpty && RemiloIOSDelivery.attempts.isEmpty)
+
+        try await engine.observeNotificationDelivery(
+            occurrenceID: callback.id, generation: callback.generation + 1, registrationID: callback.registration!.systemID
+        )
+        try await engine.observeNotificationDelivery(
+            occurrenceID: callback.id, generation: callback.generation, registrationID: UUID()
+        )
+        let afterStale = try store.load()
+        precondition(afterStale.reminders[callback.id]?.deliveryState == "DeliveryUnconfirmed")
+
+        try await engine.observeNotificationDelivery(
+            occurrenceID: callback.id, generation: callback.generation, registrationID: callback.registration!.systemID
+        )
+        RemiloIOSDelivery.deliveredNotifications.insert(center.registration!.systemID)
+        try await engine.reconcile()
+        RemiloIOSDelivery.deliveredNotifications.removeAll()
+        let restarted = store.engine()
+        try await restarted.reconcile()
+        let confirmed = try store.load()
+        for original in [callback, center, rewind] {
+            let current = confirmed.reminders[original.id]!
+            precondition(current.deliveryState == "Notified" && current.active && current.nextAlertMs == nil)
+            precondition(current.generation == original.generation && current.revision == original.revision)
+            precondition(current.registration?.systemID == original.registration?.systemID)
+        }
+        precondition(RemiloIOSDelivery.attempts.isEmpty)
+
+        let postponed = try await restarted.apply([
+            "kind": "Postpone", "operationId": "postpone-notified", "occurrenceId": callback.id,
+            "expectedGeneration": callback.generation, "alarmAtMs": now + 120_000,
+        ])
+        precondition(postponed["status"] as? String == "Scheduled")
+        try await restarted.observeNotificationDelivery(
+            occurrenceID: callback.id, generation: callback.generation, registrationID: callback.registration!.systemID
+        )
+        let replacement = try store.load().reminders[callback.id]!
+        precondition(replacement.deliveryState == "Scheduled" && replacement.nextAlertMs == now + 120_000)
+        precondition(replacement.generation > callback.generation)
     }
 
     private static func alarmDismissalLeavesReminderOpen() async throws {

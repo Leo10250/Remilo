@@ -377,8 +377,8 @@ private final class RemiloNotificationActions: NSObject, UNUserNotificationCente
                 identifier: startID, title: IOSDeliveryCopy.startRoutine.forLanguage(language), options: [.foreground]
             )
             return [
-                UNNotificationCategory(identifier: categoryID(language, routine: false), actions: [done, postpone], intentIdentifiers: [], options: []),
-                UNNotificationCategory(identifier: categoryID(language, routine: true), actions: [start], intentIdentifiers: [], options: []),
+                UNNotificationCategory(identifier: categoryID(language, routine: false), actions: [done, postpone], intentIdentifiers: [], options: [.customDismissAction]),
+                UNNotificationCategory(identifier: categoryID(language, routine: true), actions: [start], intentIdentifiers: [], options: [.customDismissAction]),
             ]
         })
     }
@@ -386,13 +386,23 @@ private final class RemiloNotificationActions: NSObject, UNUserNotificationCente
     func userNotificationCenter(
         _ center: UNUserNotificationCenter, willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {
-        [.banner, .list, .sound]
+        let request = notification.request
+        if let occurrenceID = request.content.userInfo[Self.occurrenceKey] as? String,
+           let generation = request.content.userInfo[Self.generationKey] as? Int,
+           let registrationID = UUID(uuidString: request.identifier) {
+            // The delivery engine can be waiting on the notification center.
+            Task { await Self.recordDelivery(occurrenceID, generation: generation, registrationID: registrationID) }
+        }
+        return [.banner, .list, .sound]
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
         let info = response.notification.request.content.userInfo
         guard let occurrenceID = info[Self.occurrenceKey] as? String,
               let generation = info[Self.generationKey] as? Int else { return }
+        if let registrationID = UUID(uuidString: response.notification.request.identifier) {
+            await Self.recordDelivery(occurrenceID, generation: generation, registrationID: registrationID)
+        }
         let routine = info[Self.routineKey] as? Bool == true
         switch response.actionIdentifier {
         case Self.doneID:
@@ -417,6 +427,16 @@ private final class RemiloNotificationActions: NSObject, UNUserNotificationCente
             }
         default:
             return
+        }
+    }
+
+    private static func recordDelivery(_ occurrenceID: String, generation: Int, registrationID: UUID) async {
+        do {
+            try await RemiloIOSEngine.shared.observeNotificationDelivery(
+                occurrenceID: occurrenceID, generation: generation, registrationID: registrationID
+            )
+        } catch {
+            log.error("Could not record notification delivery")
         }
     }
 }

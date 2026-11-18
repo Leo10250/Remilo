@@ -162,6 +162,11 @@ explicit notification Done reaches the engine through the native delegate, and
 notification Postpone hands the occurrence and generation to the foreground
 chooser. Only confirmation changes the target. [Apple AlarmKit FAQ](https://developer.apple.com/forums/thread/797158)
 
+iOS records notification delivery from a matching Notification Center entry,
+foreground delivery callback, or notification response. The engine matches the
+current registration and generation before saving the observed outcome. Clearing
+the notification leaves the reminder unfinished.
+
 A bounded window of repeat occurrences has independent registrations. The
 [native recovery coordinator](../modules/remilo-alarm/ios/RemiloIOSRecovery.swift)
 reconciles on activation and coalesces protected-data, clock, time-zone,

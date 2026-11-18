@@ -147,6 +147,9 @@ Select relevant scenarios from this reusable release smoke menu:
 - From a sounding routine alarm on iOS, open its actions and start the routine.
   The sheet should close before the captured date opens. Dismissing or snoozing
   should return to the invoking screen. Check that existing steps stay intact.
+- On iOS, let a Notification arrive, clear it from Notification Center, and
+  open Remilo. Verify the reminder remains unfinished with Notification sent
+  shown when iOS reported the dismissal, then confirm it can be postponed.
 
 This is a menu, not a full matrix required for every feature. A reported failure
 remains actionable; absence of old paperwork alone is not a failure. Describe the
