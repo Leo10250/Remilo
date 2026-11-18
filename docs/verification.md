@@ -107,6 +107,11 @@ variants for shared theme changes and larger text/narrow widths for layout/copy.
 Keep temporary captures ignored. Screenshots do not establish focus, Back, keyboard,
 TalkBack, native pickers or alarm behavior.
 
+Open the preview at `/?reviewRoutine=1&reviewSession=routine-alarm&reviewLostReply=1`
+to exercise two queued routine alarm sheets and retry after a lost reply.
+Use Start routine, then Retry the same action. Check that the first sheet
+closes before the dated session opens and the second sheet appears.
+
 ## Physical testing
 
 Physical checking is part of normal development. Use the installed signed bundled
@@ -136,6 +141,9 @@ Select relevant scenarios from this reusable release smoke menu:
   sheet with Notification selected. Check the prompt or the notification
   settings link, grant access, and verify the warning clears without resetting
   the draft. On Android, check the warning with only the routine channel off.
+- From a sounding routine alarm on iOS, open its actions and start the routine.
+  The sheet should close before the captured date opens. Dismissing or snoozing
+  should return to the invoking screen. Check that existing steps stay intact.
 
 This is a menu, not a full matrix required for every feature. A reported failure
 remains actionable; absence of old paperwork alone is not a failure. Describe the

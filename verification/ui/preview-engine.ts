@@ -15,6 +15,7 @@ import type {
   RecurrenceDraft,
   RepeatFamily,
   ResolvedReminderDraft,
+  RoutineAlarmActionRequest,
   SchedulePreview,
   Series,
   SoundPreviewSnapshot,
@@ -345,12 +346,28 @@ const routines = routinePreview(
     shape: review.get('reviewRoutineShape') ?? undefined,
   },
 );
-if (routines.progress)
+const currentRoutine = routines.progress;
+const routineAlarms: RoutineAlarmActionRequest[] =
+  review.get('reviewSession') === 'routine-alarm' && currentRoutine
+    ? [1, 2].map((index) => ({
+        kind: 'RoutineAlarmActions',
+        occurrenceId: 'fixture-routine-alarm-' + index,
+        routineId: currentRoutine.routineId,
+        date: currentRoutine.date,
+        expectedGeneration: 1,
+        expectedSessionId: 'fixture-routine-session-' + index,
+        expectedSnoozeMinutes: index === 1 ? 10 : 15,
+        closesAtMs: Date.now() + 3_600_000,
+      }))
+    : [];
+let routineAlarmsTaken = false;
+const handledRoutineAlarms = new Set<string>();
+if (currentRoutine)
   items.push(
-    make(routines.progress.occurrenceId!, 'Weekly workout', 0, {
+    make(currentRoutine.occurrenceId!, 'Weekly workout', 0, {
       mode: 'Notification',
       vibration: false,
-      routine: routines.progress,
+      routine: currentRoutine,
       overdue: false,
       overdueAtMs: null,
     }),
@@ -861,6 +878,28 @@ function apply(command: Command): CommandResult {
   if (routine) return routine;
   const receipt = receipts.get(command.operationId);
   if (receipt) return clone(receipt);
+  if (command.kind === 'DismissRoutineAlarm' || command.kind === 'SnoozeRoutineAlarm') {
+    const capture = routineAlarms.find(
+      (alarm) =>
+        alarm.occurrenceId === command.occurrenceId &&
+        alarm.date === command.date &&
+        alarm.expectedGeneration === command.expectedGeneration &&
+        alarm.expectedSessionId === command.expectedSessionId,
+    );
+    if (!capture || handledRoutineAlarms.has(capture.expectedSessionId))
+      return { status: 'Rejected', errorCode: 'STALE_GENERATION' };
+    if (
+      command.kind === 'SnoozeRoutineAlarm' &&
+      capture.expectedSnoozeMinutes !== command.expectedSnoozeMinutes
+    )
+      return { status: 'Rejected', errorCode: 'STALE_SNOOZE' };
+    handledRoutineAlarms.add(capture.expectedSessionId);
+    const result: CommandResult = {
+      status: command.kind === 'SnoozeRoutineAlarm' ? 'Scheduled' : 'Applied',
+    };
+    receipts.set(command.operationId, result);
+    return result;
+  }
   let result: CommandResult = { status: 'Applied' };
   if (command.kind === 'Settings') {
     if (command.expectedRevision !== settings.revision)
@@ -1335,6 +1374,15 @@ const preview = {
   previewRoutine: routines.previewRoutine,
   createOperationId: () => 'preview-operation-' + nextId(),
   getTimeDisplayPreferences: async () => timePreferences(),
+  ...(routineAlarms.length
+    ? {
+        takePendingDeliveryRequests: async () => {
+          if (routineAlarmsTaken) return [];
+          routineAlarmsTaken = true;
+          return clone(routineAlarms);
+        },
+      }
+    : {}),
   addListener: (event: string, fn: (() => void) | ((snapshot: SoundPreviewSnapshot) => void)) => {
     if (event === 'onTimeDisplayPreferencesChanged') {
       const callback = fn as (

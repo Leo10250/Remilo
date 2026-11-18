@@ -179,7 +179,7 @@ export function NativeDeliveryRequestHost() {
     <RoutineAlarmActions
       key={routineAlarm.expectedSessionId}
       capture={routineAlarm}
-      onClose={() => {
+      onDismissed={() => {
         currentRoutineAlarm.current = undefined;
         setRoutineAlarm(undefined);
         presentNext.current?.();

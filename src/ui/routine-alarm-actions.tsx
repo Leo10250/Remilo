@@ -13,16 +13,17 @@ import { useLocalizedState, useTranslation } from '../localization/react';
 import { ActionFeedback, Button, Sheet } from './components';
 import { apply, CommandError, engine } from './native';
 import { notify } from './feedback';
+import { useSheetExitAction } from './sheet-motion';
 
 type Action = 'start' | 'snooze' | 'dismiss';
 type Job = { command: RoutineAlarmCommand; action: Action };
 
 export function RoutineAlarmActions({
   capture,
-  onClose,
+  onDismissed,
 }: {
   capture: RoutineAlarmActionRequest;
-  onClose: () => void;
+  onDismissed: () => void;
 }) {
   const t = useTranslation();
   const client = useQueryClient();
@@ -34,6 +35,8 @@ export function RoutineAlarmActions({
       ),
   );
   const running = useRef(false);
+  const [visible, setVisible] = useState(true);
+  const exit = useSheetExitAction(() => setVisible(false));
   const [busy, setBusy] = useState(false);
   const [settled, setSettled] = useState(false);
   const [snoozeChanged, setSnoozeChanged] = useState(false);
@@ -50,14 +53,18 @@ export function RoutineAlarmActions({
       const result = await operation.run(job);
       if (result.status === 'Applied' || result.status === 'Scheduled') {
         if (job.action === 'start') {
-          router.navigate({
-            pathname: '/routine-session',
-            params: { id: capture.routineId, date: capture.date },
-          });
-        } else if (job.action === 'snooze') {
-          notify({ message: t('m_5550d1a27260'), tone: 'success' });
+          exit.afterClose(() =>
+            router.navigate({
+              pathname: '/routine-session',
+              params: { id: capture.routineId, date: capture.date },
+            }),
+          );
+        } else {
+          if (job.action === 'snooze') {
+            notify({ message: t('m_5550d1a27260'), tone: 'success' });
+          }
+          setVisible(false);
         }
-        onClose();
       } else {
         setSettled(true);
         setFeedback(commandFeedback(result, ''));
@@ -88,7 +95,7 @@ export function RoutineAlarmActions({
     }
   };
   const choose = (action: Action) => {
-    if (settled || operation.pending || running.current) return;
+    if (!visible || settled || operation.pending || running.current) return;
     const common = {
       occurrenceId: capture.occurrenceId,
       date: capture.date,
@@ -112,9 +119,13 @@ export function RoutineAlarmActions({
   return (
     <Sheet
       title={t('m_8c648567f73c')}
-      visible
+      visible={visible}
       onClose={() => {
-        if (!running.current && !operation.pending) onClose();
+        if (!running.current && !operation.pending) setVisible(false);
+      }}
+      onDismissed={() => {
+        exit.onDismissed();
+        onDismissed();
       }}
     >
       <View style={{ gap: 8 }}>
